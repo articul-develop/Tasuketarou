@@ -1,0 +1,34 @@
+h2 {
+  font-size: 1.5em !important; /* フォントを大きく */
+  color: #1E90FF !important; /* 青字 */
+  margin-bottom: 16px !important; /* 見出しと内容の間の余白 */
+  font-weight: bold !important; /* 太字 */
+  border-bottom: 1px solid #ccc !important; /* 下線を付ける */
+  padding-bottom: 4px !important;
+}
+
+/* 入力欄全体の余白を統一 */
+.setting {
+  margin-bottom: 30px; /* セクション間の余白を広げる */
+}
+
+.add-row-button {
+  display: inline-block;
+  width: 25px; /* ボタンの幅 */
+  height: 25px; /* ボタンの高さ */
+  border-radius: 50%; /* 丸い形 */
+  background-color: #3498db; /* 青色 */
+  color: #fff; /* 文字色 */
+  text-align: center; /* テキストの中央揃え */
+  line-height: 20px; /* テキストの縦方向の中央揃え */
+  font-size: 12px; /* 文字サイズ */
+  font-weight: bold; /* 太字 */
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1); /* ボタンの影 */
+  cursor: pointer;
+  border: none; /* 枠線なし */
+  margin-right: 10px; /* ボタン間の隙間 */
+}
+
+.add-row-button:hover {
+  background-color: #1d6fa5; /* ホバー時の色 */
+}
