@@ -12,7 +12,7 @@ window.AuthModule = (function () {
         },
         body: JSON.stringify({
           Domain: location.hostname, 
-          ItemKey: 3 // ★BubbleでのアプリID
+          ItemKey: API_CONFIG.ItemKey
         })
       });
 
