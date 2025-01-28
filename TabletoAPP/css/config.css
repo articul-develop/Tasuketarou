@@ -1,0 +1,25 @@
+h2 {
+  font-size: 1.5em !important; /* フォントを大きく */
+  color: #1E90FF !important; /* 青字 */
+  margin-bottom: 16px !important; /* 見出しと内容の間の余白 */
+  font-weight: bold !important; /* 太字 */
+  border-bottom: 1px solid #ccc !important; /* 下線を付ける */
+  padding-bottom: 4px !important;
+}
+
+/* 入力欄全体の余白を統一 */
+.setting {
+  margin-bottom: 30px; /* セクション間の余白を広げる */
+}
+
+#normal-fields, #table-fields {
+  border: 2px solid #ccc; /* 枠の色と太さ */
+  padding: 10px;         /* 内側の余白 */
+  margin: 10px 0;        /* 上下の余白、左右は0 */
+  border-radius: 5px;    /* 角を丸くする */
+  background-color: #f9f9f9; /* 背景色 */
+  width: 50%;            /* 横幅を50%に設定 */
+  min-width: 200px;      /* 最小幅を設定（狭くなりすぎるのを防ぐ） */
+  text-align: left;      /* 枠内のテキストを左揃え */
+}
+
