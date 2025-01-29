@@ -13,9 +13,11 @@
       return event;
     }
 
-    // 認証成功の場合のみ、実行ロジックを呼び出す
-    window.executeDesktopLogic(); // 同期的に呼び出す
-    return event;
+    if (isAuthenticated) {
+      // 認証成功の場合のみ、実行ロジックを呼び出す
+      window.executeDesktopLogic(); // 同期的に呼び出す
+      return event;
+      }
   });
 
 })(kintone.$PLUGIN_ID);

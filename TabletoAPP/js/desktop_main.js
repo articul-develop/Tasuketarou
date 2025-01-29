@@ -6,8 +6,8 @@
   //console.log('プラグイン設定取得');
 
  
-  async function executeDesktopLogic() {
-    const isAuth = await window.isAuthenticated(); // 認証状態を確認
+  function executeDesktopLogic() {
+    const isAuth = window.isAuthenticated(); // 同期的に true/false
     if (!isAuth) {
       console.error('認証されていないため、処理を実行できません。');
       return;
