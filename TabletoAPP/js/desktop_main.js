@@ -6,29 +6,59 @@
   //console.log('プラグイン設定取得');
 
 
-/*
+  /*
+  
+    function executeDesktopLogic() {
+      const isAuth = window.isAuthenticated(); // 同期的に true/false
+      if (!isAuth) {
+        console.error('認証されていないため、処理を実行できません。');
+        return;
+      }
+  
+      // ここで実行処理を続ける
+      console.log('desktop_実行.jsの処理を開始します。');
+  */
+  //ここから追加 パターン1
+  /*
+  // 認証状態を取得
+  const isAuthenticated = window.isAuthenticated();
 
-  function executeDesktopLogic() {
-    const isAuth = window.isAuthenticated(); // 同期的に true/false
-    if (!isAuth) {
-      console.error('認証されていないため、処理を実行できません。');
+  function registerKintoneEvents() {
+    if (!isAuthenticated) {
+      console.warn("プラグインの処理をスキップします（認証されていません）");
+      return;
+    }
+*/
+  //パターン2
+  async function getAuthenticationStatus() {
+    let authStatus = window.isAuthenticated();
+
+    // 認証処理が完了していない場合、少し待つ
+    if (authStatus === undefined || authStatus === "") {
+      console.warn("認証処理が完了していないため、待機します...");
+      await new Promise(resolve => setTimeout(resolve, 500)); // 500ms待機
+      authStatus = window.isAuthenticated(); // 再取得
+    }
+
+    return !!authStatus; // `undefined`, `""`, `null` を `false` に変換
+  }
+
+  /**
+  * 認証済みの場合にのみ、Kintoneイベントを登録
+  */
+  async function registerKintoneEvents() {
+    const isAuthenticated = await getAuthenticationStatus();
+
+    if (!isAuthenticated) {
+      console.warn("プラグインの処理をスキップします（認証されていません）");
       return;
     }
 
-    // ここで実行処理を続ける
-    console.log('desktop_実行.jsの処理を開始します。');
-*/
-//ここから追加
-    // 認証状態を取得
-    const isAuthenticated = window.isAuthenticated(); 
 
-    function registerKintoneEvents() {
-      if (!isAuthenticated) {
-          console.warn("プラグインの処理をスキップします（認証されていません）");
-          return;
-      }
-//ここまで追加
-      
+
+
+    //ここまで追加
+
     //更新元アプリの設定
     const tableFieldCode = config.tableFieldCode;
     const baseUrl = location.origin;
@@ -412,14 +442,14 @@
     });
 
 
-/*
+    /*
+      }
+      window.executeDesktopLogic = executeDesktopLogic;
+    */
   }
-  window.executeDesktopLogic = executeDesktopLogic;
-*/
-}
 
-// イベント登録の実行
-registerKintoneEvents();
+  // イベント登録の実行
+  registerKintoneEvents();
 
   //ここまで追加
 
