@@ -5,7 +5,9 @@
   const config = kintone.plugin.app.getConfig(PLUGIN_ID) || {};
   //console.log('プラグイン設定取得');
 
- 
+
+
+
   function executeDesktopLogic() {
     const isAuth = window.isAuthenticated(); // 同期的に true/false
     if (!isAuth) {
@@ -45,7 +47,7 @@
 
 
 
-    // 行識別子の削除
+    // 行識別子の非表示
     const eventsToShow = ['app.record.create.show', 'app.record.edit.show'];
     kintone.events.on(eventsToShow, function (event) {
       const config = kintone.plugin.app.getConfig(PLUGIN_ID) || {};
@@ -55,6 +57,15 @@
       return event;
     });
 
+    //レコード再利用時に行識別子をクリア
+    kintone.events.on('app.record.create.show', function (event) {
+      // レコードを再利用した場合（reuse === true）
+      if (event.reuse === true) {
+        console.log('レコードが再利用されました。');
+        event.record.行識別子.value = ''; //  フィールドをクリア
+      }
+      return event;
+    });
 
     // 削除時処理の共通ロジック
     async function deleteRecordsByIdentifiers(identifiers, targetUrl, targetAppId, apiToken) {
