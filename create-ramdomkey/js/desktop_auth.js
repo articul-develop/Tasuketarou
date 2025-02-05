@@ -50,7 +50,9 @@
   // 認証チェック関数
   async function initializeAuthentication() {
     const authResult = await checkAndReauthenticate();
-    isAuthenticated = authResult.success;
+    if (authResult !== undefined) {
+      isAuthenticated = authResult.success; // `undefined` の場合は `isAuthenticated` を確定しない
+  }
   }
 
 
