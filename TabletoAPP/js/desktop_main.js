@@ -6,30 +6,6 @@
   //console.log('プラグイン設定取得');
 
 
-  /*
-  
-    function executeDesktopLogic() {
-      const isAuth = window.isAuthenticated(); // 同期的に true/false
-      if (!isAuth) {
-        console.error('認証されていないため、処理を実行できません。');
-        return;
-      }
-  
-      // ここで実行処理を続ける
-      console.log('desktop_実行.jsの処理を開始します。');
-  */
-  //ここから追加 パターン1
-  /*
-  // 認証状態を取得
-  const isAuthenticated = window.isAuthenticated();
-
-  function registerKintoneEvents() {
-    if (!isAuthenticated) {
-      console.warn("プラグインの処理をスキップします（認証されていません）");
-      return;
-    }
-*/
-  //パターン2
   async function getAuthenticationStatus() {
     let authStatus = window.isAuthenticated();
 
@@ -39,13 +15,12 @@
       await new Promise(resolve => setTimeout(resolve, 500)); // 500ms待機
       authStatus = window.isAuthenticated(); // 再取得
     }
-
     return !!authStatus; // `undefined`, `""`, `null` を `false` に変換
   }
 
-  /**
-  * 認証済みの場合にのみ、Kintoneイベントを登録
-  */
+ 
+//認証済みの場合にのみ、Kintoneイベントを登録
+ 
   async function registerKintoneEvents() {
     const isAuthenticated = await getAuthenticationStatus();
 
@@ -103,8 +78,10 @@
         console.log('レコードが再利用されました。');
         console.log('ROW_IDENTIFIER_FIELD:', ROW_IDENTIFIER_FIELD);
         console.log('event.record:', event.record);
-        
-        event.record[ROW_IDENTIFIER_FIELD].value = ''; //  フィールドをクリア
+        event.record[TABLE_FIELD_CODE].value.forEach(row => {
+          row.value[ROW_IDENTIFIER_FIELD].value = ''; //  フィールドをクリア
+        }
+        );
       }
       return event;
     });
@@ -444,10 +421,6 @@
     });
 
 
-    /*
-      }
-      window.executeDesktopLogic = executeDesktopLogic;
-    */
   }
 
   // イベント登録の実行
