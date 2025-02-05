@@ -92,7 +92,7 @@
     kintone.events.on(eventsToShow, function (event) {
       const config = kintone.plugin.app.getConfig(PLUGIN_ID) || {};
       if (config.hideKeyField) {
-        kintone.app.record.setFieldShown('行識別子', false);
+        kintone.app.record.setFieldShown(ROW_IDENTIFIER_FIELD, false);
       }
       return event;
     });
@@ -102,7 +102,7 @@
       // レコードを再利用した場合（reuse === true）
       if (event.reuse === true) {
         console.log('レコードが再利用されました。');
-        event.record.行識別子.value = ''; //  フィールドをクリア
+        event.record.ROW_IDENTIFIER_FIELD.value = ''; //  フィールドをクリア
       }
       return event;
     });
