@@ -111,6 +111,18 @@
 
 
 
+    // 認証状態を保持するフラグ
+    let isAuthenticated = false;
+
+    // 認証チェック関数
+    async function initializeAuthentication() {
+        const authResult = await checkAndReauthenticate();
+        if (authResult !== undefined) {
+            isAuthenticated = authResult.success; // `undefined` の場合は `isAuthenticated` を確定しない
+        }
+    }
+
+
     // 認証チェック関数
     async function checkAndReauthenticate() {
         const errorMessages = [];
@@ -159,6 +171,7 @@
         return { success: false, errors: errorMessages }; // 認証失敗
     }
 
+
     //ここまで共通処理
 
 
@@ -198,9 +211,9 @@
 
         //エラー時処理
         (async () => {
-            await checkAndReauthenticate();
-            if (errorMessages.length > 0) {
+            await initializeAuthentication();
 
+            if (!isAuthenticated) {
                 // ボタンを無効化
                 const button = document.getElementById('bulk-delete-button');
                 if (button) {
