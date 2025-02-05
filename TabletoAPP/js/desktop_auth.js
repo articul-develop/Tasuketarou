@@ -18,7 +18,6 @@
   const trialEndDateStr = config.Trial_enddate || ''; // お試し期限日
   const authStatus = config.authStatus || ''; // 認証ステータス
 
-
   //お試し期限の表示
   kintone.events.on(['app.record.create.show', 'app.record.edit.show'], function (event) {
     if (config.Trial_enddate) {
@@ -48,7 +47,7 @@
   // 認証チェック関数
   async function initializeAuthentication() {
     const authResult = await checkAndReauthenticate();
-    isAuthenticated = authResult.success;
+    isAuthenticated = authResult?.success ?? false;  // authResultがundefinedの可能性も考慮
   }
 
 

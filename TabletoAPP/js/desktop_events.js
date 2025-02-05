@@ -9,7 +9,6 @@
     // 認証状態をチェック
     if (!isAuthenticated) {
       event.error = '認証に失敗しているため、処理を実行できません。';
-      console.error('認証に失敗しているため、イベントを中断します。');
       return event;
     }
 
