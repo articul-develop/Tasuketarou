@@ -78,7 +78,7 @@
         console.log('レコードが再利用されました。');
         console.log('ROW_IDENTIFIER_FIELD:', ROW_IDENTIFIER_FIELD);
         console.log('event.record:', event.record);
-        event.record[TABLE_FIELD_CODE].value.forEach(row => {
+        event.record[tableFieldCode].value.forEach(row => {
           row.value[ROW_IDENTIFIER_FIELD].value = ''; //  フィールドをクリア
         }
         );
