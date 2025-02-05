@@ -97,7 +97,7 @@
       errorMessages.push('認証中にエラーが発生しました。');
     }
 
-    console.error(errorMessages.join('\n'));
+    alert(errorMessages.join('\n')); // メッセージを改行で結合
     return { success: false, errors: errorMessages }; // 認証失敗
   }
 
