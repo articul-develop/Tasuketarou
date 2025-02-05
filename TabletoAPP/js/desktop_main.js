@@ -101,6 +101,9 @@
       // レコードを再利用した場合（reuse === true）
       if (event.reuse === true) {
         console.log('レコードが再利用されました。');
+        console.log('ROW_IDENTIFIER_FIELD:', ROW_IDENTIFIER_FIELD);
+        console.log('event.record:', event.record);
+        
         event.record[ROW_IDENTIFIER_FIELD].value = ''; //  フィールドをクリア
       }
       return event;
