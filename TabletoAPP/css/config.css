@@ -23,3 +23,7 @@ h2 {
   text-align: left;      /* 枠内のテキストを左揃え */
 }
 
+.kintoneplugin-highlight {
+  color: #0073e6; /* 青色に設定 */
+  font-weight: bold; /* 文字を太字に */
+}
