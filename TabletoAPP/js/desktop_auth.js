@@ -111,8 +111,4 @@
 
 
 
-
-
-
-
 })(kintone.$PLUGIN_ID);

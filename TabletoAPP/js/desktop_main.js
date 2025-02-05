@@ -6,7 +6,7 @@
   //console.log('プラグイン設定取得');
 
 
-
+/*
 
   function executeDesktopLogic() {
     const isAuth = window.isAuthenticated(); // 同期的に true/false
@@ -17,8 +17,18 @@
 
     // ここで実行処理を続ける
     console.log('desktop_実行.jsの処理を開始します。');
+*/
+//ここから追加
+    // 認証状態を取得
+    const isAuthenticated = window.isAuthenticated(); 
 
-
+    function registerKintoneEvents() {
+      if (!isAuthenticated) {
+          console.warn("プラグインの処理をスキップします（認証されていません）");
+          return;
+      }
+//ここまで追加
+      
     //更新元アプリの設定
     const tableFieldCode = config.tableFieldCode;
     const baseUrl = location.origin;
@@ -402,10 +412,16 @@
     });
 
 
-
+/*
   }
   window.executeDesktopLogic = executeDesktopLogic;
+*/
+}
 
+// イベント登録の実行
+registerKintoneEvents();
+
+  //ここまで追加
 
 })(kintone.$PLUGIN_ID);
 
