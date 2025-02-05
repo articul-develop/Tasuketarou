@@ -60,7 +60,7 @@
       ROW_VARIABLES.push(config[`ROW_VARIABLE_${i}`] || '');
     }
 
-/*
+
     // 行識別子の非表示
     const eventsToShow = ['app.record.create.show', 'app.record.edit.show'];
     kintone.events.on(eventsToShow, function (event) {
@@ -70,16 +70,13 @@
       }
       return event;
     });
-*/
+
     //レコード再利用時に行識別子をクリア
     kintone.events.on('app.record.create.show', function (event) {
       // レコードを再利用した場合（reuse === true）
       if (event.reuse === true) {
-        console.log('レコードが再利用されました。');
-        console.log('ROW_IDENTIFIER_FIELD:', ROW_IDENTIFIER_FIELD);
-        console.log('event.record:', event.record);
         event.record[tableFieldCode].value.forEach(row => {
-          row.value[ROW_IDENTIFIER_FIELD].value = ''; //  フィールドをクリア
+          row.value[ROW_IDENTIFIER_FIELD].value = ''; 
         }
         );
       }
