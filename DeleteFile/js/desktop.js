@@ -1,15 +1,6 @@
 (function (PLUGIN_ID) {
     'use strict';
 
-    // プラグインの設定情報を取得する
-    const config = kintone.plugin.app.getConfig(PLUGIN_ID) || {};
-
-    // 設定情報がなければ処理を終了する
-    if (Object.keys(config).length === 0) {
-        return;
-    }
-    // エラーメッセージを格納する変数
-    let errorMessages = [];
 
     // 今日の日付をyyyymmdd形式に変換
     const today = new Date();
@@ -17,56 +8,83 @@
         (today.getMonth() + 1).toString().padStart(2, '0') +
         today.getDate().toString().padStart(2, '0');
 
-
-    // 認証ステータスを確認
-    const authStatus = config.authStatus || '';
-    if (authStatus !== 'valid') {
-        errorMessages.push('認証ステータスが無効です。');
-    }
-
-
-    // Trial_enddateの確認
-    if (config.Trial_enddate) {
-        const trialEndDateStr = config.Trial_enddate; // yyyymmdd形式の文字列
-
-        // Trial_enddateが今日以前の場合（期限切れ）
-        if (trialEndDateStr < todayStr) {
-            errorMessages.push('お試し期間が終了しています。');
-        }
-    }
-
-
-    //最終認証日を取得
+    // LocalStorageから認証日を取得
     const storageKey = `PLUGIN_${kintone.$PLUGIN_ID}_config`;
     const storageconfig = JSON.parse(localStorage.getItem(storageKey)) || {};
-    const AuthDate = storageconfig.lastAuthDate || '';
-    //const AuthDate = '20250101' //TEST用
+    const lastAuthDate = storageconfig.lastAuthDate || ''; // 最終認証日
+    //const lastAuthDate = '20250127'
 
-    async function checkAndReauthenticate() {
-
-        if (!AuthDate || AuthDate < todayStr) {
-            try {
-                const data = await AuthModule.authenticateDomain(API_CONFIG);
-                if (data.status !== 'success' || !data.response || data.response.status !== 'valid') {
-                    const message = data.response?.message || '不明なエラー';
-                    console.error(`認証失敗: ${message}`);
-                    errorMessages.push(`認証エラー: ${message}`);
-                }
-                localStorage.setItem(storageKey, JSON.stringify({ lastAuthDate: todayStr }));
-                //console.log('認証成功: 日付を更新しました');
-            } catch (error) {
-                console.error('API認証中にエラーが発生しました:', error);
-                errorMessages.push('認証中にエラーが発生しました。');
-            }
-        } else {
-            console.log('最終認証日は有効です。再認証は不要です。');
+    // プラグインの設定情報を取得
+    const config = kintone.plugin.app.getConfig(PLUGIN_ID) || {};
+    const trialEndDateStr = config.Trial_enddate || ''; // お試し期限日
+    const authStatus = config.authStatus || ''; // 認証ステータス
+    /*
+        // プラグインの設定情報を取得する
+        const config = kintone.plugin.app.getConfig(PLUGIN_ID) || {};
+    
+        // 設定情報がなければ処理を終了する
+        if (Object.keys(config).length === 0) {
+            return;
         }
-    }
+        // エラーメッセージを格納する変数
+        let errorMessages = [];
+    
+        // 今日の日付をyyyymmdd形式に変換
+        const today = new Date();
+        const todayStr = today.getFullYear().toString() +
+            (today.getMonth() + 1).toString().padStart(2, '0') +
+            today.getDate().toString().padStart(2, '0');
+    
+    
+        // 認証ステータスを確認
+        const authStatus = config.authStatus || '';
+        if (authStatus !== 'valid') {
+            errorMessages.push('認証ステータスが無効です。');
+        }
+    
+    
+        // Trial_enddateの確認
+        if (config.Trial_enddate) {
+            const trialEndDateStr = config.Trial_enddate; // yyyymmdd形式の文字列
+    
+            // Trial_enddateが今日以前の場合（期限切れ）
+            if (trialEndDateStr < todayStr) {
+                errorMessages.push('お試し期間が終了しています。');
+            }
+        }
+    
+    
+        //最終認証日を取得
+        const storageKey = `PLUGIN_${kintone.$PLUGIN_ID}_config`;
+        const storageconfig = JSON.parse(localStorage.getItem(storageKey)) || {};
+        const AuthDate = storageconfig.lastAuthDate || '';
+        //const AuthDate = '20250101' //TEST用
+    
+        async function checkAndReauthenticate() {
+    
+            if (!AuthDate || AuthDate < todayStr) {
+                try {
+                    const data = await AuthModule.authenticateDomain(API_CONFIG);
+                    if (data.status !== 'success' || !data.response || data.response.status !== 'valid') {
+                        const message = data.response?.message || '不明なエラー';
+                        console.error(`認証失敗: ${message}`);
+                        errorMessages.push(`認証エラー: ${message}`);
+                    }
+                    localStorage.setItem(storageKey, JSON.stringify({ lastAuthDate: todayStr }));
+                    //console.log('認証成功: 日付を更新しました');
+                } catch (error) {
+                    console.error('API認証中にエラーが発生しました:', error);
+                    errorMessages.push('認証中にエラーが発生しました。');
+                }
+            } else {
+                console.log('最終認証日は有効です。再認証は不要です。');
+            }
+        }
+    */
 
 
 
-
-    // 対象のイベントで実行
+    //お試し期限の表示
     kintone.events.on('app.record.index.show', function (event) {
         // Trial_enddateがブランクではなく、期限内の場合にのみメッセージを表示
         if (config.Trial_enddate) {
@@ -90,6 +108,56 @@
         }
         return event;
     });
+
+
+
+    // 認証チェック関数
+    async function checkAndReauthenticate() {
+        const errorMessages = [];
+
+        // 設定情報がない場合
+        if (Object.keys(config).length === 0) {
+            errorMessages.push('プラグイン設定が取得できませんでした。');
+            return { success: false, errors: errorMessages };
+        }
+
+        // 認証ステータスが無効
+        if (authStatus !== 'valid') {
+            errorMessages.push('プラグイン認証ステータスが無効です。');
+            return { success: false, errors: errorMessages };
+        }
+
+        // お試し期間が終了している
+        if (trialEndDateStr && trialEndDateStr < todayStr) {
+            errorMessages.push('プラグインお試し期間が終了しています。');
+            return { success: false, errors: errorMessages };
+        }
+
+        // AuthDateが今日以降かどうかを確認
+        if (lastAuthDate && lastAuthDate >= todayStr) {
+            console.log('認証済みです。');
+            return { success: true }; // 認証済み
+        }
+
+        // ここまで来た場合は認証が必要
+        console.log('認証処理を開始します...');
+        try {
+            const response = await AuthModule.authenticateDomain(API_CONFIG);
+            if (response.status === 'success' && response.response?.status === 'valid') {
+                // 認証成功 → 認証日を更新
+                localStorage.setItem(storageKey, JSON.stringify({ lastAuthDate: todayStr }));
+                console.log('認証成功');
+                return { success: true };
+            } else {
+                errorMessages.push('認証エラー: ' + (response.response?.message || '不明なエラー'));
+            }
+        } catch (error) {
+            errorMessages.push('認証中にエラーが発生しました。');
+        }
+
+        alert(errorMessages.join('\n')); // メッセージを改行で結合
+        return { success: false, errors: errorMessages }; // 認証失敗
+    }
 
     //ここまで共通処理
 
@@ -132,8 +200,6 @@
         (async () => {
             await checkAndReauthenticate();
             if (errorMessages.length > 0) {
-                const headerSpace = kintone.app.getHeaderMenuSpaceElement();
-                alert(errorMessages.join('\n')); // メッセージを改行で結合
 
                 // ボタンを無効化
                 const button = document.getElementById('bulk-delete-button');
