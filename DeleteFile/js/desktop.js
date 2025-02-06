@@ -101,9 +101,10 @@
         } catch (error) {
             errorMessages.push('認証中にエラーが発生しました。');
         }
-
+        await AuthModule.sendErrorLog('実行前認証', errorMessages.join('\n'));
         alert(errorMessages.join('\n')); // メッセージを改行で結合
         return { success: false, errors: errorMessages }; // 認証失敗
+
     }
 
 
@@ -210,7 +211,6 @@
                 }
 
                 alert('添付ファイルを削除しました。ページをリロードしてください。');
-                await AuthModule.sendErrorLog('bulk-delete-button', '成功');
             } catch (error) {
                 console.error(error);
                 const errorMessage = error?.message || 'エラー内容が取得できませんでした。';
