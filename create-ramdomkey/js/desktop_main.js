@@ -52,10 +52,14 @@
       if (isNaN(digitLength) || digitLength <= 0) {
         digitLength = 10; // デフォルト値: 10
       }
+      if (isNaN(digitLength) || digitLength <= 0) {
+        alert('エラー: digitLength の値が無効です。');
+        throw new Error('digitLength の値が無効です');
+      }
 
       // 設定されたフィールドコードが存在するか確認
       if (!targetField || !event.record[targetField]) {
-        console.error(`指定されたフィールドコード "${targetField}"が存在しません。`);
+        alert(`指定されたフィールドコード "${targetField}"が存在しません。`);
         return event; // エラーでも処理を続行
       }
 
