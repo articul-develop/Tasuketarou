@@ -119,7 +119,8 @@
           if (!deleteRequest.ok) {
             const errorData = await deleteRequest.json();
             console.error('削除リクエストエラー:', errorData);
-            alert(`削除リクエストエラー\n${errorData.message}`);
+            const errorMessage = errorData?.message || errorData?.errors?.[0]?.message || 'エラー内容が取得できませんでした。';
+            alert(`削除リクエストエラー\n${errorMessage}`);
           }
         }
       } catch (error) {
@@ -279,9 +280,7 @@
         if (!response.ok) {
           const errorData = await response.json();
           console.error('更新先アプリのレコード取得エラー:', errorData);
-          // エラーメッセージを適切に取得
           const errorMessage = errorData?.message || errorData?.errors?.[0]?.message || 'エラー内容が取得できませんでした。';
-
           // アラートで表示
           alert(`更新先アプリからレコードを取得できませんでした。\n${errorMessage}`);
 
@@ -355,7 +354,8 @@
           if (!updateResponse.ok) {
             const errorData = await updateResponse.json();
             console.error('更新先アプリの更新エラー:', errorData);
-            alert(`更新先アプリへの更新に失敗しました。\n${errorData.message}`);
+            const errorMessage = errorData?.message || errorData?.errors?.[0]?.message || 'エラー内容が取得できませんでした。';
+            alert(`更新先アプリへの更新に失敗しました。\n${errorMessage}`);
           }
         } catch (error) {
           const errorMessage = error?.message;
@@ -381,7 +381,8 @@
           if (!createResponse.ok) {
             const errorData = await createResponse.json();
             console.error('更新先アプリの新規登録エラー:', errorData);
-            alert(`更新先アプリへの新規登録に失敗しました。\n${errorData.message}`);
+            const errorMessage = errorData?.message || errorData?.errors?.[0]?.message || 'エラー内容が取得できませんでした。';
+            alert(`更新先アプリへの新規登録に失敗しました。\n${errorMessage}`);
           }
         } catch (error) {
           const errorMessage = error?.message;
