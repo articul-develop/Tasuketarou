@@ -336,7 +336,8 @@
           app: targetAppId,
           records: recordsToUpdate.map(record => ({
             id: record.id,
-            revision: record.revision || -1, // 最新リビジョンを使うか明示的に指定されたものを使用
+            //revision: record.revision || -1, // 最新リビジョンを使うか明示的に指定されたものを使用
+            revision: -1,
             record: record.record,
           })),
         };
