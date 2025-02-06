@@ -279,7 +279,8 @@
         if (!response.ok) {
           const errorData = await response.json();
           console.error('更新先アプリのレコード取得エラー:', errorData);
-          alert('更新先アプリからレコードを取得できませんでした。\n${errorData.message}');
+          const errorMessage = error?.message || 'エラー内容が取得できませんでした。';
+          alert('更新先アプリからレコードを取得できませんでした。\n${errormessage}');
 
           return event;
         }
