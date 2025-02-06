@@ -150,7 +150,7 @@
     const saveEvents = [
       'app.record.create.submit.success',
       'app.record.edit.submit.success',
-      'app.record.index.edit.submit'
+      'app.record.index.edit.submit.success'
     ];
 
     kintone.events.on(saveEvents, async function (event) {
@@ -231,9 +231,9 @@
 
       try {
         // 自アプリの更新
-        console.log(`[DEBUG] レコード更新開始: recordId=${recordNumber}`);
+        console.log(`[DEBUG] 自アプリ更新キーのレコード更新開始: recordId=${recordNumber}`);
         await kintone.api(kintone.api.url('/k/v1/record', true), 'PUT', updatePayload);
-        console.log(`[DEBUG] レコード更新成功: recordId=${recordNumber}`);
+        console.log(`[DEBUG] 自アプリ更新キーのレコード更新成功: recordId=${recordNumber}`);
       } catch (error) {
         const errorMessage = error?.message;
         console.error(`[ERROR] レコード更新失敗: recordId=${recordNumber}, エラー=${error?.message}`);
