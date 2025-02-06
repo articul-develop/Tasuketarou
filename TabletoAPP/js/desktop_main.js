@@ -119,8 +119,7 @@
           if (!deleteRequest.ok) {
             const errorData = await deleteRequest.json();
             console.error('削除リクエストエラー:', errorData);
-            const errorMessage = error?.message || '削除処理中に予期しないエラーが発生しました。';
-            alert(`削除リクエストエラー\n${errorMessage}`);
+            alert(`削除リクエストエラー\n${errorData.message}`);
           }
         }
       } catch (error) {
@@ -280,7 +279,7 @@
         if (!response.ok) {
           const errorData = await response.json();
           console.error('更新先アプリのレコード取得エラー:', errorData);
-          alert('更新先アプリからレコードを取得できませんでした。');
+          alert('更新先アプリからレコードを取得できませんでした。\n${errorData.message}');
 
           return event;
         }
