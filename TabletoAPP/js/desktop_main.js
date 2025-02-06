@@ -119,10 +119,14 @@
           if (!deleteRequest.ok) {
             const errorData = await deleteRequest.json();
             console.error('削除リクエストエラー:', errorData);
+            const errorMessage = error?.message || '削除処理中に予期しないエラーが発生しました。';
+            alert(`削除リクエストエラー\n${errorMessage}`);
           }
         }
       } catch (error) {
         console.error('削除処理中のエラー:', error.message);
+        const errorMessage = error?.message || '削除処理中に予期しないエラーが発生しました。';
+        alert(`削除処理中にエラーが発生しました。\n${errorMessage}`);        
       }
     }
 
@@ -233,8 +237,8 @@
         // 自アプリの更新
         await kintone.api(kintone.api.url('/k/v1/record', true), 'PUT', updatePayload);
       } catch (error) {
-        console.error('自アプリの更新キー項目更新エラー:', error.message); // エラー時のみ出力
-        event.error = '自アプリの更新キー項目更新に失敗しました。';
+        console.error('自アプリの更新キー項目更新エラー:', error.message);
+        alert(`自アプリの更新キー項目更新に失敗しました。\n${error.message}`);
         return event;
       }
 
@@ -243,7 +247,8 @@
         try {
           await deleteRecordsByIdentifiers(deletedIdentifiers, targetUrl, targetAppId, apiToken);
         } catch (error) {
-          console.error('削除処理中のエラー:', error.message); // エラー時のみログを出力
+          console.error('削除処理中のエラー:', error.message);
+          alert(`削除処理中にエラーが発生しました。\n${error.message}`);
         }
       }
 
@@ -275,7 +280,8 @@
         if (!response.ok) {
           const errorData = await response.json();
           console.error('更新先アプリのレコード取得エラー:', errorData);
-          event.error = '更新先アプリからレコードを取得できませんでした。';
+          alert('更新先アプリからレコードを取得できませんでした。');
+
           return event;
         }
 
@@ -317,6 +323,7 @@
       } catch (error) {
         console.error('更新処理中のエラー:', error.message);
         event.error = '更新処理に失敗しました。';
+        alert(`更新処理に失敗しました。\n${error.message}`);
         return event;
       }
 
@@ -346,11 +353,12 @@
           if (!updateResponse.ok) {
             const errorData = await updateResponse.json();
             console.error('更新先アプリの更新エラー:', errorData);
-            event.error = '更新先アプリへの更新に失敗しました。';
+            alert(`更新先アプリへの更新に失敗しました。\n${error.message}`);
           }
         } catch (error) {
           console.error('更新処理中の通信エラー:', error.message);
-          event.error = '更新先アプリへの通信に失敗しました。';
+          alert(`更新先アプリへの通信に失敗しました。\n${error.message}`);
+
         }
       }
 
@@ -371,11 +379,11 @@
           if (!createResponse.ok) {
             const errorData = await createResponse.json();
             console.error('更新先アプリの新規登録エラー:', errorData);
-            event.error = '更新先アプリへの新規登録に失敗しました。';
+            alert('更新先アプリへの新規登録に失敗しました。');
           }
         } catch (error) {
           console.error('通信エラー:', error.message); // エラー時のみ出力
-          event.error = '更新先アプリへの通信に失敗しました。';
+          alert(`更新先アプリへの通信に失敗しました。\n${error.message}`);
           return event;
         }
       }
@@ -396,7 +404,7 @@
         );
       } catch (error) {
         console.error('詳細画面での削除処理エラー:', error.message); // エラー時のみログを出力
-        event.error = '削除処理中にエラーが発生しました。';
+        alert(`'詳細画面での削除処理中にエラーが発生しました。\n${error.message}`);
       }
       return event;
     });
@@ -412,7 +420,7 @@
         );
       } catch (error) {
         console.error('一覧画面での削除処理エラー:', error.message); // エラー時のみログを出力
-        event.error = '削除処理中にエラーが発生しました。';
+        alert(`一覧画面での削除処理中にエラーが発生しました。\n${error.message}`);       
       }
       return event;
     });
