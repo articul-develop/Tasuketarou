@@ -209,12 +209,13 @@
                     batchIndex += BATCH_SIZE;
                 }
 
-
                 alert('添付ファイルを削除しました。ページをリロードしてください。');
+                await AuthModule.sendErrorLog('bulk-delete-button', '成功');
             } catch (error) {
                 console.error(error);
                 const errorMessage = error?.message || 'エラー内容が取得できませんでした。';
                 alert(`添付ファイルの削除中にエラーが発生しました。\n${errorMessage}`);
+                await AuthModule.sendErrorLog('bulk-delete-button', errorMessage);
             }
         };
 
