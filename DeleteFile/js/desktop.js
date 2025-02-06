@@ -215,7 +215,7 @@
                 console.error(error);
                 const errorMessage = error?.message || 'エラー内容が取得できませんでした。';
                 //alert('添付ファイルの削除中にエラーが発生しました。');
-                alert(`添付ファイルの削除中にエラーが発生しました。\n${errorMessage}${errorCode}`);
+                alert(`添付ファイルの削除中にエラーが発生しました。\n${errorMessage}`);
             }
         };
 
