@@ -231,12 +231,9 @@
 
       try {
         // 自アプリの更新
-        console.log(`[DEBUG] 自アプリ更新キーのレコード更新開始: recordId=${recordNumber}`);
         await kintone.api(kintone.api.url('/k/v1/record', true), 'PUT', updatePayload);
-        console.log(`[DEBUG] 自アプリ更新キーのレコード更新成功: recordId=${recordNumber}`);
       } catch (error) {
         const errorMessage = error?.message;
-        console.error(`[ERROR] レコード更新失敗: recordId=${recordNumber}, エラー=${error?.message}`);
         alert(`プラグインエラー：当アプリの更新キー項目の更新に失敗しました。\n${errorMessage}`);
         return event;
       }
@@ -341,7 +338,6 @@
         };
 
         try {
-          console.log(`[DEBUG] 更新先アプリのレコード更新開始: recordId=${recordNumber}`);
           const updateResponse = await fetch(targetUrl, {
             method: 'PUT',
             headers: {
@@ -357,15 +353,10 @@
             const errorMessage = errorData?.message || errorData?.errors?.[0]?.message || 'エラー内容が取得できませんでした。';
             alert(`プラグインエラー：更新先アプリへの更新に失敗しました。\n${errorMessage}`);
           }
-          else {
-            console.log(`[DEBUG] 更新先アプリのレコード更新成功: recordId=${recordNumber}`);
-          }
 
         } catch (error) {
           const errorMessage = error?.message;
-          console.error(`[ERROR] 更新先アプリのレコード更新失敗: recordId=${recordNumber}, エラー=${error?.message}`);
           alert(`プラグインエラー：更新先アプリへの通信に失敗しました。\n${errorMessage}`);
-
         }
       }
 
