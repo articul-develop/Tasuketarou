@@ -154,7 +154,8 @@
     //保存時処理
     const saveEvents = [
       'app.record.create.submit.success',
-      'app.record.edit.submit.success'
+      'app.record.edit.submit.success',
+      'app.record.index.edit.submit' 
     ];
 
     kintone.events.on(saveEvents, async function (event) {
