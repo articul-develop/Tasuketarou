@@ -213,7 +213,9 @@
                 alert('添付ファイルを削除しました。ページをリロードしてください。');
             } catch (error) {
                 console.error(error);
-                alert('添付ファイルの削除中にエラーが発生しました。');
+                const errorMessage = error?.message || 'エラー内容が取得できませんでした。';
+                //alert('添付ファイルの削除中にエラーが発生しました。');
+                alert(`添付ファイルの削除中にエラーが発生しました。\n${errorMessage}${errorCode}`);
             }
         };
 
