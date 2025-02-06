@@ -237,8 +237,8 @@
         // 自アプリの更新
         await kintone.api(kintone.api.url('/k/v1/record', true), 'PUT', updatePayload);
       } catch (error) {
-        console.error('自アプリの更新キー項目更新エラー:', error.message);
-        alert(`自アプリの更新キー項目更新に失敗しました。\n${error.message}`);
+        const errorMessage = error?.message;       
+        alert(`当アプリの更新キー項目の更新に失敗しました。\n${errormessage}`);
         return event;
       }
 
@@ -247,8 +247,8 @@
         try {
           await deleteRecordsByIdentifiers(deletedIdentifiers, targetUrl, targetAppId, apiToken);
         } catch (error) {
-          console.error('削除処理中のエラー:', error.message);
-          alert(`削除処理中にエラーが発生しました。\n${error.message}`);
+          const errorMessage = error?.message;  
+          alert(`削除処理中にエラーが発生しました。\n${errormessage}`);
         }
       }
 
@@ -280,7 +280,6 @@
         if (!response.ok) {
           const errorData = await response.json();
           console.error('更新先アプリのレコード取得エラー:', errorData);
-
           alert('更新先アプリからレコードを取得できませんでした。');
 
           return event;
@@ -322,9 +321,8 @@
         }
 
       } catch (error) {
-        console.error('更新処理中のエラー:', error.message);
-        event.error = '更新処理に失敗しました。';
-        alert(`更新処理に失敗しました。\n${error.message}`);
+        const errorMessage = error?.message; 
+        alert(`更新処理に失敗しました。\n${errormessage}`);
         return event;
       }
 
@@ -354,10 +352,11 @@
           if (!updateResponse.ok) {
             const errorData = await updateResponse.json();
             console.error('更新先アプリの更新エラー:', errorData);
-            alert(`更新先アプリへの更新に失敗しました。\n${error.message}`);
+            alert(`更新先アプリへの更新に失敗しました。\n${errorData.message}`);
           }
         } catch (error) {
-          alert(`更新先アプリへの通信に失敗しました。\n${error.message}`);
+          const errorMessage = error?.message; 
+          alert(`更新先アプリへの通信に失敗しました。\n${errormessage}`);
 
         }
       }
@@ -379,10 +378,11 @@
           if (!createResponse.ok) {
             const errorData = await createResponse.json();
             console.error('更新先アプリの新規登録エラー:', errorData);
-            alert(`更新先アプリへの新規登録に失敗しました。\n${error.message}`);            
+            alert(`更新先アプリへの新規登録に失敗しました。\n${errorData.message}`);            
           }
         } catch (error) {
-          alert(`更新先アプリへの通信に失敗しました。\n${error.message}`);
+          const errorMessage = error?.message; 
+          alert(`更新先アプリへの通信に失敗しました。\n${errormessage}`);
           return event;
         }
       }
