@@ -280,6 +280,7 @@
         if (!response.ok) {
           const errorData = await response.json();
           console.error('更新先アプリのレコード取得エラー:', errorData);
+
           alert('更新先アプリからレコードを取得できませんでした。');
 
           return event;
@@ -356,7 +357,6 @@
             alert(`更新先アプリへの更新に失敗しました。\n${error.message}`);
           }
         } catch (error) {
-          console.error('更新処理中の通信エラー:', error.message);
           alert(`更新先アプリへの通信に失敗しました。\n${error.message}`);
 
         }
@@ -379,10 +379,9 @@
           if (!createResponse.ok) {
             const errorData = await createResponse.json();
             console.error('更新先アプリの新規登録エラー:', errorData);
-            alert('更新先アプリへの新規登録に失敗しました。');
+            alert(`更新先アプリへの新規登録に失敗しました。\n${error.message}`);            
           }
         } catch (error) {
-          console.error('通信エラー:', error.message); // エラー時のみ出力
           alert(`更新先アプリへの通信に失敗しました。\n${error.message}`);
           return event;
         }
