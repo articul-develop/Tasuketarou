@@ -3,9 +3,8 @@
 
   // プラグインの設定情報を取得する
   const config = kintone.plugin.app.getConfig(PLUGIN_ID) || {};
-  //console.log('プラグイン設定取得');
 
-
+  //認証はじめ
   async function getAuthenticationStatus() {
     let authStatus = window.isAuthenticated();
 
@@ -15,12 +14,10 @@
       await new Promise(resolve => setTimeout(resolve, 500)); // 500ms待機
       authStatus = window.isAuthenticated(); // 再取得
     }
-    return !!authStatus; // `undefined`, `""`, `null` を `false` に変換
+    return !!authStatus;
   }
 
-
   //認証済みの場合にのみ、Kintoneイベントを登録
-
   async function registerKintoneEvents() {
     const isAuthenticated = await getAuthenticationStatus();
 
@@ -29,10 +26,8 @@
       return;
     }
 
+    //認証終わり
 
-
-
-    //ここまで追加
 
     //更新元アプリの設定
     const tableFieldCode = config.tableFieldCode;
@@ -124,7 +119,7 @@
           }
         }
       } catch (error) {
-        console.error('削除処理中のエラー:', error.message);
+        console.error('削除処理中のエラー:', error?.message || 'エラー詳細不明');
         const errorMessage = error?.message || '削除処理中に予期しないエラーが発生しました。';
         alert(`プラグインエラー：削除処理中にエラーが発生しました。\n${errorMessage}`);
       }
@@ -155,7 +150,7 @@
     const saveEvents = [
       'app.record.create.submit.success',
       'app.record.edit.submit.success',
-      'app.record.index.edit.submit' 
+      'app.record.index.edit.submit'
     ];
 
     kintone.events.on(saveEvents, async function (event) {
@@ -236,10 +231,13 @@
 
       try {
         // 自アプリの更新
+        console.log(`[DEBUG] レコード更新開始: recordId=${recordNumber}`);
         await kintone.api(kintone.api.url('/k/v1/record', true), 'PUT', updatePayload);
+        console.log(`[DEBUG] レコード更新成功: recordId=${recordNumber}`);
       } catch (error) {
         const errorMessage = error?.message;
-        alert(`プラグインエラー：当アプリの更新キー項目の更新に失敗しました。\n${errormessage}`);
+        console.error(`[ERROR] レコード更新失敗: recordId=${recordNumber}, エラー=${error?.message}`);
+        alert(`プラグインエラー：当アプリの更新キー項目の更新に失敗しました。\n${errorMessage}`);
         return event;
       }
 
@@ -249,7 +247,7 @@
           await deleteRecordsByIdentifiers(deletedIdentifiers, targetUrl, targetAppId, apiToken);
         } catch (error) {
           const errorMessage = error?.message;
-          alert(`プラグインエラー：削除処理中にエラーが発生しました。\n${errormessage}`);
+          alert(`プラグインエラー：削除処理中にエラーが発生しました。\n${errorMessage}`);
         }
       }
 
@@ -324,7 +322,7 @@
 
       } catch (error) {
         const errorMessage = error?.message;
-        alert(`プラグインエラー：更新処理に失敗しました。\n${errormessage}`);
+        alert(`プラグインエラー：更新処理に失敗しました。\n${errorMessage}`);
         return event;
       }
 
@@ -343,6 +341,7 @@
         };
 
         try {
+          console.log(`[DEBUG] 更新先アプリのレコード更新開始: recordId=${recordNumber}`);
           const updateResponse = await fetch(targetUrl, {
             method: 'PUT',
             headers: {
@@ -358,9 +357,14 @@
             const errorMessage = errorData?.message || errorData?.errors?.[0]?.message || 'エラー内容が取得できませんでした。';
             alert(`プラグインエラー：更新先アプリへの更新に失敗しました。\n${errorMessage}`);
           }
+          else {
+            console.log(`[DEBUG] 更新先アプリのレコード更新成功: recordId=${recordNumber}`);
+          }
+
         } catch (error) {
           const errorMessage = error?.message;
-          alert(`プラグインエラー：更新先アプリへの通信に失敗しました。\n${errormessage}`);
+          console.error(`[ERROR] 更新先アプリのレコード更新失敗: recordId=${recordNumber}, エラー=${error?.message}`);
+          alert(`プラグインエラー：更新先アプリへの通信に失敗しました。\n${errorMessage}`);
 
         }
       }
@@ -387,7 +391,7 @@
           }
         } catch (error) {
           const errorMessage = error?.message;
-          alert(`プラグインエラー：更新先アプリへの通信に失敗しました。\n${errormessage}`);
+          alert(`プラグインエラー：更新先アプリへの通信に失敗しました。\n${errorMessage}`);
           return event;
         }
       }
@@ -408,8 +412,8 @@
         );
       } catch (error) {
         const errorMessage = error?.message;
-        console.error('詳細画面での削除処理エラー:', error.message); // エラー時のみログを出力
-        alert(`プラグインエラー：詳細画面での削除処理中にエラーが発生しました。\n${errormessage}`);
+        console.error('詳細画面での削除処理エラー:',error?.message || 'エラー詳細不明');
+        alert(`プラグインエラー：詳細画面での削除処理中にエラーが発生しました。\n${errorMessage}`);
       }
       return event;
     });
@@ -425,7 +429,7 @@
         );
       } catch (error) {
         const errorMessage = error?.message;
-        console.error('一覧画面での削除処理エラー:', error.message); // エラー時のみログを出力
+        console.error('一覧画面での削除処理エラー:', error?.message || 'エラー詳細不明');
         alert(`プラグインエラー：一覧画面での削除処理中にエラーが発生しました。\n${errormessage}`);
       }
       return event;
