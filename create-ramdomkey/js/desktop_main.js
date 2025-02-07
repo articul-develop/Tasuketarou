@@ -58,7 +58,8 @@
       }
 
       // 設定されたフィールドコードが存在するか確認
-      if (!targetField || !event.record[targetField]) {
+      if (!targetField ||  !kintone.app.record.getFieldElement(targetField)){
+
         alert(`指定されたフィールドコード "${targetField}"が存在しません。`);
         return event; // エラーでも処理を続行
       }
