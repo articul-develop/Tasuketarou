@@ -239,7 +239,7 @@
         // モバイル環境の場合
         if (kintone.mobile && kintone.mobile.app && typeof kintone.mobile.app.getId === 'function') {
           return kintone.mobile.app.getId();
-          console.log('スマホ版APPID：',kintone.mobile.app.getId());
+          console.log('スマホ版APPID',kintone.mobile.app.getId());
         }
         return null;
       }
