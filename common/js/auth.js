@@ -39,7 +39,7 @@ window.AuthModule = (function () {
           ItemKey: API_CONFIG.ItemKey,
           ErrorContext: errorContext, //エラー発生場所
           ErrorMessage: errorMessage,
-          Timestamp: new Date().toISOString()
+          Timestamp: new Date().toLocaleString()
         })
       });
 
