@@ -58,8 +58,8 @@
       }
 
       // 設定されたフィールドコードが存在するか確認
-      if (!targetField ||  !kintone.app.record.getFieldElement(targetField)){
-        const errorMessage = `指定されたフィールドコード "${targetField}" は存在しないか、または編集権限がありません。`;
+      if (!targetField || !event.record[targetField]) {
+        const errorMessage = `指定されたフィールドコード "${targetField}" が存在しません。`;
         alert(errorMessage);
         AuthModule.sendErrorLog('generateRandomKey', errorMessage);
         return event; // エラーでも処理を続行
