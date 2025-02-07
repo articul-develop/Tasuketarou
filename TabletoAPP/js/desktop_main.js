@@ -240,6 +240,14 @@
           }
         }
       };
+// 更新前にログ出力（更新対象の項目と内容）
+console.log("[DEBUG] 更新処理前：自アプリに対する updatePayload の内容は以下の通りです。");
+console.log(JSON.stringify(updatePayload, null, 2));
+
+// テーブル内の各行の詳細もログに出力（デバッグ用）
+tableRecords.forEach((row, index) => {
+  console.log(`[DEBUG] テーブル行 ${index + 1}:`, JSON.stringify(row, null, 2));
+});
 
       try {
         // 自アプリの更新
