@@ -256,6 +256,7 @@
           }
         }
       };
+      console.log('スマホ版APPID2',getAppId())
 // 更新前にログ出力（更新対象の項目と内容）
 console.log("[DEBUG] 更新処理前：自アプリに対する updatePayload の内容は以下の通りです。");
 console.log(JSON.stringify(updatePayload, null, 2));
