@@ -250,6 +250,7 @@
 
       function getAppId() {
         console.log('IDを取得します');
+        /*
         if (kintone.app && typeof kintone.app.getId === 'function') {
           console.log('デスクトップ版APPID', kintone.app.getId());
           return kintone.app.getId();
@@ -257,6 +258,13 @@
         else {
           console.log('スマホ版APPID', kintone.mobile.app.getId());
           return kintone.mobile.app.getId();
+        }
+*/
+        if (kintone.app.getId() === null) {
+          return kintone.mobile.app.getId();
+        }
+        else {
+          return kintone.app.getId();
         }
       }
 
@@ -271,7 +279,7 @@
           }
         }
       };
-      console.log('スマホ版APPID2', getAppId())
+
       // 更新前にログ出力（更新対象の項目と内容）
       console.log("[DEBUG] 更新処理前：自アプリに対する updatePayload の内容は以下の通りです。");
       console.log(JSON.stringify(updatePayload, null, 2));
