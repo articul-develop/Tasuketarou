@@ -230,7 +230,7 @@
         }
       }
 
-
+/*
       function getAppId() {
         // デスクトップ環境の場合
         if (kintone.app && typeof kintone.app.getId === 'function') {
@@ -246,6 +246,17 @@
         console.log("モバイル版環境ではありません。");
         return null;
       }
+*/
+
+function getAppId() {
+  console.log('IDを取得します');
+  if (kintone.app && typeof kintone.app.getId === 'function') {
+  return kintone.app.getId();
+console.log('デスクトップ版APPID',kintone.app.getId());
+}else
+{return kintone.mobile.app.getId();
+  console.log('スマホ版APPID',kintone.mobile.app.getId());
+  }}
 
 
       // 自アプリを更新するためのリクエスト
