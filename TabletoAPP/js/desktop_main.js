@@ -243,9 +243,7 @@
           console.log('スマホ版APPID',kintone.mobile.app.getId());
           return kintone.mobile.app.getId();
         }
-        else {
-          console.log("モバイル版環境ではありません。");
-        }
+        console.log("モバイル版環境ではありません。");
         return null;
       }
 
