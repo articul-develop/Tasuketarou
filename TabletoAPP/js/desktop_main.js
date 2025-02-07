@@ -57,7 +57,12 @@
 
 
     // 行識別子の非表示
-    const eventsToShow = ['app.record.create.show', 'app.record.edit.show'];
+    const eventsToShow = [
+      'app.record.create.show',
+      'app.record.edit.show',
+      'mobile.app.record.create.show',
+      'mobile.app.record.edit.show'
+    ];
     kintone.events.on(eventsToShow, function (event) {
       const config = kintone.plugin.app.getConfig(PLUGIN_ID) || {};
       if (config.hideKeyField) {
@@ -134,25 +139,30 @@
     let previousIdentifiers = [];
 
     // 編集画面表示時に現在のテーブル状態（更新キー項目のみ）を記録
-    kintone.events.on('app.record.edit.show', function (event) {
-      const record = event.record;
+    kintone.events.on(
+      ['app.record.edit.show',
+        'mobile.app.record.edit.show'],
+      function (event) {
+        const record = event.record;
 
-      // テーブルの更新キー項目だけを記録
-      if (record[tableFieldCode] && record[tableFieldCode].value) {
-        previousIdentifiers = record[tableFieldCode].value
-          .map(row => row.value[ROW_IDENTIFIER_FIELD].value || '');
-      } else {
-        previousIdentifiers = [];
-      }
-      return event;
-    });
+        // テーブルの更新キー項目だけを記録
+        if (record[tableFieldCode] && record[tableFieldCode].value) {
+          previousIdentifiers = record[tableFieldCode].value
+            .map(row => row.value[ROW_IDENTIFIER_FIELD].value || '');
+        } else {
+          previousIdentifiers = [];
+        }
+        return event;
+      });
     //行削除前データ取得END
 
     //保存時処理
     const saveEvents = [
       'app.record.create.submit.success',
       'app.record.edit.submit.success',
-      'app.record.index.edit.submit.success'
+      'app.record.index.edit.submit.success',
+      'mobile.app.record.create.submit.success',
+      'mobile.app.record.edit.submit.success'
     ];
 
     kintone.events.on(saveEvents, async function (event) {
@@ -403,7 +413,7 @@
 
     //5.削除
     // レコード削除時（詳細画面）
-    kintone.events.on('app.record.detail.delete.submit', async function (event) {
+    kintone.events.on(['app.record.detail.delete.submit', 'mobile.app.record.detail.delete.submit'], async function (event) {
       try {
         await deleteRecordsByIdentifiers(
           event.record[tableFieldCode]?.value.map(row => row.value[ROW_IDENTIFIER_FIELD].value || ''),
@@ -413,7 +423,7 @@
         );
       } catch (error) {
         const errorMessage = error?.message;
-        console.error('詳細画面での削除処理エラー:',error?.message || 'エラー詳細不明');
+        console.error('詳細画面での削除処理エラー:', error?.message || 'エラー詳細不明');
         alert(`プラグインエラー：詳細画面での削除処理中にエラーが発生しました。\n${errorMessage}`);
         AuthModule.sendErrorLog("詳細画面での削除処理", errorMessage);
       }
@@ -421,7 +431,7 @@
     });
 
     // レコード削除時（一覧画面）
-    kintone.events.on('app.record.index.delete.submit', async function (event) {
+    kintone.events.on(['app.record.index.delete.submit', 'mobile.app.record.index.delete.submit'], async function (event) {
       try {
         await deleteRecordsByIdentifiers(
           event.record[tableFieldCode]?.value.map(row => row.value[ROW_IDENTIFIER_FIELD].value || ''),
