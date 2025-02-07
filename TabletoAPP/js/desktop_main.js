@@ -241,9 +241,10 @@
         if (kintone.mobile && kintone.mobile.app && typeof kintone.mobile.app.getId === 'function') {
           console.log("モバイル版環境に該当します。 kintone.mobile.app.getId() は利用可能です。");
           console.log('スマホ版APPID',kintone.mobile.app.getId());
-
           return kintone.mobile.app.getId();
-
+        }
+        else {
+          console.log("モバイル版環境ではありません。");
         }
         return null;
       }
