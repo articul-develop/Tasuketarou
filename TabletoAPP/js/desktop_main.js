@@ -230,9 +230,23 @@
         }
       }
 
+
+      function getAppId() {
+        // デスクトップ環境の場合
+        if (kintone.app && typeof kintone.app.getId === 'function') {
+          return kintone.app.getId();
+        }
+        // モバイル環境の場合
+        if (kintone.mobile && kintone.mobile.app && typeof kintone.mobile.app.getId === 'function') {
+          return kintone.mobile.app.getId();
+        }
+        return null;
+      }
+
+
       // 自アプリを更新するためのリクエスト
       const updatePayload = {
-        app: kintone.app.getId(),
+        app: getAppId(),
         id: recordNumber,
         record: {
           [tableFieldCode]: {
