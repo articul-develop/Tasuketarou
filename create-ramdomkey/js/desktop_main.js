@@ -5,15 +5,15 @@
   const config = kintone.plugin.app.getConfig(PLUGIN_ID) || {};
 
   (function () {
-    // イベント: レコードが保存される直前に処理を実行
-    kintone.events.on('app.record.create.submit', function (event) {
+    // 対象イベント: 新規登録および編集登録時に処理を実行
+    kintone.events.on(['app.record.create.submit', 'app.record.edit.submit'], function (event) {
 
 
-     // 認証が成功しているか確認
-     if (!window.isAuthenticated || !window.isAuthenticated()) {
-      // 認証に失敗した場合、処理を中断
-      return ;
-    }
+      // 認証が成功しているか確認
+      if (!window.isAuthenticated || !window.isAuthenticated()) {
+        // 認証に失敗した場合、処理を中断
+        return;
+      }
 
 
       // ランダムな文字列を生成する関数
@@ -65,10 +65,11 @@
         return event; // エラーでも処理を続行
       }
 
-      // 設定した項目にランダムキーを設定
-      let randomKey = generateRandomKey(digitLength, charType);
-      event.record[targetField].value = randomKey;
-
+      // 対象フィールドがブランクの場合のみランダムキーを設定
+      if (!event.record[targetField].value) {
+        let randomKey = generateRandomKey(digitLength, charType);
+        event.record[targetField].value = randomKey;
+      }
       return event;
     });
   })();
