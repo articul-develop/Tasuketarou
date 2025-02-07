@@ -169,6 +169,10 @@
             }
 
             try {
+
+                // テスト用に強制的なエラーを発生させる
+                throw new Error('テスト用のエラーです');
+
                 const records = event.records;
                 if (records.length === 0) {
                     alert('削除対象のレコードがありません。');
