@@ -235,6 +235,7 @@
         // デスクトップ環境の場合
         if (kintone.app && typeof kintone.app.getId === 'function') {
           return kintone.app.getId();
+          console.log('デスクトップ版APPID',kintone.app.getId());
         }
         // モバイル環境の場合
         if (kintone.mobile && kintone.mobile.app && typeof kintone.mobile.app.getId === 'function') {
