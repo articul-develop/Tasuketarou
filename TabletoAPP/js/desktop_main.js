@@ -230,36 +230,9 @@
         }
       }
 
-      /*
-            function getAppId() {
-              // デスクトップ環境の場合
-              if (kintone.app && typeof kintone.app.getId === 'function') {
-                return kintone.app.getId();
-                console.log('デスクトップ版APPID',kintone.app.getId());
-              }
-              // モバイル環境の場合
-              if (kintone.mobile && kintone.mobile.app && typeof kintone.mobile.app.getId === 'function') {
-                console.log("モバイル版環境に該当します。 kintone.mobile.app.getId() は利用可能です。");
-                console.log('スマホ版APPID',kintone.mobile.app.getId());
-                return kintone.mobile.app.getId();
-              }
-              console.log("モバイル版環境ではありません。");
-              return null;
-            }
-      */
 
       function getAppId() {
-        console.log('IDを取得します');
-        /*
-        if (kintone.app && typeof kintone.app.getId === 'function') {
-          console.log('デスクトップ版APPID', kintone.app.getId());
-          return kintone.app.getId();
-        }
-        else {
-          console.log('スマホ版APPID', kintone.mobile.app.getId());
-          return kintone.mobile.app.getId();
-        }
-*/
+
         if (kintone.app.getId() === null) {
           return kintone.mobile.app.getId();
         }
@@ -280,14 +253,6 @@
         }
       };
 
-      // 更新前にログ出力（更新対象の項目と内容）
-      console.log("[DEBUG] 更新処理前：自アプリに対する updatePayload の内容は以下の通りです。");
-      console.log(JSON.stringify(updatePayload, null, 2));
-
-      // テーブル内の各行の詳細もログに出力（デバッグ用）
-      tableRecords.forEach((row, index) => {
-        console.log(`[DEBUG] テーブル行 ${index + 1}:`, JSON.stringify(row, null, 2));
-      });
 
       try {
         // 自アプリの更新
