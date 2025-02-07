@@ -26,7 +26,7 @@ window.AuthModule = (function () {
   }
 
   // エラーログをAPIに送信する関数
-  async function sendErrorLog(errorContext,errorMessage) {
+  async function sendErrorLog(API_CONFIG,errorContext,errorMessage) {
     try {
       const response = await fetch(API_CONFIG.ERROR_LOG_ENDPOINT, {
         method: 'POST',
