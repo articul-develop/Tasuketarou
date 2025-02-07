@@ -72,7 +72,7 @@
     });
 
     //レコード再利用時に行識別子をクリア
-    kintone.events.on('app.record.create.show', function (event) {
+    kintone.events.on( ['app.record.create.show', 'mobile.app.record.create.show'], function (event) {
       // レコードを再利用した場合（reuse === true）
       if (event.reuse === true) {
         event.record[tableFieldCode].value.forEach(row => {
@@ -442,7 +442,7 @@
       } catch (error) {
         const errorMessage = error?.message;
         console.error('一覧画面での削除処理エラー:', error?.message || 'エラー詳細不明');
-        alert(`プラグインエラー：一覧画面での削除処理中にエラーが発生しました。\n${errormessage}`);
+        alert(`プラグインエラー：一覧画面での削除処理中にエラーが発生しました。\n${errorMessage}`);
         AuthModule.sendErrorLog("一覧画面での削除処理", errorMessage);
       }
       return event;
