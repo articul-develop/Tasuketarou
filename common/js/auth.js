@@ -45,7 +45,7 @@ window.AuthModule = (function () {
       });
 
       console.log("📡 fetch() を実行します...");
-
+/*
       const response = await fetch(API_CONFIG.ERROR_LOG_ENDPOINT, {
         method: 'POST',
         headers: {
@@ -60,28 +60,38 @@ window.AuthModule = (function () {
           Timestamp: new Date().toLocaleString()
         })
       });
+*/
+const controller = new AbortController();
+const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("⏳ Fetchタイムアウト")), 5000));
+const fetchPromise = fetch(API_CONFIG.ERROR_LOG_ENDPOINT, {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'Authorization': API_CONFIG.AUTH_TOKEN,
+    },
+    body: JSON.stringify({
+        Domain: location.hostname,
+        ItemKey: API_CONFIG.ItemKey,
+        ErrorContext: errorContext,
+        ErrorMessage: errorMessage,
+        Timestamp: new Date().toLocaleString()
+    }),
+    signal: controller.signal
+});
 
-      console.log("📡【レスポンス情報】fetch() の完了を確認");
+const response = await Promise.race([fetchPromise, timeout]);
+clearTimeout(controller.abort);
 
-      if (!response) {
-          console.error("🚨 fetch() のレスポンスが `undefined` または `null` です");
-          throw new Error("fetch() のレスポンスがありません");
-      }
+console.log("📡【レスポンス情報】fetch() の完了を確認");
+console.log("📡【レスポンス情報】ステータスコード:", response.status);
 
-      console.log("📡【レスポンス情報】ステータスコード:", response.status);
-
-      // ヘッダー情報を確認
-      console.log("📡【レスポンス情報】ヘッダー:", [...response.headers]);
-
-      let responseBody;
-      try {
-          responseBody = await response.json();
-          console.log("📡【レスポンス内容】", responseBody);
-      } catch (jsonError) {
-          console.error("🚨 レスポンスの JSON 解析に失敗:", jsonError);
-          responseBody = await response.text();
-          console.log("📡【レスポンス内容（text）】", responseBody);
-      }
+} catch (error) {
+console.error("🚨【エラーログ送信エラー】", error.message || "エラー詳細不明");
+if (error.message === "⏳ Fetchタイムアウト") {
+    console.error("⏳ Bubble API からのレスポンスが返ってこない可能性があります");
+}
+}
+}
 
 
       /*
@@ -94,17 +104,7 @@ window.AuthModule = (function () {
         }
           */
          
-        if (!response.ok) {
-          throw new Error(`エラーログAPIエラー: ${response.status} ${response.statusText}`);
-      }
-
-      console.log("✅ エラーログ送信成功！");
-
-  } catch (error) {
-      console.error("🚨【エラーログ送信エラー】", error.message || "エラー詳細不明");
-      console.error("🛠️【エラー詳細】", error);
-  }
-}
+      
 
 
 
