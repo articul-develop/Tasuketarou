@@ -7,7 +7,7 @@
   (function () {
     // 対象イベント: 新規登録および編集登録時に処理を実行
     kintone.events.on(['app.record.create.submit', 'app.record.edit.submit', 'mobile.app.record.create.submit', 'mobile.app.record.edit.submit'], 
-      function (event) {
+      async function (event) {
 
       // 認証が成功しているか確認
       if (!window.isAuthenticated || !window.isAuthenticated()) {
