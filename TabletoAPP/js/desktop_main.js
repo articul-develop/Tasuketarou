@@ -121,14 +121,14 @@
             console.error('削除リクエストエラー:', errorData);
             const errorMessage = errorData?.message || errorData?.errors?.[0]?.message || 'エラー内容が取得できませんでした。';
             alert(`プラグインエラー：削除リクエストエラー\n${errorMessage}`);
-            AuthModule.sendErrorLog(API_CONFIG,"削除リクエスト", errorMessage);
+            AuthModule.sendErrorLog(API_CONFIG, "削除リクエスト", errorMessage);
           }
         }
       } catch (error) {
         console.error('削除処理中のエラー:', error?.message || 'エラー詳細不明');
         const errorMessage = error?.message || '削除処理中に予期しないエラーが発生しました。';
         alert(`プラグインエラー：削除処理中にエラーが発生しました。\n${errorMessage}`);
-        AuthModule.sendErrorLog(API_CONFIG,"削除処理中", errorMessage);
+        AuthModule.sendErrorLog(API_CONFIG, "削除処理中", errorMessage);
       }
     }
 
@@ -260,7 +260,7 @@
       } catch (error) {
         const errorMessage = error?.message;
         alert(`プラグインエラー：当アプリの更新キー項目の更新に失敗しました。\n${errorMessage}`);
-        AuthModule.sendErrorLog(API_CONFIG,"当アプリの更新キー項目更新", errorMessage);
+        AuthModule.sendErrorLog(API_CONFIG, "当アプリの更新キー項目更新", errorMessage);
         return event;
       }
 
@@ -271,7 +271,7 @@
         } catch (error) {
           const errorMessage = error?.message;
           alert(`プラグインエラー：削除処理中にエラーが発生しました。\n${errorMessage}`);
-          AuthModule.sendErrorLog(API_CONFIG,"削除処理中(削除された行)", errorMessage);
+          AuthModule.sendErrorLog(API_CONFIG, "削除処理中(削除された行)", errorMessage);
         }
       }
 
@@ -305,7 +305,7 @@
           console.error('更新先アプリのレコード取得エラー:', errorData);
           const errorMessage = errorData?.message || errorData?.errors?.[0]?.message || 'エラー内容が取得できませんでした。';
           alert(`プラグインエラー：更新先アプリからレコードを取得できませんでした。\n${errorMessage}`);
-          AuthModule.sendErrorLog(API_CONFIG,"更新先アプリのレコード取得", errorMessage);
+          AuthModule.sendErrorLog(API_CONFIG, "更新先アプリのレコード取得", errorMessage);
 
           return event;
         }
@@ -348,7 +348,7 @@
       } catch (error) {
         const errorMessage = error?.message;
         alert(`プラグインエラー：更新処理に失敗しました。\n${errorMessage}`);
-        AuthModule.sendErrorLog(API_CONFIG,"更新処理", errorMessage);
+        AuthModule.sendErrorLog(API_CONFIG, "更新処理", errorMessage);
         return event;
       }
 
@@ -381,13 +381,13 @@
             console.error('更新先アプリの更新エラー:', errorData);
             const errorMessage = errorData?.message || errorData?.errors?.[0]?.message || 'エラー内容が取得できませんでした。';
             alert(`プラグインエラー：更新先アプリへの更新に失敗しました。\n${errorMessage}`);
-            AuthModule.sendErrorLog(API_CONFIG,"更新先アプリの更新", errorMessage);
+            AuthModule.sendErrorLog(API_CONFIG, "更新先アプリの更新", errorMessage);
           }
 
         } catch (error) {
           const errorMessage = error?.message;
           alert(`プラグインエラー：更新先アプリへの通信に失敗しました。\n${errorMessage}`);
-          AuthModule.sendErrorLog(API_CONFIG,"更新先アプリの通信", errorMessage);
+          AuthModule.sendErrorLog(API_CONFIG, "更新先アプリの通信", errorMessage);
         }
       }
 
@@ -410,12 +410,14 @@
             console.error('更新先アプリの新規登録エラー:', errorData);
             const errorMessage = errorData?.message || errorData?.errors?.[0]?.message || 'エラー内容が取得できませんでした。';
             alert(`プラグインエラー：更新先アプリへの新規登録に失敗しました。\n${errorMessage}`);
-            AuthModule.sendErrorLog(API_CONFIG,"更新先アプリの新規登録", errorMessage);
+            AuthModule.sendErrorLog(API_CONFIG, "更新先アプリの新規登録", errorMessage);
+
+
           }
         } catch (error) {
           const errorMessage = error?.message;
           alert(`プラグインエラー：更新先アプリへの通信に失敗しました。\n${errorMessage}`);
-          AuthModule.sendErrorLog(API_CONFIG,"更新先アプリの通信", errorMessage);
+          AuthModule.sendErrorLog(API_CONFIG, "更新先アプリの通信", errorMessage);
           return event;
         }
       }
@@ -438,7 +440,7 @@
         const errorMessage = error?.message;
         console.error('詳細画面での削除処理エラー:', error?.message || 'エラー詳細不明');
         alert(`プラグインエラー：詳細画面での削除処理中にエラーが発生しました。\n${errorMessage}`);
-        AuthModule.sendErrorLog(API_CONFIG,"詳細画面での削除処理", errorMessage);
+        AuthModule.sendErrorLog(API_CONFIG, "詳細画面での削除処理", errorMessage);
       }
       return event;
     });
@@ -456,7 +458,7 @@
         const errorMessage = error?.message;
         console.error('一覧画面での削除処理エラー:', error?.message || 'エラー詳細不明');
         alert(`プラグインエラー：一覧画面での削除処理中にエラーが発生しました。\n${errorMessage}`);
-        AuthModule.sendErrorLog(API_CONFIG,"一覧画面での削除処理", errorMessage);
+        AuthModule.sendErrorLog(API_CONFIG, "一覧画面での削除処理", errorMessage);
       }
       return event;
     });
