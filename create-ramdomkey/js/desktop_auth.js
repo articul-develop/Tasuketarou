@@ -99,7 +99,7 @@
     } catch (error) {
       errorMessages.push('認証中にエラーが発生しました。');
     }
-    await AuthModule.sendErrorLog('checkAndReauthenticate', errorMessages.join('\n') || '認証中に不明なエラーが発生しました');
+    await AuthModule.sendErrorLog(API_CONFIG, 'checkAndReauthenticate', errorMessages.join('\n') || '認証中に不明なエラーが発生しました');
     alert(errorMessages.join('\n')); // メッセージを改行で結合
     return { success: false, errors: errorMessages }; // 認証失敗
   }

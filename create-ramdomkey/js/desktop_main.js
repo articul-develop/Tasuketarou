@@ -61,7 +61,7 @@
       if (!targetField || !event.record[targetField]) {
         const errorMessage = `指定されたフィールドコード "${targetField}" が存在しません。`;
         alert(errorMessage);
-        await AuthModule.sendErrorLog('generateRandomKey', errorMessage);
+        await AuthModule.sendErrorLog(API_CONFIG, 'generateRandomKey', errorMessage);
         return event; // エラーでも処理を続行
       }
 
