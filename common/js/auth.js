@@ -29,17 +29,22 @@ window.AuthModule = (function () {
   async function sendErrorLog(API_CONFIG, errorContext, errorMessage) {
     try {
 
-      // エラーログ送信の成功・失敗をコンソールに出力
       console.log("🔍【デバッグ情報】sendErrorLog に渡された API_CONFIG:", API_CONFIG);
       console.log("🖥️ ERROR_LOG_ENDPOINT:", API_CONFIG?.ERROR_LOG_ENDPOINT);
-      console.log("📡 送信データ:", {
-        Domain: location.hostname,
-        ItemKey: API_CONFIG.ItemKey,
-        ErrorContext: errorContext,
-        ErrorMessage: errorMessage,
-        Timestamp: new Date().toLocaleString()
+
+      if (!API_CONFIG || !API_CONFIG.ERROR_LOG_ENDPOINT) {
+          throw new Error("API_CONFIG または ERROR_LOG_ENDPOINT が undefined です");
+      }
+
+      console.log("📡【送信データ】: ", {
+          Domain: location.hostname,
+          ItemKey: API_CONFIG.ItemKey,
+          ErrorContext: errorContext,
+          ErrorMessage: errorMessage,
+          Timestamp: new Date().toLocaleString()
       });
 
+      console.log("📡 fetch() を実行します...");
 
       const response = await fetch(API_CONFIG.ERROR_LOG_ENDPOINT, {
         method: 'POST',
