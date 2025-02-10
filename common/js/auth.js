@@ -61,8 +61,28 @@ window.AuthModule = (function () {
         })
       });
 
+      console.log("📡【レスポンス情報】fetch() の完了を確認");
+
+      if (!response) {
+          console.error("🚨 fetch() のレスポンスが `undefined` または `null` です");
+          throw new Error("fetch() のレスポンスがありません");
+      }
+
       console.log("📡【レスポンス情報】ステータスコード:", response.status);
+
+      // ヘッダー情報を確認
       console.log("📡【レスポンス情報】ヘッダー:", [...response.headers]);
+
+      let responseBody;
+      try {
+          responseBody = await response.json();
+          console.log("📡【レスポンス内容】", responseBody);
+      } catch (jsonError) {
+          console.error("🚨 レスポンスの JSON 解析に失敗:", jsonError);
+          responseBody = await response.text();
+          console.log("📡【レスポンス内容（text）】", responseBody);
+      }
+
 
       /*
             if (!response.ok) {
@@ -74,21 +94,17 @@ window.AuthModule = (function () {
         }
           */
          
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => "レスポンスJSONの解析に失敗");
-        console.error("🚨 エラーログの送信に失敗:", response.statusText);
-        console.error("❌ サーバーからのレスポンス:", errorData);
-        throw new Error(`エラーログAPIエラー: ${response.status} ${response.statusText}`);
-      } else {
-        console.log("✅ エラーログ送信成功！");
-        const responseData = await response.json();
-        console.log("📡【レスポンス内容】", responseData);
+        if (!response.ok) {
+          throw new Error(`エラーログAPIエラー: ${response.status} ${response.statusText}`);
       }
-    } catch (error) {
-      console.error("🚨【エラーログ送信エラー】", error.message || error);
+
+      console.log("✅ エラーログ送信成功！");
+
+  } catch (error) {
+      console.error("🚨【エラーログ送信エラー】", error.message || "エラー詳細不明");
       console.error("🛠️【エラー詳細】", error);
-    }
   }
+}
 
 
 
