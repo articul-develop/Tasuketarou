@@ -26,7 +26,7 @@
     if (config.Trial_enddate) {
       const trialEndDateStr = config.Trial_enddate;
  
-      if (trialEndDateStr > todayStr) {
+      if (trialEndDateStr >= todayStr) {
         const headerSpace = kintone.app.record.getHeaderMenuSpaceElement();
 
         // カスタムメッセージの追加
