@@ -25,7 +25,7 @@
         if (config.Trial_enddate) {
             const trialEndDateStr = config.Trial_enddate;
 
-            if (trialEndDateStr > todayStr) {
+            if (trialEndDateStr >= todayStr) {
                 // ヘッダー部分を取得
                 const headerSpace = kintone.app.getHeaderMenuSpaceElement();
 
