@@ -101,16 +101,13 @@
         } catch (error) {
             errorMessages.push('認証中にエラーが発生しました。');
         }
-        await AuthModule.sendErrorLog(API_CONFIG,'checkAndReauthenticate', errorMessages.join('\n') || '認証中に不明なエラーが発生しました');
+        await AuthModule.sendErrorLog(API_CONFIG, 'checkAndReauthenticate', errorMessages.join('\n') || '認証中に不明なエラーが発生しました');
         alert(errorMessages.join('\n')); // メッセージを改行で結合
         return { success: false, errors: errorMessages }; // 認証失敗
 
     }
 
-
     //ここまで共通処理
-
-
 
 
     // ボタンを追加する処理
@@ -160,7 +157,25 @@
             }
         })();
 
+        // 全レコードを取得する非同期関数
+        async function fetchAllRecords(appId) {
+            const limit = 100; // 一度に取得する件数
+            let offset = 0;
+            let allRecords = [];
+            let response;
 
+            // 取得できたレコードがlimit件の場合、まだデータが残っている可能性があるため、繰り返し取得する
+            do {
+                response = await kintone.api(kintone.api.url('/k/v1/records', true), 'GET', {
+                    app: appId,
+                    query: `limit ${limit} offset ${offset}`
+                });
+                allRecords = allRecords.concat(response.records);
+                offset += limit;
+            } while (response.records.length === limit);
+
+            return allRecords;
+        }
 
         // ボタンクリック時の処理
         button.onclick = async function () {
@@ -169,13 +184,19 @@
             }
 
             try {
+                /*
                 const records = event.records;
+                */
+                const appId = kintone.app.getId();
+                // 全件取得に変更
+                const records = await fetchAllRecords(appId);
+
                 if (records.length === 0) {
                     alert('削除対象のレコードがありません。');
                     return;
                 }
 
-                const appId = kintone.app.getId();
+                //const appId = kintone.app.getId();
                 const dropdownContainerFields = JSON.parse(config.dropdownContainer || '[]');
 
                 if (dropdownContainerFields.length === 0) {
@@ -215,7 +236,7 @@
                 console.error(error);
                 const errorMessage = error?.message || 'エラー内容が取得できませんでした。';
                 alert(`添付ファイルの削除中にエラーが発生しました。\n${errorMessage}`);
-                await AuthModule.sendErrorLog(API_CONFIG,'bulk-delete-button', errorMessage);
+                await AuthModule.sendErrorLog(API_CONFIG, 'bulk-delete-button', errorMessage);
             }
         };
 
