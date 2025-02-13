@@ -179,9 +179,7 @@
 
         // ボタンクリック時の処理
         button.onclick = async function () {
-            if (!confirm('一覧画面に表示されているレコードの添付ファイルを削除します。よろしいですか？')) {
-                return;
-            }
+
 
             try {
                 /*
@@ -190,6 +188,11 @@
                 const appId = kintone.app.getId();
                 // 全件取得に変更
                 const records = await fetchAllRecords(appId);
+                const recordCount = records.length;
+
+                if (!confirm(`全件のレコード（${recordCount}件）の添付ファイルを削除します。よろしいですか？`)) {
+                    return;
+                }
 
                 if (records.length === 0) {
                     alert('削除対象のレコードがありません。');
