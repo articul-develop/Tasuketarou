@@ -168,6 +168,7 @@
 
             // rowIdentifierField の選択肢設定
             const rowIdentifierFieldSelect = document.querySelector('select[name="rowIdentifierField"]');
+            rowIdentifierFieldSelect.innerHTML = '';
 
             // SingleText フィールドを取得
             const singleTextFields = await KintoneConfigHelper.getFields(['SINGLE_LINE_TEXT']);
@@ -193,13 +194,16 @@
             if (!rowIdentifierFieldSelect.value && filteredFields.length > 0) {
                 rowIdentifierFieldSelect.value = filteredFields[0].code;
             } else if (filteredFields.length === 0) {
-                alert('更新キーに設定可能な項目が見つかりません');
+                alert('更新キーに設定可能な共通する文字列項目が見つかりません');
             }
             //ここまで行識別子
 
             //レコードNO、行NOの選択肢を用意
             const sourceRecordNumberSelect = document.querySelector('select[name="sourceRecordNumber"]');
             const tableRowNumberSelect = document.querySelector('select[name="tableRowNumber"]');
+
+            sourceRecordNumberSelect.innerHTML = '';
+            tableRowNumberSelect.innerHTML = '';
 
             // targetFields を SingleText フィールドに絞り込む
 
