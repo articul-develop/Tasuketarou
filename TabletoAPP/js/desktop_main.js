@@ -65,7 +65,7 @@
     ];
     kintone.events.on(eventsToShow, function (event) {
       const config = kintone.plugin.app.getConfig(PLUGIN_ID) || {};
-      if (config.hideKeyField === 'true') {      
+      if (config.hideKeyField === 'true') {
         kintone.app.record.setFieldShown(ROW_IDENTIFIER_FIELD, false);
       }
       return event;
@@ -188,6 +188,7 @@
       ); // 既存の更新キー項目を取得
 
       const recordsToCreateInTarget = [];
+      const newIdentifierIndexes = []; // 新しく採番した行のインデックスを保存
 
       for (let i = 0; i < tableRecords.length; i++) {
         if (!tableRecords[i].value[ROW_IDENTIFIER_FIELD].value) {
@@ -202,7 +203,7 @@
           // 更新キー項目を設定
           tableRecords[i].value[ROW_IDENTIFIER_FIELD].value = newIdentifier;
           existingIdentifiers.add(newIdentifier); // 生成済み識別子を追加
-
+          newIdentifierIndexes.push(i); // 採番した行のインデックスを記録
 
           // 更新先アプリに追加するためのデータを作成
           const recordData = {
@@ -411,13 +412,17 @@
             const errorMessage = errorData?.message || errorData?.errors?.[0]?.message || 'エラー内容が取得できませんでした。';
             alert(`プラグインエラー：更新先アプリへの新規登録に失敗しました。\n${errorMessage}`);
             await AuthModule.sendErrorLog(API_CONFIG, "更新先アプリの新規登録", errorMessage);
-
+            // エラー発生時に自アプリの採番済み行識別子をクリア
+            await revertRowIdentifiers(recordNumber, tableRecords, newIdentifierIndexes);
 
           }
         } catch (error) {
           const errorMessage = error?.message;
           alert(`プラグインエラー：更新先アプリへの通信に失敗しました。\n${errorMessage}`);
           await AuthModule.sendErrorLog(API_CONFIG, "更新先アプリの通信", errorMessage);
+
+          // エラー発生時に自アプリの採番済み行識別子をクリア
+          await revertRowIdentifiers(recordNumber, tableRecords, newIdentifierIndexes);
           return event;
         }
       }
@@ -462,6 +467,35 @@
       }
       return event;
     });
+
+    // 6.新規登録にてエラー発生時に自アプリの採番済み行識別子をクリアする関数
+    async function revertRowIdentifiers(recordNumber, tableRecords, newIdentifierIndexes) {
+      // 採番した行の識別子をクリア
+      newIdentifierIndexes.forEach(index => {
+        tableRecords[index].value[ROW_IDENTIFIER_FIELD].value = '';
+      });
+
+      // 自アプリのレコードを更新して、テーブルの識別子をクリアする
+      const revertPayload = {
+        app: getAppId(),
+        id: recordNumber,
+        record: {
+          [tableFieldCode]: {
+            value: tableRecords
+          }
+        }
+      };
+
+      try {
+        await kintone.api(kintone.api.url('/k/v1/record', true), 'PUT', revertPayload);
+        console.log('行識別子をクリアしました。');
+      } catch (err) {
+        console.error('行識別子のクリアに失敗しました:', err);
+      }
+    }
+
+
+
 
 
   }
