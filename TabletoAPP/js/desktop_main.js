@@ -28,6 +28,16 @@
 
     //認証終わり
 
+    function getAppId() {
+
+      if (kintone.app.getId() === null) {
+        return kintone.mobile.app.getId();
+      }
+      else {
+        return kintone.app.getId();
+      }
+    }
+
 
     //更新元アプリの設定
     const tableFieldCode = config.tableFieldCode;
@@ -231,17 +241,17 @@
         }
       }
 
-
-      function getAppId() {
-
-        if (kintone.app.getId() === null) {
-          return kintone.mobile.app.getId();
-        }
-        else {
-          return kintone.app.getId();
-        }
-      }
-
+      /*
+            function getAppId() {
+      
+              if (kintone.app.getId() === null) {
+                return kintone.mobile.app.getId();
+              }
+              else {
+                return kintone.app.getId();
+              }
+            }
+      */
 
       // 自アプリを更新するためのリクエスト
       const updatePayload = {
