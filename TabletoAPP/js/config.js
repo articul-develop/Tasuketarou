@@ -133,6 +133,14 @@
                 '作成日時',
             ];
 
+            // 除外するフィールドの種類
+            const excludedTypes = [
+                'FILE',
+                'REFERENCE_TABLE',
+                'GROUP',
+                'SUBTABLE'
+            ];
+
             //フィールドコードとtypeが一致する項目を取得
             const matchingNormalFields = sourceNormalFields.filter(code => {
                 const sourceField = sourceResponse.properties[code];
@@ -142,7 +150,8 @@
                     !excludeFields.includes(code) &&
                     sourceField &&
                     targetField &&
-                    sourceField.type === targetField.type // フィールドの種類が一致しているかを確認
+                    sourceField.type === targetField.type && // フィールドの種類が一致しているかを確認
+                    !excludedTypes.includes(sourceField.type)  // 除外対象のフィールドタイプを省く
                 );
             });
 
@@ -160,7 +169,8 @@
                     targetFields.includes(code) &&
                     sourceField &&
                     targetField &&
-                    sourceField.type === targetField.type // フィールドの種類が一致しているかを確認
+                    sourceField.type === targetField.type &&  // フィールドの種類が一致しているかを確認
+                    !excludedTypes.includes(sourceField.type)  // 除外対象のフィールドタイプを省く                
                 );
             });
 
