@@ -65,9 +65,7 @@
     ];
     kintone.events.on(eventsToShow, function (event) {
       const config = kintone.plugin.app.getConfig(PLUGIN_ID) || {};
-      console.log('キー項目非表示：',config.hideKeyField);
-      if (config.hideKeyField === 'true') {
-        console.log('キー項目非表示がtrueのため非表示にします');        
+      if (config.hideKeyField === 'true') {      
         kintone.app.record.setFieldShown(ROW_IDENTIFIER_FIELD, false);
       }
       return event;
