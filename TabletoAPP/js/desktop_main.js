@@ -187,6 +187,12 @@
 
       // テーブルフィールドコード
       const tableRecords = record[tableFieldCode].value;
+      if (!tableField || !tableField.value) {
+        const errorMsg = `テーブルフィールドコード "${tableFieldCode}" が見つかりません。`;
+        alert(`プラグインエラー：${errorMsg}`);
+        await AuthModule.sendErrorLog(API_CONFIG, "テーブルフィールド未検出", errorMsg);
+        return event; // 処理を中断
+      }
 
       // 保存後の更新キー項目リストを取得
       const currentIdentifiers = tableRecords.map(row => row.value[ROW_IDENTIFIER_FIELD].value || '');
