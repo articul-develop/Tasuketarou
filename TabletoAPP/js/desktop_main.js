@@ -390,8 +390,11 @@
           if (!updateResponse.ok) {
             const errorData = await updateResponse.json();
             console.error('更新先アプリの更新エラー:', errorData);
-            const errorMessage = errorData?.message || errorData?.errors?.[0]?.message || 'エラー内容が取得できませんでした。';
-            alert(`プラグインエラー：更新先アプリへの更新に失敗しました。\n${errorMessage}`);
+           
+            const userFriendlyMessage = parseApiErrors(errorData);
+            alert(userFriendlyMessage);
+            //const errorMessage = errorData?.message || errorData?.errors?.[0]?.message || 'エラー内容が取得できませんでした。';
+            //alert(`プラグインエラー：更新先アプリへの更新に失敗しました。\n${errorMessage}`);
             await AuthModule.sendErrorLog(API_CONFIG, "更新先アプリの更新", errorMessage);
           }
 
@@ -504,7 +507,23 @@
       }
     }
 
-
+    function parseApiErrors(errorData) {
+      if (errorData?.errors && Array.isArray(errorData.errors)) {
+        const detailedErrors = errorData.errors.map((err) => {
+          // ここでフィールドキーとメッセージを取り出して整形する
+          const fieldKey = Object.keys(err).find(
+            (key) => !['id', 'message'].includes(key)
+          );
+          const message = err.message || '入力内容が正しくありません。';
+          return `${fieldKey}：${message}`;
+        });
+    
+        return detailedErrors.join('\n');
+      }
+    
+      // errors が無い場合など
+      return errorData?.message || 'エラー内容が取得できませんでした。';
+    }
 
 
 
