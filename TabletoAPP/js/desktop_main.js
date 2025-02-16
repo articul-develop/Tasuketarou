@@ -132,9 +132,9 @@
 
             const userFriendlyMessage = parseApiErrors(errorData);
             alert(`プラグインエラー：削除リクエスト時にエラーが発生しました\n${userFriendlyMessage}`);
-            await AuthModule.sendErrorLog(API_CONFIG, "削除リクエスト",  JSON.stringify(errorData) );
- 
-            
+            await AuthModule.sendErrorLog(API_CONFIG, "削除リクエスト", JSON.stringify(errorData));
+
+
           }
         }
       } catch (error) {
@@ -186,13 +186,14 @@
       const formattedRecordNumber = recordNumber.toString().padStart(6, '0'); // 例: "15" -> "000015"
 
       // テーブルフィールドコード
-      const tableRecords = record[tableFieldCode].value;
+      const tableField = record[tableFieldCode];
       if (!tableField || !tableField.value) {
         const errorMsg = `更新対象テーブルフィールドコード "${tableFieldCode}" が見つかりません。`;
         alert(`プラグインエラー：${errorMsg}`);
         await AuthModule.sendErrorLog(API_CONFIG, "テーブルフィールド未検出", errorMsg);
         return event; // 処理を中断
       }
+      const tableRecords = tableField.value;
 
       // 保存後の更新キー項目リストを取得
       const currentIdentifiers = tableRecords.map(row => row.value[ROW_IDENTIFIER_FIELD].value || '');
@@ -323,10 +324,10 @@
         if (!response.ok) {
           const errorData = await response.json();
           console.error('更新先アプリのレコード取得エラー:', errorData);
-          
+
           const userFriendlyMessage = parseApiErrors(errorData);
           alert(`プラグインエラー：更新先アプリからレコードを取得できませんでした。\n${userFriendlyMessage}`);
-          await AuthModule.sendErrorLog(API_CONFIG, "更新先アプリのレコード取得",  JSON.stringify(errorData) );
+          await AuthModule.sendErrorLog(API_CONFIG, "更新先アプリのレコード取得", JSON.stringify(errorData));
 
           return event;
         }
@@ -402,7 +403,7 @@
             console.error('更新先アプリの更新エラー:', errorData);
             const userFriendlyMessage = parseApiErrors(errorData);
             alert(`プラグインエラー：更新先アプリへの更新に失敗しました。\n${userFriendlyMessage}`);
-            await AuthModule.sendErrorLog(API_CONFIG, "更新先アプリの更新",  JSON.stringify(errorData) );
+            await AuthModule.sendErrorLog(API_CONFIG, "更新先アプリの更新", JSON.stringify(errorData));
           }
 
         } catch (error) {
@@ -432,7 +433,7 @@
 
             const userFriendlyMessage = parseApiErrors(errorData);
             alert(`プラグインエラー：更新先アプリへの新規登録に失敗しました。\n${userFriendlyMessage}`);
-            await AuthModule.sendErrorLog(API_CONFIG, "更新先アプリの新規登録",  JSON.stringify(errorData) );
+            await AuthModule.sendErrorLog(API_CONFIG, "更新先アプリの新規登録", JSON.stringify(errorData));
 
             // エラー発生時に自アプリの採番済み行識別子をクリア
             await revertRowIdentifiers(recordNumber, tableRecords, newIdentifierIndexes);
@@ -521,7 +522,7 @@
     function parseApiErrors(errorData) {
       // まず外側の message をベースにする
       let combinedMessage = errorData?.message || 'エラー内容が取得できませんでした。';
-    
+
       // errors があれば、その中身を追記していく
       if (errorData?.errors && typeof errorData.errors === 'object') {
         // errors オブジェクトのキーと値をループ
@@ -537,7 +538,7 @@
           }
         });
       }
-    
+
       return combinedMessage;
     }
 
