@@ -391,7 +391,7 @@
             const errorData = await updateResponse.json();
             console.error('更新先アプリの更新エラー:', errorData);
            console.log('更新先アプリの更新エラー:', errorData?.errors);
-            const userFriendlyMessage = parseApiErrors(errorData?.errors);
+            const userFriendlyMessage = parseApiErrors(errorData);
             alert(userFriendlyMessage);
             //const errorMessage = errorData?.message || errorData?.errors?.[0]?.message || 'エラー内容が取得できませんでした。';
             //alert(`プラグインエラー：更新先アプリへの更新に失敗しました。\n${errorMessage}`);
@@ -508,23 +508,27 @@
     }
 
     function parseApiErrors(errorData) {
-      if (errorData?.errors && Array.isArray(errorData.errors)) {
-        const detailedErrors = errorData.errors.map((err) => {
-          // ここでフィールドキーとメッセージを取り出して整形する
-          const fieldKey = Object.keys(err).find(
-            (key) => !['id', 'message'].includes(key)
-          );
-          const message = err.message || '入力内容が正しくありません。';
-          return `${fieldKey}：${message}`;
-        });
+      // まず外側の message をベースにする
+      let combinedMessage = errorData?.message || 'エラー内容が取得できませんでした。';
     
-        return detailedErrors.join('\n');
+      // errors があれば、その中身を追記していく
+      if (errorData?.errors && typeof errorData.errors === 'object') {
+        // errors オブジェクトのキーと値をループ
+        Object.entries(errorData.errors).forEach(([fieldKey, fieldValue]) => {
+          // fieldValue に { messages: [ ... ] } のような配列が入っている場合
+          if (fieldValue?.messages && Array.isArray(fieldValue.messages)) {
+            fieldValue.messages.forEach((msg) => {
+              combinedMessage += `\n${fieldKey}：${msg}`;
+            });
+          } else {
+            // その他の形の場合、JSON化しておくなど必要に応じて処理
+            combinedMessage += `\n${fieldKey}：${JSON.stringify(fieldValue)}`;
+          }
+        });
       }
     
-      // errors が無い場合など
-      return errorData?.message || 'エラー内容が取得できませんでした。';
+      return combinedMessage;
     }
-
 
 
   }
