@@ -129,9 +129,12 @@
           if (!deleteRequest.ok) {
             const errorData = await deleteRequest.json();
             console.error('削除リクエストエラー:', errorData);
-            const errorMessage = errorData?.message || errorData?.errors?.[0]?.message || 'エラー内容が取得できませんでした。';
-            alert(`プラグインエラー：削除リクエストエラー\n${errorMessage}`);
-            await AuthModule.sendErrorLog(API_CONFIG, "削除リクエスト", errorMessage);
+
+            const userFriendlyMessage = parseApiErrors(errorData);
+            alert(`プラグインエラー：削除リクエスト時にエラーが発生しました\n${userFriendlyMessage}`);
+            await AuthModule.sendErrorLog(API_CONFIG, "削除リクエスト",  JSON.stringify(errorData) );
+ 
+            
           }
         }
       } catch (error) {
@@ -314,9 +317,10 @@
         if (!response.ok) {
           const errorData = await response.json();
           console.error('更新先アプリのレコード取得エラー:', errorData);
-          const errorMessage = errorData?.message || errorData?.errors?.[0]?.message || 'エラー内容が取得できませんでした。';
-          alert(`プラグインエラー：更新先アプリからレコードを取得できませんでした。\n${errorMessage}`);
-          await AuthModule.sendErrorLog(API_CONFIG, "更新先アプリのレコード取得", errorMessage);
+          
+          const userFriendlyMessage = parseApiErrors(errorData);
+          alert(`プラグインエラー：更新先アプリからレコードを取得できませんでした。\n${userFriendlyMessage}`);
+          await AuthModule.sendErrorLog(API_CONFIG, "更新先アプリのレコード取得",  JSON.stringify(errorData) );
 
           return event;
         }
@@ -390,10 +394,7 @@
           if (!updateResponse.ok) {
             const errorData = await updateResponse.json();
             console.error('更新先アプリの更新エラー:', errorData);
-
             const userFriendlyMessage = parseApiErrors(errorData);
-            //alert(userFriendlyMessage);
-            //const errorMessage = errorData?.message || errorData?.errors?.[0]?.message || 'エラー内容が取得できませんでした。';
             alert(`プラグインエラー：更新先アプリへの更新に失敗しました。\n${userFriendlyMessage}`);
             await AuthModule.sendErrorLog(API_CONFIG, "更新先アプリの更新",  JSON.stringify(errorData) );
           }
@@ -422,9 +423,11 @@
           if (!createResponse.ok) {
             const errorData = await createResponse.json();
             console.error('更新先アプリの新規登録エラー:', errorData);
-            const errorMessage = errorData?.message || errorData?.errors?.[0]?.message || 'エラー内容が取得できませんでした。';
-            alert(`プラグインエラー：更新先アプリへの新規登録に失敗しました。\n${errorMessage}`);
-            await AuthModule.sendErrorLog(API_CONFIG, "更新先アプリの新規登録", errorMessage);
+
+            const userFriendlyMessage = parseApiErrors(errorData);
+            alert(`プラグインエラー：更新先アプリへの新規登録に失敗しました。\n${userFriendlyMessage}`);
+            await AuthModule.sendErrorLog(API_CONFIG, "更新先アプリの新規登録",  JSON.stringify(errorData) );
+
             // エラー発生時に自アプリの採番済み行識別子をクリア
             await revertRowIdentifiers(recordNumber, tableRecords, newIdentifierIndexes);
 
@@ -507,6 +510,8 @@
       }
     }
 
+
+    // 7.エラーメッセージの整形関数
     function parseApiErrors(errorData) {
       // まず外側の message をベースにする
       let combinedMessage = errorData?.message || 'エラー内容が取得できませんでした。';
