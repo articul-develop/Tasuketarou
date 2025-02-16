@@ -390,12 +390,12 @@
           if (!updateResponse.ok) {
             const errorData = await updateResponse.json();
             console.error('更新先アプリの更新エラー:', errorData);
-           
+           console.log('更新先アプリの更新エラー:', errorData?.errors);
             const userFriendlyMessage = parseApiErrors(errorData?.errors);
             alert(userFriendlyMessage);
             //const errorMessage = errorData?.message || errorData?.errors?.[0]?.message || 'エラー内容が取得できませんでした。';
             //alert(`プラグインエラー：更新先アプリへの更新に失敗しました。\n${errorMessage}`);
-            await AuthModule.sendErrorLog(API_CONFIG, "更新先アプリの更新", errorMessage);
+            await AuthModule.sendErrorLog(API_CONFIG, "更新先アプリの更新", errorData );
           }
 
         } catch (error) {
