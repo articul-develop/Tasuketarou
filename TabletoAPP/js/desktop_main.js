@@ -188,7 +188,7 @@
       // テーブルフィールドコード
       const tableRecords = record[tableFieldCode].value;
       if (!tableField || !tableField.value) {
-        const errorMsg = `テーブルフィールドコード "${tableFieldCode}" が見つかりません。`;
+        const errorMsg = `更新対象テーブルフィールドコード "${tableFieldCode}" が見つかりません。`;
         alert(`プラグインエラー：${errorMsg}`);
         await AuthModule.sendErrorLog(API_CONFIG, "テーブルフィールド未検出", errorMsg);
         return event; // 処理を中断
