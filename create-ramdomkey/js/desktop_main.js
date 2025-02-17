@@ -7,11 +7,13 @@
   const targetField = config.targetField; // フィールドコード
   let digitLength = parseInt(config.digitLength, 10); // 数値に変換
   const charType = config.charType || 'alphanumeric'; // デフォルト値
+  const noRefreshNumbering = config.noRefreshNumbering || 'false';
+
 
   //レコード再利用時に行識別子をクリア
   kintone.events.on(['app.record.create.show', 'mobile.app.record.create.show'], function (event) {
-    // レコードを再利用した場合（reuse === true）
-    if (event.reuse === true) {
+ // レコードを再利用した場合（reuse === true）で、チェックボックスが false のとき
+    if (event.reuse === true ) {
       event.record[targetField].value = '';
     }
     return event;
