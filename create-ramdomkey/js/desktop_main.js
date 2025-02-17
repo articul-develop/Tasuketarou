@@ -13,7 +13,7 @@
   //レコード再利用時に行識別子をクリア
   kintone.events.on(['app.record.create.show', 'mobile.app.record.create.show'], function (event) {
  // レコードを再利用した場合（reuse === true）で、チェックボックスが false のとき
-    if (event.reuse === true ) {
+    if (event.reuse === true && noRefreshNumbering === 'false') {
       event.record[targetField].value = '';
     }
     return event;
