@@ -4,12 +4,15 @@
   // プラグインの設定情報を取得する
   const config = kintone.plugin.app.getConfig(PLUGIN_ID) || {};
 
+  const targetField = config.targetField; // フィールドコード
+  let digitLength = parseInt(config.digitLength, 10); // 数値に変換
+  const charType = config.charType || 'alphanumeric'; // デフォルト値
 
   //レコード再利用時に行識別子をクリア
   kintone.events.on(['app.record.create.show', 'mobile.app.record.create.show'], function (event) {
     // レコードを再利用した場合（reuse === true）
     if (event.reuse === true) {
-        event.record[targetField].value = '';
+      event.record[targetField].value = '';
     }
     return event;
   });
@@ -56,10 +59,7 @@
           return result;
         }
 
-        // プラグインの設定情報から必要な設定を取得
-        const targetField = config.targetField; // フィールドコード
-        let digitLength = parseInt(config.digitLength, 10); // 数値に変換
-        const charType = config.charType || 'alphanumeric'; // デフォルト値
+
 
         if (isNaN(digitLength) || digitLength <= 0) {
           digitLength = 10; // デフォルト値: 10
