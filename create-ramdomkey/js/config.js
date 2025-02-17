@@ -7,6 +7,7 @@
   const digitLength = config.digitLength || '';
   const charType = config.charType || '';
   const targetField = config.targetField || '';
+  const noRefreshNumbering = config.noRefreshNumbering || 'false'; // 保存済みのチェックボックス値（初期値は"false"）
 
   // digitLength の設定
   const digitLengthSelect = document.querySelector('select[name="digitLength"]');
@@ -56,12 +57,19 @@
     alert('対象フィールドの取得に失敗しました');
   }
 
+  // 再利用時のチェックボックス
+  const noRefreshNumberingCheckbox = document.getElementById('noRefreshNumbering');
+  if (noRefreshNumberingCheckbox) {
+    noRefreshNumberingCheckbox.checked = noRefreshNumbering === 'true';
+  }
+  
   // 保存ボタンの動作
   const saveButton = document.getElementById('save-button');
   saveButton.addEventListener('click', async () => {
     const digitLengthValue = digitLengthSelect.value;
     const charTypeValue = charTypeSelect.value;
     const targetFieldValue = targetFieldSelect.value;
+    const noRefreshNumberingValue = document.getElementById('noRefreshNumbering').checked;
 
     // 必須チェック
     if (!digitLengthValue || !charTypeValue || !targetFieldValue) {
@@ -107,6 +115,7 @@
         digitLength: digitLengthValue,
         charType: charTypeValue,
         targetField: targetFieldValue,
+        noRefreshNumbering: noRefreshNumberingValue.toString(),
         authStatus: 'valid' // 認証結果を保存
       };
 
