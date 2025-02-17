@@ -9,16 +9,13 @@
   kintone.events.on(['app.record.create.show', 'mobile.app.record.create.show'], function (event) {
     // レコードを再利用した場合（reuse === true）
     if (event.reuse === true) {
-      event.record[tableFieldCode].value.forEach(row => {
-        row.value[ROW_IDENTIFIER_FIELD].value = '';
-      }
-      );
+        event.record[targetField].value = '';
     }
     return event;
   });
 
 
-  
+
   (function () {
     // 対象イベント: 新規登録および編集登録時に処理を実行
     kintone.events.on(['app.record.create.submit', 'app.record.edit.submit', 'mobile.app.record.create.submit', 'mobile.app.record.edit.submit'],
