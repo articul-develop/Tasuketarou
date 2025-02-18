@@ -21,7 +21,7 @@
   const storageconfig = JSON.parse(localStorage.getItem(storageKey)) || {};
   const lastAuthDate = storageconfig.lastAuthDate || ''; // 最終認証日
   //const lastAuthDate = '20250101' //Debug 
-  console.log('lastAuthDate:', lastAuthDate);//Debug
+  //console.log('lastAuthDate:', lastAuthDate);//Debug
 
   // プラグインの設定情報を取得
   const config = kintone.plugin.app.getConfig(PLUGIN_ID) || {};
@@ -74,19 +74,19 @@
 
     // 設定情報がない場合
     if (Object.keys(config).length === 0) {
-      errorMessages.push('プラグイン設定が取得できませんでした。');
+      errorMessages.push('プラグイン設定が取得できませんでした。再度プラグインの設定を行ってください。');
       return await handleAuthError(errorMessages);
     }
 
     // 認証ステータスが無効
     if (authStatus !== 'valid') {
-      errorMessages.push('プラグイン認証ステータスが無効です。');
+      errorMessages.push('プラグイン設定が失敗しています。再度プラグインの設定を行ってください。');
       return await handleAuthError(errorMessages);
     }
 
     // お試し期間が終了している
     if (trialEndDateStr && trialEndDateStr < todayStr) {
-      errorMessages.push('プラグインお試し期間が終了しています。');
+      errorMessages.push('プラグインお試し期間が終了しています。本契約をご検討ください。ご使用にならない場合はプラグイン設定より無効にしてください。');
       return await handleAuthError(errorMessages);
     }
 

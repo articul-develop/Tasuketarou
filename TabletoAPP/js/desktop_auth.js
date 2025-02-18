@@ -73,7 +73,7 @@
 
     // 設定情報がない場合
     if (Object.keys(config).length === 0) {
-      errorMessages.push('プラグイン設定が取得できませんでした。');
+      errorMessages.push('プラグイン設定が取得できませんでした。再度プラグインの設定を行ってください。');
       return await handleAuthError(errorMessages);
     }
 
@@ -85,7 +85,7 @@
 
     // お試し期間が終了している
     if (trialEndDateStr && trialEndDateStr < todayStr) {
-      errorMessages.push('プラグインお試し期間が終了しています。');
+      errorMessages.push('プラグインお試し期間が終了しています。本契約をご検討ください。ご使用にならない場合はプラグイン設定より無効にしてください。');
       return await handleAuthError(errorMessages);
     }
 
