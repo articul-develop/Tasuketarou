@@ -3,7 +3,7 @@ h2 {
   color: #1E90FF !important; /* 青字 */
   margin-bottom: 16px !important; /* 見出しと内容の間の余白 */
   font-weight: bold !important; /* 太字 */
-  border-bottom: 1px solid #ccc !important; /* 下線を付ける */
+  /*border-bottom: 1px solid #ccc !important; *//* 下線を付ける */
   padding-bottom: 4px !important;
 }
 
@@ -26,4 +26,10 @@ h2 {
 .kintoneplugin-highlight {
   color: #0073e6; /* 青色に設定 */
   font-weight: bold; /* 文字を太字に */
+}
+
+hr.custom-line {
+  border: none;
+  border-top: 1px solid #ccc;
+  margin: 20px 0;
 }
