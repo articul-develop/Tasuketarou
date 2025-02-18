@@ -25,13 +25,13 @@
   // プラグインの設定情報を取得
   const config = kintone.plugin.app.getConfig(PLUGIN_ID) || {};
   const trialEndDateStr = config.Trial_enddate || ''; // お試し期限日
-  //const trialEndDateStr = '20250127' //Debug
+  //const trialEndDateStr = '20250127'; //Debug
   //console.log('trialEndDateStr:', trialEndDateStr);//Debug
 
   const authStatus = config.authStatus || ''; // 認証ステータス
-  //const authStatus = 'invalid' //Debug
+  //const authStatus = 'invalid'; //Debug
   //console.log('authStatus:', authStatus);//Debug
-  ;
+  
   //お試し期限の表示
   kintone.events.on(['app.record.create.show', 'app.record.edit.show'], function (event) {
     if (config.Trial_enddate) {
