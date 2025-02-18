@@ -46,10 +46,18 @@
     const apiToken = config.apiToken;
     const targetUrl = `${baseUrl}/k/v1/records.json`;
 
-        const appInfo =  kintone.api(kintone.api.url('/k/v1/app', true), 'GET', { id: targetAppId }); 
-        const targetAppName = appInfo.name;
-        console.log(`更新先アプリ名: ${targetAppName}`);
+    // ❶ すぐに使える仮の値を入れておく（例: "アプリID: 123"）
+    let targetAppName = `AppID:${config.targetAppId}`;
 
+    // ❷ 非同期でアプリ名を取得して、取得できたら上書き
+    (async () => {
+      try {
+        const resp = await kintone.api(kintone.api.url('/k/v1/app', true), 'GET', { id: config.targetAppId });
+        targetAppName = resp.name;
+      } catch (e) {
+        console.warn('ターゲットアプリ名の取得に失敗しました', e);
+      }
+    })();
 
     // 更新キー項目の定義
     const ROW_IDENTIFIER_FIELD = config.rowIdentifierField;
