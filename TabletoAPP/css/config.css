@@ -7,10 +7,6 @@ h2 {
   /*border-bottom: 1px solid #ccc !important;  下線を付ける */
   padding-bottom: 4px !important;
 }
-/* 入力欄全体の余白を統一 */
-.setting {
-  margin-bottom: 30px; /* セクション間の余白を広げる */
-}
 
 #normal-fields, #table-fields {
   border: 2px solid #ccc; /* 枠の色と太さ */
