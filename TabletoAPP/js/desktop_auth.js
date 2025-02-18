@@ -28,8 +28,8 @@
   //const trialEndDateStr = '20250127' //Debug
   //console.log('trialEndDateStr:', trialEndDateStr);//Debug
 
-  //const authStatus = config.authStatus || ''; // 認証ステータス
-  const authStatus = 'invalid' //Debug
+  const authStatus = config.authStatus || ''; // 認証ステータス
+  //const authStatus = 'invalid' //Debug
   //console.log('authStatus:', authStatus);//Debug
   ;
   //お試し期限の表示
