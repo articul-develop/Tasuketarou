@@ -20,7 +20,6 @@
   //認証済みの場合にのみ、Kintoneイベントを登録
   async function registerKintoneEvents() {
     const isAuthenticated = await getAuthenticationStatus();
-
     if (!isAuthenticated) {
       console.warn("プラグインの処理をスキップします（認証されていません）");
       return;
@@ -46,10 +45,11 @@
     const targetAppId = config.targetAppId;
     const apiToken = config.apiToken;
     const targetUrl = `${baseUrl}/k/v1/records.json`;
-
-    const appInfo = await kintone.api(kintone.api.url('/k/v1/app', true), 'GET', { id: targetAppId }); 
-    const targetAppName = appInfo.name;
-    console.log(`更新先アプリ名: ${targetAppName}`);
+    /*
+        const appInfo = await kintone.api(kintone.api.url('/k/v1/app', true), 'GET', { id: targetAppId }); 
+        const targetAppName = appInfo.name;
+        console.log(`更新先アプリ名: ${targetAppName}`);
+    */
 
     // 更新キー項目の定義
     const ROW_IDENTIFIER_FIELD = config.rowIdentifierField;
