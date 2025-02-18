@@ -19,8 +19,8 @@
   const storageKey = `PLUGIN_${kintone.$PLUGIN_ID}_config`;
   const storageconfig = JSON.parse(localStorage.getItem(storageKey)) || {};
   //const lastAuthDate = storageconfig.lastAuthDate || ''; // 最終認証日
-  console.log('lastAuthDate:', lastAuthDate);//Debug
   const lastAuthDate = '20250127'
+  console.log('lastAuthDate:', lastAuthDate);//Debug
 
   // プラグインの設定情報を取得
   const config = kintone.plugin.app.getConfig(PLUGIN_ID) || {};
