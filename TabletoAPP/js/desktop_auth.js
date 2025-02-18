@@ -1,6 +1,14 @@
 (function (PLUGIN_ID) {
   'use strict';
 
+  // 共通のエラー処理関数（エラーメッセージをログ出力・alert・返却）
+  async function handleAuthError(errorMessages) {
+    const errorText = errorMessages.join('\n') || '認証中に不明なエラーが発生しました';
+    await AuthModule.sendErrorLog(API_CONFIG, 'checkAndReauthenticate', errorText);
+    alert(errorText);
+    return { success: false, errors: errorMessages };
+  }
+
   // 今日の日付をyyyymmdd形式に変換
   const today = new Date();
   const todayStr = today.getFullYear().toString() +
@@ -16,11 +24,13 @@
 
   // プラグインの設定情報を取得
   const config = kintone.plugin.app.getConfig(PLUGIN_ID) || {};
-  const trialEndDateStr = config.Trial_enddate || ''; // お試し期限日
+  //const trialEndDateStr = config.Trial_enddate || ''; // お試し期限日
+  const trialEndDateStr = '20250127' //Debug
   console.log('trialEndDateStr:', trialEndDateStr);//Debug
+
   const authStatus = config.authStatus || ''; // 認証ステータス
   console.log('authStatus:', authStatus);//Debug
-  
+  ;
   //お試し期限の表示
   kintone.events.on(['app.record.create.show', 'app.record.edit.show'], function (event) {
     if (config.Trial_enddate) {
@@ -63,19 +73,22 @@
     // 設定情報がない場合
     if (Object.keys(config).length === 0) {
       errorMessages.push('プラグイン設定が取得できませんでした。');
-      return { success: false, errors: errorMessages };
+      return await handleAuthError(errorMessages);
+      //return { success: false, errors: errorMessages };
     }
 
     // 認証ステータスが無効
     if (authStatus !== 'valid') {
       errorMessages.push('プラグイン認証ステータスが無効です。');
-      return { success: false, errors: errorMessages };
+      return await handleAuthError(errorMessages);
+            //return { success: false, errors: errorMessages };
     }
 
     // お試し期間が終了している
     if (trialEndDateStr && trialEndDateStr < todayStr) {
       errorMessages.push('プラグインお試し期間が終了しています。');
-      return { success: false, errors: errorMessages };
+      return await handleAuthError(errorMessages);
+      //return { success: false, errors: errorMessages };
     }
 
     // AuthDateが今日以降かどうかを確認
@@ -95,13 +108,17 @@
         return { success: true };
       } else {
         errorMessages.push('認証エラー: ' + (response.response?.message || '不明なエラー'));
+        return await handleAuthError(errorMessages);
       }
     } catch (error) {
       errorMessages.push('認証中にエラーが発生しました。');
+      return await handleAuthError(errorMessages);
     }
+    /*
     await AuthModule.sendErrorLog(API_CONFIG,'checkAndReauthenticate', errorMessages.join('\n') || '認証中に不明なエラーが発生しました');
     alert(errorMessages.join('\n')); // メッセージを改行で結合
     return { success: false, errors: errorMessages }; // 認証失敗
+    */
   }
 
   // 認証初期化を同期的にエクスポート
