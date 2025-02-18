@@ -472,7 +472,7 @@
           targetAppId,
           apiToken
         );
-        showSuccessMessage(`${targetAppName}からの削除が正常に完了しました。`);
+        showSuccessMessage(`${targetAppName}の対象レコードを正常に削除しました。`);
       } catch (error) {
         const errorMessage = error?.message;
         console.error('詳細画面での削除処理エラー:', error?.message || 'エラー詳細不明');
@@ -491,7 +491,7 @@
           targetAppId,
           apiToken
         );
-        showSuccessMessage(`${targetAppName}からの削除が正常に完了しました。`);
+        showSuccessMessage(`${targetAppName}の対象レコードを正常に削除しました。`);
       } catch (error) {
         const errorMessage = error?.message;
         console.error('一覧画面での削除処理エラー:', error?.message || 'エラー詳細不明');
