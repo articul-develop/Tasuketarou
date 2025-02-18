@@ -447,7 +447,6 @@
           return event;
         }
       }
-      //debug 保存成功
       alert(`${targetAppName}への更新が正常に完了しました`);
       return event;
 
@@ -466,7 +465,7 @@
           targetAppId,
           apiToken
         );
-         alert('${targetAppName}からの削除が正常に完了しました'); 
+         alert(`${targetAppName}からの削除が正常に完了しました。`);
       } catch (error) {
         const errorMessage = error?.message;
         console.error('詳細画面での削除処理エラー:', error?.message || 'エラー詳細不明');
@@ -485,7 +484,7 @@
           targetAppId,
           apiToken
         );
-        alert('${targetAppName}からの削除が正常に完了しました'); 
+        alert(`${targetAppName}からの削除が正常に完了しました。`);
       } catch (error) {
         const errorMessage = error?.message;
         console.error('一覧画面での削除処理エラー:', error?.message || 'エラー詳細不明');
