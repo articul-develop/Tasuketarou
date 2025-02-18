@@ -52,9 +52,8 @@
       try {
         const resp = await kintone.api(kintone.api.url('/k/v1/app', true), 'GET', { id: config.targetAppId });
         targetAppName = resp.name;
-        console.log('ターゲットアプリ名:', targetAppName);
       } catch (e) {
-        console.warn('ターゲットアプリ名の取得に失敗しました', e);
+        console.warn('更新先アプリ名の取得に失敗しました', e);
       }
     })();
 
@@ -448,6 +447,10 @@
           return event;
         }
       }
+      //debug 保存成功
+      alert(`${targetAppName}への更新が正常に完了しました`);
+      return event;
+
     });
 
 
