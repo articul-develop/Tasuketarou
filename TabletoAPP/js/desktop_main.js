@@ -46,7 +46,7 @@
     const apiToken = config.apiToken;
     const targetUrl = `${baseUrl}/k/v1/records.json`;
 
-        const appInfo = await kintone.api(kintone.api.url('/k/v1/app', true), 'GET', { id: targetAppId }); 
+        const appInfo =  kintone.api(kintone.api.url('/k/v1/app', true), 'GET', { id: targetAppId }); 
         const targetAppName = appInfo.name;
         console.log(`更新先アプリ名: ${targetAppName}`);
 
