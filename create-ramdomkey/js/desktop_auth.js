@@ -75,19 +75,19 @@
     // 設定情報がない場合
     if (Object.keys(config).length === 0) {
       errorMessages.push('プラグイン設定が取得できませんでした。');
-      return { success: false, errors: errorMessages };
+      return await handleAuthError(errorMessages);
     }
 
     // 認証ステータスが無効
     if (authStatus !== 'valid') {
       errorMessages.push('プラグイン認証ステータスが無効です。');
-      return { success: false, errors: errorMessages };
+      return await handleAuthError(errorMessages);
     }
 
     // お試し期間が終了している
     if (trialEndDateStr && trialEndDateStr < todayStr) {
       errorMessages.push('プラグインお試し期間が終了しています。');
-      return { success: false, errors: errorMessages };
+      return await handleAuthError(errorMessages);
     }
 
     // AuthDateが今日以降かどうかを確認
