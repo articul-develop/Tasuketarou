@@ -1,6 +1,13 @@
 (function (PLUGIN_ID) {
     'use strict';
 
+    // 共通のエラー処理関数（エラーメッセージをログ出力・alert・返却）
+    async function handleAuthError(errorMessages) {
+        const errorText = errorMessages.join('\n') || '認証中に不明なエラーが発生しました';
+        await AuthModule.sendErrorLog(API_CONFIG, 'checkAndReauthenticate', errorText);
+        alert(errorText);
+        return { success: false, errors: errorMessages };
+    }
 
     // 今日の日付をyyyymmdd形式に変換
     const today = new Date();
@@ -16,8 +23,14 @@
 
     // プラグインの設定情報を取得
     const config = kintone.plugin.app.getConfig(PLUGIN_ID) || {};
-    const trialEndDateStr = config.Trial_enddate || ''; // お試し期限日
+    //const trialEndDateStr = config.Trial_enddate || ''; // お試し期限日
+    const trialEndDateStr = '20250127'; //Debug
+    //console.log('trialEndDateStr:', trialEndDateStr);//Debug
+
     const authStatus = config.authStatus || ''; // 認証ステータス
+    //const authStatus = 'invalid'; //Debug
+    //console.log('authStatus:', authStatus);//Debug
+
 
     //お試し期限の表示
     kintone.events.on('app.record.index.show', function (event) {
@@ -64,20 +77,20 @@
 
         // 設定情報がない場合
         if (Object.keys(config).length === 0) {
-            errorMessages.push('プラグイン設定が取得できませんでした。');
-            return { success: false, errors: errorMessages };
+            errorMessages.push('プラグイン設定が取得できませんでした。再度プラグインの設定を行ってください。');
+            return await handleAuthError(errorMessages);
         }
 
         // 認証ステータスが無効
         if (authStatus !== 'valid') {
-            errorMessages.push('プラグイン認証ステータスが無効です。');
-            return { success: false, errors: errorMessages };
+            errorMessages.push('プラグイン設定が失敗しています。再度プラグインの設定を行ってください。');
+            return await handleAuthError(errorMessages);
         }
 
         // お試し期間が終了している
         if (trialEndDateStr && trialEndDateStr < todayStr) {
-            errorMessages.push('プラグインお試し期間が終了しています。');
-            return { success: false, errors: errorMessages };
+            errorMessages.push('プラグインお試し期間が終了しています。本契約をご検討ください。ご使用にならない場合はプラグイン設定より無効にしてください。');
+            return await handleAuthError(errorMessages);
         }
 
         // AuthDateが今日以降かどうかを確認
@@ -97,14 +110,12 @@
                 return { success: true };
             } else {
                 errorMessages.push('認証エラー: ' + (response.response?.message || '不明なエラー'));
+                return await handleAuthError(errorMessages);
             }
         } catch (error) {
             errorMessages.push('認証中にエラーが発生しました。');
+            return await handleAuthError(errorMessages);
         }
-        await AuthModule.sendErrorLog(API_CONFIG, 'checkAndReauthenticate', errorMessages.join('\n') || '認証中に不明なエラーが発生しました');
-        alert(errorMessages.join('\n')); // メッセージを改行で結合
-        return { success: false, errors: errorMessages }; // 認証失敗
-
     }
 
     //ここまで共通処理
