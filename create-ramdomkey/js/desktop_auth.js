@@ -20,13 +20,13 @@
   const storageKey = `PLUGIN_${kintone.$PLUGIN_ID}_config`;
   const storageconfig = JSON.parse(localStorage.getItem(storageKey)) || {};
   const lastAuthDate = storageconfig.lastAuthDate || ''; // 最終認証日
-  //const lastAuthDate = '20250101' //Debug 
+  //const lastAuthDate = '20250101'; //Debug 
   //console.log('lastAuthDate:', lastAuthDate);//Debug
 
   // プラグインの設定情報を取得
   const config = kintone.plugin.app.getConfig(PLUGIN_ID) || {};
   const trialEndDateStr = config.Trial_enddate || ''; // お試し期限日
-  //const trialEndDateStr = '20250127' //Debug
+  //const trialEndDateStr = '20250127'; //Debug
   //console.log('お試し期間：', trialEndDateStr);
 
   const authStatus = config.authStatus || ''; // 認証ステータス
