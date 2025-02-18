@@ -80,7 +80,7 @@
 
     // 認証ステータスが無効
     if (authStatus !== 'valid') {
-      errorMessages.push('プラグイン認証ステータスが無効です。');
+      errorMessages.push('プラグイン設定が失敗しています。再度プラグインの設定を行ってください。');
       return await handleAuthError(errorMessages);
             //return { success: false, errors: errorMessages };
     }
