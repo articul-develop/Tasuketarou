@@ -29,7 +29,6 @@
     //認証終わり
 
     function getAppId() {
-
       if (kintone.app.getId() === null) {
         return kintone.mobile.app.getId();
       }
@@ -47,6 +46,10 @@
     const targetAppId = config.targetAppId;
     const apiToken = config.apiToken;
     const targetUrl = `${baseUrl}/k/v1/records.json`;
+
+    const appInfo = await kintone.api(kintone.api.url('/k/v1/app', true), 'GET', { id: targetAppId }); 
+    const targetAppName = appInfo.name;
+    console.log(`更新先アプリ名: ${targetAppName}`);
 
     // 更新キー項目の定義
     const ROW_IDENTIFIER_FIELD = config.rowIdentifierField;
@@ -251,17 +254,6 @@
         }
       }
 
-      /*
-            function getAppId() {
-      
-              if (kintone.app.getId() === null) {
-                return kintone.mobile.app.getId();
-              }
-              else {
-                return kintone.app.getId();
-              }
-            }
-      */
 
       // 自アプリを更新するためのリクエスト
       const updatePayload = {
