@@ -1,6 +1,15 @@
 (function (PLUGIN_ID) {
   'use strict';
 
+  // 共通のエラー処理関数（エラーメッセージをログ出力・alert・返却）
+  async function handleAuthError(errorMessages) {
+    const errorText = errorMessages.join('\n') || '認証中に不明なエラーが発生しました';
+    await AuthModule.sendErrorLog(API_CONFIG, 'checkAndReauthenticate', errorText);
+    alert(errorText);
+    return { success: false, errors: errorMessages };
+  }
+
+
   // 今日の日付をyyyymmdd形式に変換
   const today = new Date();
   const todayStr = today.getFullYear().toString() +
@@ -10,12 +19,13 @@
   // LocalStorageから認証日を取得
   const storageKey = `PLUGIN_${kintone.$PLUGIN_ID}_config`;
   const storageconfig = JSON.parse(localStorage.getItem(storageKey)) || {};
-  //const lastAuthDate = storageconfig.lastAuthDate || ''; // 最終認証日
-  const lastAuthDate = '20250101'
+  const lastAuthDate = storageconfig.lastAuthDate || ''; // 最終認証日
+  //const lastAuthDate = '20250101' //Debug 
 
   // プラグインの設定情報を取得
   const config = kintone.plugin.app.getConfig(PLUGIN_ID) || {};
-  const trialEndDateStr = config.Trial_enddate || ''; // お試し期限日
+  //const trialEndDateStr = config.Trial_enddate || ''; // お試し期限日
+  const trialEndDateStr = '20250127' //Debug
   //console.log('お試し期間：', trialEndDateStr);
 
   const authStatus = config.authStatus || ''; // 認証ステータス
@@ -95,13 +105,12 @@
         return { success: true };
       } else {
         errorMessages.push('認証エラー: ' + (response.response?.message || '不明なエラー'));
+        return await handleAuthError(errorMessages);
       }
     } catch (error) {
       errorMessages.push('認証中にエラーが発生しました。');
+      return await handleAuthError(errorMessages);
     }
-    await AuthModule.sendErrorLog(API_CONFIG, 'checkAndReauthenticate', errorMessages.join('\n') || '認証中に不明なエラーが発生しました');
-    alert(errorMessages.join('\n')); // メッセージを改行で結合
-    return { success: false, errors: errorMessages }; // 認証失敗
   }
 
   // 認証初期化を同期的にエクスポート
