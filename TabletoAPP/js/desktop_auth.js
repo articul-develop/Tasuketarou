@@ -20,17 +20,17 @@
   const storageconfig = JSON.parse(localStorage.getItem(storageKey)) || {};
   const lastAuthDate = storageconfig.lastAuthDate || ''; // 最終認証日
   //const lastAuthDate = '20250127'
-  console.log('lastAuthDate:', lastAuthDate);//Debug
+  //console.log('lastAuthDate:', lastAuthDate);//Debug
 
   // プラグインの設定情報を取得
   const config = kintone.plugin.app.getConfig(PLUGIN_ID) || {};
   const trialEndDateStr = config.Trial_enddate || ''; // お試し期限日
   //const trialEndDateStr = '20250127' //Debug
-  console.log('trialEndDateStr:', trialEndDateStr);//Debug
+  //console.log('trialEndDateStr:', trialEndDateStr);//Debug
 
   //const authStatus = config.authStatus || ''; // 認証ステータス
   const authStatus = 'invalid' //Debug
-  console.log('authStatus:', authStatus);//Debug
+  //console.log('authStatus:', authStatus);//Debug
   ;
   //お試し期限の表示
   kintone.events.on(['app.record.create.show', 'app.record.edit.show'], function (event) {
@@ -75,21 +75,18 @@
     if (Object.keys(config).length === 0) {
       errorMessages.push('プラグイン設定が取得できませんでした。');
       return await handleAuthError(errorMessages);
-      //return { success: false, errors: errorMessages };
     }
 
     // 認証ステータスが無効
     if (authStatus !== 'valid') {
       errorMessages.push('プラグイン設定が失敗しています。再度プラグインの設定を行ってください。');
       return await handleAuthError(errorMessages);
-            //return { success: false, errors: errorMessages };
     }
 
     // お試し期間が終了している
     if (trialEndDateStr && trialEndDateStr < todayStr) {
       errorMessages.push('プラグインお試し期間が終了しています。');
       return await handleAuthError(errorMessages);
-      //return { success: false, errors: errorMessages };
     }
 
     // AuthDateが今日以降かどうかを確認
@@ -115,11 +112,6 @@
       errorMessages.push('認証中にエラーが発生しました。');
       return await handleAuthError(errorMessages);
     }
-    /*
-    await AuthModule.sendErrorLog(API_CONFIG,'checkAndReauthenticate', errorMessages.join('\n') || '認証中に不明なエラーが発生しました');
-    alert(errorMessages.join('\n')); // メッセージを改行で結合
-    return { success: false, errors: errorMessages }; // 認証失敗
-    */
   }
 
   // 認証初期化を同期的にエクスポート
