@@ -46,14 +46,13 @@
     const apiToken = config.apiToken;
     const targetUrl = `${baseUrl}/k/v1/records.json`;
 
-    // ❶ すぐに使える仮の値を入れておく（例: "アプリID: 123"）
-    let targetAppName = `AppID:${config.targetAppId}`;
 
-    // ❷ 非同期でアプリ名を取得して、取得できたら上書き
+    let targetAppName = `AppID:${config.targetAppId}`;
     (async () => {
       try {
         const resp = await kintone.api(kintone.api.url('/k/v1/app', true), 'GET', { id: config.targetAppId });
         targetAppName = resp.name;
+        console.log('ターゲットアプリ名:', targetAppName);
       } catch (e) {
         console.warn('ターゲットアプリ名の取得に失敗しました', e);
       }
