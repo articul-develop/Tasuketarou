@@ -1,3 +1,8 @@
+/* 入力欄全体の余白を統一 */
+.setting {
+  margin-bottom: 30px; /* セクション間の余白を広げる */
+}
+
 
 h2 {
   font-size: 1.5em !important; /* フォントを大きく */
