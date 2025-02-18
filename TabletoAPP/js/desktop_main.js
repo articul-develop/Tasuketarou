@@ -47,6 +47,9 @@
     const targetUrl = `${baseUrl}/k/v1/records.json`;
 
 
+
+
+    //完了メッセージの表示用
     let targetAppName = `AppID:${config.targetAppId}`;
     (async () => {
       try {
@@ -56,6 +59,10 @@
         console.warn('更新先アプリ名の取得に失敗しました', e);
       }
     })();
+
+    function showSuccessMessage(message) {
+      if (config.suppressSuccessMessage !== 'true') { alert(message); }
+    }
 
     // 更新キー項目の定義
     const ROW_IDENTIFIER_FIELD = config.rowIdentifierField;
@@ -447,7 +454,7 @@
           return event;
         }
       }
-      alert(`${targetAppName}への更新が正常に完了しました`);
+      showSuccessMessage(`${targetAppName}への更新が正常に完了しました`);
       return event;
 
     });
@@ -465,7 +472,7 @@
           targetAppId,
           apiToken
         );
-         alert(`${targetAppName}からの削除が正常に完了しました。`);
+        showSuccessMessage(`${targetAppName}からの削除が正常に完了しました。`);
       } catch (error) {
         const errorMessage = error?.message;
         console.error('詳細画面での削除処理エラー:', error?.message || 'エラー詳細不明');
@@ -484,7 +491,7 @@
           targetAppId,
           apiToken
         );
-        alert(`${targetAppName}からの削除が正常に完了しました。`);
+        showSuccessMessage(`${targetAppName}からの削除が正常に完了しました。`);
       } catch (error) {
         const errorMessage = error?.message;
         console.error('一覧画面での削除処理エラー:', error?.message || 'エラー詳細不明');

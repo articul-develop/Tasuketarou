@@ -13,7 +13,9 @@
     // 非表示にするチェックボックスの初期値を設定
     const hideKeyFieldCheckbox = document.getElementById('hideKeyField');
     hideKeyFieldCheckbox.checked = config.hideKeyField === 'true';
-
+    //完了メッセージ非表示のチェックボックスの初期値を設定
+    const suppressSuccessMessageCheckbox = document.getElementById('suppressSuccessMessage'); 
+    suppressSuccessMessageCheckbox.checked = config.suppressSuccessMessage === 'false';
 
     // targetAppId の設定
     const targetAppSelect = document.querySelector('select[name="targetAppId"]');
@@ -70,7 +72,6 @@
         alert('対象フィールドの取得に失敗しました');
     }
 
-    //ここまでtableNameの設定
 
 
 
@@ -291,6 +292,7 @@
             const sourceRecordNumber = document.getElementById('sourceRecordNumber').value;
             const tableRowNumber = document.getElementById('tableRowNumber').value;
             const hideKeyField = document.getElementById('hideKeyField').checked;
+            const suppressSuccessMessage = document.getElementById('suppressSuccessMessage').checked;
 
             // 必須項目が未入力の場合にエラーを表示
             if (!targetAppId || !apiToken || !tableFieldCode || !rowIdentifierField) {
@@ -329,6 +331,7 @@
                 sourceRecordNumber: sourceRecordNumber,
                 tableRowNumber: tableRowNumber,
                 hideKeyField: hideKeyField.toString(), // チェックボックスの値を保存
+                suppressSuccessMessage: suppressSuccessMessage.toString(), // チェックボックスの値を保存
                 authStatus: 'valid' // 認証結果を保存
             };
             // Trial_enddateが存在する場合に追加
