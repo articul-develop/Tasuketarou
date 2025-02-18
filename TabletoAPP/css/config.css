@@ -1,11 +1,3 @@
-h2 {
-  font-size: 1.5em !important; /* フォントを大きく */
-  color: #1E90FF !important; /* 青字 */
-  margin-bottom: 16px !important; /* 見出しと内容の間の余白 */
-  font-weight: bold !important; /* 太字 */
-  /*border-bottom: 1px solid #ccc !important; *//* 下線を付ける */
-  padding-bottom: 4px !important;
-}
 
 /* 入力欄全体の余白を統一 */
 .setting {
