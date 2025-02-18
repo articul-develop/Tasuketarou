@@ -18,8 +18,8 @@
   // LocalStorageから認証日を取得
   const storageKey = `PLUGIN_${kintone.$PLUGIN_ID}_config`;
   const storageconfig = JSON.parse(localStorage.getItem(storageKey)) || {};
-  //const lastAuthDate = storageconfig.lastAuthDate || ''; // 最終認証日
-  const lastAuthDate = '20250127'
+  const lastAuthDate = storageconfig.lastAuthDate || ''; // 最終認証日
+  //const lastAuthDate = '20250127'
   console.log('lastAuthDate:', lastAuthDate);//Debug
 
   // プラグインの設定情報を取得
@@ -28,7 +28,8 @@
   //const trialEndDateStr = '20250127' //Debug
   console.log('trialEndDateStr:', trialEndDateStr);//Debug
 
-  const authStatus = config.authStatus || ''; // 認証ステータス
+  //const authStatus = config.authStatus || ''; // 認証ステータス
+  const authStatus = 'invalid' //Debug
   console.log('authStatus:', authStatus);//Debug
   ;
   //お試し期限の表示
