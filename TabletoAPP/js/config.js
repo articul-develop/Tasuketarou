@@ -14,7 +14,7 @@
     const hideKeyFieldCheckbox = document.getElementById('hideKeyField');
     hideKeyFieldCheckbox.checked = config.hideKeyField === 'true';
     //完了メッセージ非表示のチェックボックスの初期値を設定
-    const suppressSuccessMessageCheckbox = document.getElementById('suppressSuccessMessage'); 
+    const suppressSuccessMessageCheckbox = document.getElementById('suppressSuccessMessage');
     suppressSuccessMessageCheckbox.checked = config.suppressSuccessMessage === 'false';
 
     // targetAppId の設定
@@ -216,8 +216,20 @@
             sourceRecordNumberSelect.innerHTML = '';
             tableRowNumberSelect.innerHTML = '';
 
-            // targetFields を SingleText フィールドに絞り込む
 
+            // 「選択してください」のoptionを追加
+            let defaultOption1 = document.createElement('option');
+            defaultOption1.value = "";
+            defaultOption1.textContent = "選択してください";
+            sourceRecordNumberSelect.appendChild(defaultOption1);
+
+            let defaultOption2 = document.createElement('option');
+            defaultOption2.value = "";
+            defaultOption2.textContent = "選択してください";
+            tableRowNumberSelect.appendChild(defaultOption2);
+
+
+            // targetFields を SingleText フィールドに絞り込む
             const TablesingleTextFields = Object.values(targetResponse.properties).filter(
                 field => field.type === 'SINGLE_LINE_TEXT' || field.type === 'NUMBER'
             );
@@ -236,8 +248,8 @@
 
             // 初期値を設定（select.value を直接設定）
             if (TablesingleTextFields.length > 0) {
-                sourceRecordNumberSelect.value = sourceRecordNumber || TablesingleTextFields[0].code;
-                tableRowNumberSelect.value = tableRowNumber || TablesingleTextFields[0].code;
+                sourceRecordNumberSelect.value = sourceRecordNumber || "";
+                tableRowNumberSelect.value = tableRowNumber || "";
             } else {
                 alert('レコードNOおよび行NOに設定可能な項目が見つかりません');
             }
