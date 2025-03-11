@@ -61,7 +61,10 @@
     })();
 
     function showSuccessMessage(message) {
-      if (config.suppressSuccessMessage !== 'true') { alert(message); }
+      console.log('完了メッセージ表示：', config.suppressSuccessMessage);
+      if (config.suppressSuccessMessage !== 'true') {
+        alert(message);
+      }
     }
 
     // 更新キー項目の定義
