@@ -335,7 +335,6 @@
           const userFriendlyMessage = parseApiErrors(errorData);
           alert(`プラグインエラー：更新先アプリからレコードを取得できませんでした。\n${userFriendlyMessage}`);
           await AuthModule.sendErrorLog(API_CONFIG, "更新先アプリのレコード取得", JSON.stringify(errorData));
-
           return event;
         }
 
@@ -444,7 +443,7 @@
 
             // エラー発生時に自アプリの採番済み行識別子をクリア
             await revertRowIdentifiers(recordNumber, tableRecords, newIdentifierIndexes);
-
+            return event;
           }
         } catch (error) {
           const errorMessage = error?.message;
@@ -478,7 +477,7 @@
       } catch (error) {
         const errorMessage = error?.message;
         console.error('詳細画面での削除処理エラー:', error?.message || 'エラー詳細不明');
-        alert(`プラグインエラー：詳細画面での削除処理中にエラーが発生しました。\n${errorMessage}`);
+        alert(`プラグインエラー：更新先アプリの削除処理中にエラーが発生しました。\n${errorMessage}`);
         await AuthModule.sendErrorLog(API_CONFIG, "詳細画面での削除処理", errorMessage);
         return event;        
       }
@@ -498,8 +497,9 @@
       } catch (error) {
         const errorMessage = error?.message;
         console.error('一覧画面での削除処理エラー:', error?.message || 'エラー詳細不明');
-        alert(`プラグインエラー：一覧画面での削除処理中にエラーが発生しました。\n${errorMessage}`);
+        alert(`プラグインエラー：更新先アプリの削除処理中にエラーが発生しました。\n${errorMessage}`);
         await AuthModule.sendErrorLog(API_CONFIG, "一覧画面での削除処理", errorMessage);
+        return event; 
       }
       return event;
     });
