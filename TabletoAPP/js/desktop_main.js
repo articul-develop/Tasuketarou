@@ -470,7 +470,7 @@
           //return event;//20250312
         }
       }
-      if (hasError) {
+      if (!hasError) {
         showSuccessMessage(`${targetAppName}への更新が正常に完了しました`);
       }
       return event;
