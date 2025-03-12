@@ -127,9 +127,7 @@
             headers: { 'X-Cybozu-API-Token': apiToken },
           });
 
-          /*20250312
-          if (!deleteResponse.ok) continue; // エラー時はスキップ
-          */
+
           if (!deleteResponse.ok) {
             // エラー時はエラー情報を取得して例外をスローする
             const errorData = await deleteResponse.json();
@@ -156,17 +154,15 @@
             console.error('削除リクエストエラー:', errorData);
 
             const userFriendlyMessage = parseApiErrors(errorData);
-            //alert(`プラグインエラー：更新先アプリの削除リクエスト時にエラーが発生しました\n${userFriendlyMessage}`);//20250312
             await AuthModule.sendErrorLog(API_CONFIG, "削除リクエスト", JSON.stringify(errorData));
-            throw new Error(userFriendlyMessage);//20250312
+            throw new Error(userFriendlyMessage);
           }
         }
       } catch (error) {
         console.error('削除処理中のエラー:', error?.message || 'エラー詳細不明');
         const errorMessage = error?.message || '削除処理中に予期しないエラーが発生しました。';
-        //alert(`プラグインエラー：更新先アプリの削除処理中にエラーが発生しました。\n${errorMessage}`);//20250312
         await AuthModule.sendErrorLog(API_CONFIG, "削除処理中", errorMessage);
-        throw error;//20250312
+        throw error;
       }
     }
 
@@ -204,7 +200,7 @@
     ];
 
     kintone.events.on(saveEvents, async function (event) {
-      let hasError = false; //20250312 
+      let hasError = false; 
       const record = event.record;
 
       // レコード番号を6桁にフォーマット（前ゼロ付与）
@@ -297,7 +293,7 @@
         const errorMessage = error?.message;
         alert(`プラグインエラー：当アプリの更新キー項目の更新に失敗しました。\n${errorMessage}`);
         await AuthModule.sendErrorLog(API_CONFIG, "当アプリの更新キー項目更新", errorMessage);
-        hasError = true;//20250312
+        hasError = true;
         //return event;
       }
 
@@ -309,7 +305,7 @@
           const errorMessage = error?.message;
           alert(`プラグインエラー：削除処理中にエラーが発生しました。\n${errorMessage}`);
           await AuthModule.sendErrorLog(API_CONFIG, "削除処理中(削除された行)", errorMessage);
-          hasError = true;//20250312
+          hasError = true;
         } 
       }
 
@@ -345,8 +341,7 @@
           const userFriendlyMessage = parseApiErrors(errorData);
           alert(`プラグインエラー：更新先アプリからレコードを取得できませんでした。\n${userFriendlyMessage}`);
           await AuthModule.sendErrorLog(API_CONFIG, "更新先アプリのレコード取得", JSON.stringify(errorData));
-          hasError = true;//20250312
-          //return event;//20250312
+          hasError = true;
         }
 
         const targetRecords = (await response.json()).records;
@@ -388,8 +383,7 @@
         const errorMessage = error?.message;
         alert(`プラグインエラー：更新処理に失敗しました。\n${errorMessage}`);
         await AuthModule.sendErrorLog(API_CONFIG, "更新処理", errorMessage);
-        hasError = true;//20250312
-        //return event;//20250312
+        hasError = true;
       }
 
 
@@ -422,14 +416,14 @@
             const userFriendlyMessage = parseApiErrors(errorData);
             alert(`プラグインエラー：更新先アプリへの更新に失敗しました。\n${userFriendlyMessage}`);
             await AuthModule.sendErrorLog(API_CONFIG, "更新先アプリの更新", JSON.stringify(errorData));
-            hasError = true;//20250312
+            hasError = true;
           }
 
         } catch (error) {
           const errorMessage = error?.message;
           alert(`プラグインエラー：更新先アプリへの通信に失敗しました。\n${errorMessage}`);
           await AuthModule.sendErrorLog(API_CONFIG, "更新先アプリの通信", errorMessage);
-          hasError = true;//20250312
+          hasError = true;
         }
       }
 
@@ -457,7 +451,7 @@
 
             // エラー発生時に自アプリの採番済み行識別子をクリア
             await revertRowIdentifiers(recordNumber, tableRecords, newIdentifierIndexes);
-            hasError = true;//20250312
+            hasError = true;
           }
         } catch (error) {
           const errorMessage = error?.message;
@@ -466,8 +460,7 @@
 
           // エラー発生時に自アプリの採番済み行識別子をクリア
           await revertRowIdentifiers(recordNumber, tableRecords, newIdentifierIndexes);
-          hasError = true;//20250312
-          //return event;//20250312
+          hasError = true;
         }
       }
       if (!hasError) {
@@ -483,7 +476,7 @@
     //5.削除
     // レコード削除時（詳細画面）
     kintone.events.on(['app.record.detail.delete.submit', 'mobile.app.record.detail.delete.submit'], async function (event) {
-      let hasError = false; //20250312    
+      let hasError = false; 
       try {
         await deleteRecordsByIdentifiers(
           event.record[tableFieldCode]?.value.map(row => row.value[ROW_IDENTIFIER_FIELD].value || ''),
@@ -491,24 +484,23 @@
           targetAppId,
           apiToken
         );
-        //showSuccessMessage(`${targetAppName}の対象レコードを正常に削除しました。`);//20250312
       } catch (error) {
         const errorMessage = error?.message;
         console.error('詳細画面での削除処理エラー:', error?.message || 'エラー詳細不明');
         alert(`プラグインエラー：更新先アプリの削除処理中にエラーが発生しました。\n${errorMessage}`);
         await AuthModule.sendErrorLog(API_CONFIG, "詳細画面での削除処理", errorMessage);
-        hasError = true; //20250312     
+        hasError = true;    
       }
       if (!hasError) {
         showSuccessMessage(`${targetAppName}の対象レコードを正常に削除しました。`);
-      }//20250312
+      }
 
       return event;
     });
 
     // レコード削除時（一覧画面）
     kintone.events.on(['app.record.index.delete.submit', 'mobile.app.record.index.delete.submit'], async function (event) {
-      let hasError = false; //20250312 
+      let hasError = false; 
       try {
         await deleteRecordsByIdentifiers(
           event.record[tableFieldCode]?.value.map(row => row.value[ROW_IDENTIFIER_FIELD].value || ''),
@@ -516,17 +508,17 @@
           targetAppId,
           apiToken
         );
-       // showSuccessMessage(`${targetAppName}の対象レコードを正常に削除しました。`);//20250312
+
       } catch (error) {
         const errorMessage = error?.message;
         console.error('一覧画面での削除処理エラー:', error?.message || 'エラー詳細不明');
         alert(`プラグインエラー：更新先アプリの削除処理中にエラーが発生しました。\n${errorMessage}`);
         await AuthModule.sendErrorLog(API_CONFIG, "一覧画面での削除処理", errorMessage);
-        hasError = true; //20250312   
+        hasError = true;  
       }
       if (!hasError) {
         showSuccessMessage(`${targetAppName}の対象レコードを正常に削除しました。`);
-      }//20250312
+      }
       return event;
     });
 
