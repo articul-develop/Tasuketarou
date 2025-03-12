@@ -149,7 +149,7 @@
             console.error('削除リクエストエラー:', errorData);
 
             const userFriendlyMessage = parseApiErrors(errorData);
-            alert(`プラグインエラー：削除リクエスト時にエラーが発生しました\n${userFriendlyMessage}`);
+            alert(`プラグインエラー：更新先アプリの削除リクエスト時にエラーが発生しました\n${userFriendlyMessage}`);
             await AuthModule.sendErrorLog(API_CONFIG, "削除リクエスト", JSON.stringify(errorData));
 
 
@@ -158,7 +158,7 @@
       } catch (error) {
         console.error('削除処理中のエラー:', error?.message || 'エラー詳細不明');
         const errorMessage = error?.message || '削除処理中に予期しないエラーが発生しました。';
-        alert(`プラグインエラー：削除処理中にエラーが発生しました。\n${errorMessage}`);
+        alert(`プラグインエラー：更新先アプリの削除処理中にエラーが発生しました。\n${errorMessage}`);
         await AuthModule.sendErrorLog(API_CONFIG, "削除処理中", errorMessage);
       }
     }
