@@ -204,6 +204,7 @@
     ];
 
     kintone.events.on(saveEvents, async function (event) {
+      let hasError = false; //20250312 
       const record = event.record;
 
       // レコード番号を6桁にフォーマット（前ゼロ付与）
@@ -296,18 +297,20 @@
         const errorMessage = error?.message;
         alert(`プラグインエラー：当アプリの更新キー項目の更新に失敗しました。\n${errorMessage}`);
         await AuthModule.sendErrorLog(API_CONFIG, "当アプリの更新キー項目更新", errorMessage);
-        return event;
+        hasError = true;//20250312
+        //return event;
       }
 
       // 2. 削除された行を更新先アプリから削除
-      if (deletedIdentifiers.length > 0) {
+      if ( deletedIdentifiers.length > 0) {
         try {
           await deleteRecordsByIdentifiers(deletedIdentifiers, targetUrl, targetAppId, apiToken);
         } catch (error) {
           const errorMessage = error?.message;
           alert(`プラグインエラー：削除処理中にエラーが発生しました。\n${errorMessage}`);
           await AuthModule.sendErrorLog(API_CONFIG, "削除処理中(削除された行)", errorMessage);
-        }
+          hasError = true;//20250312
+        } 
       }
 
 
@@ -342,7 +345,8 @@
           const userFriendlyMessage = parseApiErrors(errorData);
           alert(`プラグインエラー：更新先アプリからレコードを取得できませんでした。\n${userFriendlyMessage}`);
           await AuthModule.sendErrorLog(API_CONFIG, "更新先アプリのレコード取得", JSON.stringify(errorData));
-          return event;
+          hasError = true;//20250312
+          //return event;//20250312
         }
 
         const targetRecords = (await response.json()).records;
@@ -384,7 +388,8 @@
         const errorMessage = error?.message;
         alert(`プラグインエラー：更新処理に失敗しました。\n${errorMessage}`);
         await AuthModule.sendErrorLog(API_CONFIG, "更新処理", errorMessage);
-        return event;
+        hasError = true;//20250312
+        //return event;//20250312
       }
 
 
@@ -417,12 +422,14 @@
             const userFriendlyMessage = parseApiErrors(errorData);
             alert(`プラグインエラー：更新先アプリへの更新に失敗しました。\n${userFriendlyMessage}`);
             await AuthModule.sendErrorLog(API_CONFIG, "更新先アプリの更新", JSON.stringify(errorData));
+            hasError = true;//20250312
           }
 
         } catch (error) {
           const errorMessage = error?.message;
           alert(`プラグインエラー：更新先アプリへの通信に失敗しました。\n${errorMessage}`);
           await AuthModule.sendErrorLog(API_CONFIG, "更新先アプリの通信", errorMessage);
+          hasError = true;//20250312
         }
       }
 
@@ -450,6 +457,7 @@
 
             // エラー発生時に自アプリの採番済み行識別子をクリア
             await revertRowIdentifiers(recordNumber, tableRecords, newIdentifierIndexes);
+            hasError = true;//20250312
           }
         } catch (error) {
           const errorMessage = error?.message;
@@ -458,10 +466,13 @@
 
           // エラー発生時に自アプリの採番済み行識別子をクリア
           await revertRowIdentifiers(recordNumber, tableRecords, newIdentifierIndexes);
-          return event;
+          hasError = true;//20250312
+          //return event;//20250312
         }
       }
-      showSuccessMessage(`${targetAppName}への更新が正常に完了しました`);
+      if (hasError) {
+        showSuccessMessage(`${targetAppName}への更新が正常に完了しました`);
+      }
       return event;
 
     });
