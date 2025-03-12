@@ -480,7 +480,7 @@
           targetAppId,
           apiToken
         );
-        showSuccessMessage(`${targetAppName}の対象レコードを正常に削除しました。`);
+        //showSuccessMessage(`${targetAppName}の対象レコードを正常に削除しました。`);//20250312
       } catch (error) {
         const errorMessage = error?.message;
         console.error('詳細画面での削除処理エラー:', error?.message || 'エラー詳細不明');
@@ -497,6 +497,7 @@
 
     // レコード削除時（一覧画面）
     kintone.events.on(['app.record.index.delete.submit', 'mobile.app.record.index.delete.submit'], async function (event) {
+      let hasError = false; //20250312 
       try {
         await deleteRecordsByIdentifiers(
           event.record[tableFieldCode]?.value.map(row => row.value[ROW_IDENTIFIER_FIELD].value || ''),
@@ -504,13 +505,17 @@
           targetAppId,
           apiToken
         );
-        showSuccessMessage(`${targetAppName}の対象レコードを正常に削除しました。`);
+       // showSuccessMessage(`${targetAppName}の対象レコードを正常に削除しました。`);//20250312
       } catch (error) {
         const errorMessage = error?.message;
         console.error('一覧画面での削除処理エラー:', error?.message || 'エラー詳細不明');
         alert(`プラグインエラー：更新先アプリの削除処理中にエラーが発生しました。\n${errorMessage}`);
         await AuthModule.sendErrorLog(API_CONFIG, "一覧画面での削除処理", errorMessage);
+        hasError = true; //20250312   
       }
+      if (!hasError) {
+        showSuccessMessage(`${targetAppName}の対象レコードを正常に削除しました。`);
+      }//20250312
       return event;
     });
 
