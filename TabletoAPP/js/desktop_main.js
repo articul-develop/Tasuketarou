@@ -127,7 +127,14 @@
             headers: { 'X-Cybozu-API-Token': apiToken },
           });
 
+          /*20250312
           if (!deleteResponse.ok) continue; // エラー時はスキップ
+          */
+          if (!deleteResponse.ok) {
+            // エラー時はエラー情報を取得して例外をスローする
+            const errorData = await deleteResponse.json();
+            throw new Error(`GETリクエストエラー: ${JSON.stringify(errorData)}`);
+          }
 
           const deleteRecords = (await deleteResponse.json()).records;
           deleteRecords.forEach(record => idsToDelete.push(record.$id.value));
@@ -151,8 +158,7 @@
             const userFriendlyMessage = parseApiErrors(errorData);
             alert(`プラグインエラー：更新先アプリの削除リクエスト時にエラーが発生しました\n${userFriendlyMessage}`);
             await AuthModule.sendErrorLog(API_CONFIG, "削除リクエスト", JSON.stringify(errorData));
-
-
+            throw new Error(userFriendlyMessage);//20250312
           }
         }
       } catch (error) {
@@ -160,6 +166,7 @@
         const errorMessage = error?.message || '削除処理中に予期しないエラーが発生しました。';
         alert(`プラグインエラー：更新先アプリの削除処理中にエラーが発生しました。\n${errorMessage}`);
         await AuthModule.sendErrorLog(API_CONFIG, "削除処理中", errorMessage);
+        throw error;//20250312
       }
     }
 
