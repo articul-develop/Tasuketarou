@@ -480,6 +480,7 @@
         console.error('詳細画面での削除処理エラー:', error?.message || 'エラー詳細不明');
         alert(`プラグインエラー：詳細画面での削除処理中にエラーが発生しました。\n${errorMessage}`);
         await AuthModule.sendErrorLog(API_CONFIG, "詳細画面での削除処理", errorMessage);
+        return event;        
       }
       return event;
     });
