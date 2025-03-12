@@ -61,7 +61,6 @@
     })();
 
     function showSuccessMessage(message) {
-      console.log('完了メッセージ表示：', config.suppressSuccessMessage);
       if (config.suppressSuccessMessage !== 'true') {
         alert(message);
       }

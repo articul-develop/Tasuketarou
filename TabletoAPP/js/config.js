@@ -15,7 +15,7 @@
     hideKeyFieldCheckbox.checked = config.hideKeyField === 'true';
     //完了メッセージ非表示のチェックボックスの初期値を設定
     const suppressSuccessMessageCheckbox = document.getElementById('suppressSuccessMessage');
-    suppressSuccessMessageCheckbox.checked = config.suppressSuccessMessage === 'false';
+    suppressSuccessMessageCheckbox.checked = config.suppressSuccessMessage === 'true';
 
     // targetAppId の設定
     const targetAppSelect = document.querySelector('select[name="targetAppId"]');
