@@ -201,32 +201,7 @@
                 //20250513 edit>>
                 const records = await fetchAllRecords(appId);
                 const recordCount = records.length;
-/*
-                const rawQuery = kintone.app.getQuery();
-                const cleanedQuery = rawQuery.replace(/\s*limit\s+\d+\s+offset\s+\d+$/i, '').trim();
-                const records = await fetchFilteredRecords(appId, cleanedQuery);
-                // <<20250513 
 
-
-                // --- fetchFilteredRecords 20250513>>
-                async function fetchFilteredRecords(appId, query) {
-                    const limit = 100;
-                    let offset = 0;
-                    const all = [];
-                    while (true) {
-                        const resp = await kintone.api(
-                            kintone.api.url('/k/v1/records', true),
-                            'GET',
-                            { app: appId, query: `${query} limit ${limit} offset ${offset}` }
-                        );
-                        all.push(...resp.records);
-                        if (resp.records.length < limit) break;
-                        offset += limit;
-                    }
-                    return all;
-                }
-                // --- <<fetchFilteredRecords 20250513
-                */
                 
                 if (!confirm(`全件のレコード（${recordCount}件）の添付ファイルを削除します。よろしいですか？`)) {
                     return;
