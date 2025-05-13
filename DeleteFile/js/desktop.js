@@ -200,8 +200,9 @@
                 // 絞り込みした全件取得
                 //20250513 edit>>
                 //const records = await fetchAllRecords(appId);
-                const currentQuery = kintone.app.getQuery();
-                const records = await fetchFilteredRecords(appId, currentQuery);
+                const rawQuery = kintone.app.getQuery();
+                const cleanedQuery = rawQuery.replace(/\s*limit\s+\d+\s+offset\s+\d+$/i, '').trim();
+                const records = await fetchFilteredRecords(appId, cleanedQuery);
                 // <<20250513 
                 const recordCount = records.length;
 
