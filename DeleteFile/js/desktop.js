@@ -188,12 +188,12 @@
             return allRecords;
         }
 
-        // --- fetchFilteredRecords 20250513>>
+        // --- fetchFilteredRecords 20250514>>
         async function fetchFilteredRecords(appId, query) {
             const limit = 100;
             let offset = 0;
             const all = [];
-            console.log('【デバッグ】fetchFilteredRecords: appId:', appId, 'query:', query);
+            //console.log('【デバッグ】fetchFilteredRecords: appId:', appId, 'query:', query);
             while (true) {
                 const resp = await kintone.api(
                     kintone.api.url('/k/v1/records', true),
@@ -206,7 +206,7 @@
             }
             return all;
         }
-        // --- <<fetchFilteredRecords 20250513
+        // --- <<fetchFilteredRecords 20250514
 
 
         // ボタンクリック時の処理
@@ -214,25 +214,16 @@
 
 
             try {
-                /*
-                const records = event.records;
-                */
                 const appId = kintone.app.getId();
                 // 絞り込みした全件取得
-                //20250513 edit>>
+                //20250514 edit>>
                 //const records = await fetchAllRecords(appId);
 
                 // ── 修正後：画面上・ビューの絞り込み条件を取得し、limit/offset を除去してからフェッチ
                 const rawQuery = kintone.app.getQuery();
-                console.log('【デバッグ】rawQuery:', rawQuery);
-                // limit と offset 部分を取り除く
                 const cleanedQuery = rawQuery.replace(/\s*limit\s+\d+\s+offset\s+\d+$/i, '').trim();
-                console.log('【デバッグ】cleanedQuery:', cleanedQuery);
-                // 本当に絞り込みが効いているか確認
                 const records = await fetchFilteredRecords(appId, cleanedQuery);
-                console.log(`【デバッグ】取得レコード数: ${records.length} 件, クエリ: "${cleanedQuery}"`);
-
-                //<<20250513 edit
+                //<<20250514 edit
 
                 const recordCount = records.length;
 
