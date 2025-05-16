@@ -193,7 +193,7 @@
             const limit = 100;
             let offset = 0;
             const all = [];
-            //console.log('【デバッグ】fetchFilteredRecords: appId:', appId, 'query:', query);
+            //console.log('fetchFilteredRecords: appId:', appId, 'query:', query);
             while (true) {
                 const resp = await kintone.api(
                     kintone.api.url('/k/v1/records', true),
