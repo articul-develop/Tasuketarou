@@ -45,7 +45,7 @@
         if (headerSpace && !headerSpace.querySelector('.custom-header-text')) {
           const customText = document.createElement('div');
           customText.className = 'custom-header-text';
-          customText.textContent = `ランダム文字列生成プラグイン　お試し期間中（～${trialEndDateStr.slice(0, 4)}/${trialEndDateStr.slice(4, 6)}/${trialEndDateStr.slice(6, 8)}）`;
+          customText.textContent = `プラグイン　お試し期間中（～${trialEndDateStr.slice(0, 4)}/${trialEndDateStr.slice(4, 6)}/${trialEndDateStr.slice(6, 8)}）`;
           customText.style.marginLeft = '10px';
           customText.style.fontSize = '16px';
           customText.style.color = 'blue';
