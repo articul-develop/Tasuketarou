@@ -1,114 +1,164 @@
-/* ==================================================
- *  Filter Condition Display Plugin – desktop_main.js
- *  (PC / Mobile 共通)
- * ==================================================*/
+
 ((PLUGIN_ID) => {
   'use strict';
 
-  // --------------------------------------------
-  // 0. 認証チェック（desktop_auth.js が定義）
-  // --------------------------------------------
-  if (window.isAuthenticated && !window.isAuthenticated()) {
-    // 認証 NG の場合は何もしない
-    return;
-  }
+  /* ------------------ 1. ユーティリティ ------------------ */
+  const isMobileEvent = (t) => t && t.startsWith('mobile.');
 
-  /** ----------------------------------------------------------
-   *  1. ユーティリティ
-   * -----------------------------------------------------------*/
-
-  /** PC / モバイル判定 */
-  function detectMobile(evtType) {
-    if (evtType && evtType.indexOf('mobile.') === 0) return true; // イベント名が mobile.*
-    return location.pathname.indexOf('/k/m/') === 0;              // URL に /k/m/ が含まれる
-  }
-
-  /** フィールド {コード:名称} マップ取得 */
+  // フィールドコード → ラベルのマッピングを取得
   function fetchFieldMap(appId) {
     return kintone.api(kintone.api.url('/k/v1/app/form/fields', true), 'GET', { app: appId })
-      .then(function (resp) {
-        var map = {};
-        (function traverse(props) {
-          Object.keys(props).forEach(function (key) {
-            var p = props[key];
+      .then(({ properties }) => {
+        const map = {};
+        (function walk(obj) {
+          Object.keys(obj).forEach((k) => {
+            const p = obj[k];
             map[p.code] = p.label || p.code;
-            if (p.type === 'SUBTABLE' && p.fields) traverse(p.fields);
+            if (p.type === 'SUBTABLE') walk(p.fields);
           });
-        })(resp.properties);
+        })(properties);
         return map;
       });
   }
 
-  /** コード → 名称へ置換（日本語コード対応） */
-  function replaceCodes(cond, map) {
-    if (!cond) return '';
+  // 抽出条件中のフィールドコードを日本語ラベルへ置換
+  function replaceCodes(expr, map) {
+    if (!expr) return '';
     Object.keys(map)
-      .sort(function (a, b) { return b.length - a.length; }) // 長いコードから順に置換
-      .forEach(function (code) {
-        var esc = code.replace(/[-/\\^$*+?.()|[\\]{}]/g, '\\$&');
-        var reg = new RegExp('(^|[^\\\w])(' + esc + ')(?=[^\\\w]|$)', 'g');
-        cond = cond.replace(reg, function (match, pre) { return pre + map[code]; });
+      .sort((a, b) => b.length - a.length)
+      .forEach((code) => {
+        const esc = code.replace(/[-/\\^$*+?.()|[\\]{}]/g, '\\$&');
+        expr = expr.replace(new RegExp(`(^|[^\\w])(${esc})(?=[^\\w]|$)`, 'g'), (m, pre) => pre + map[code]);
       });
-    return cond;
+    return expr;
   }
 
-  /** コンテナ生成（ヘッダ領域 or ボディ先頭） */
-  function getContainer(isMobile) {
-    var id = isMobile ? 'filter-cond-mobile' : 'filter-cond';
-    var el = document.getElementById(id);
+  // イベントオブジェクトから生の抽出条件文字列を取得
+  function getRawCondition(evt, appApi) {
+    // レポートビュー（グラフ／ピボット）
+    if (evt.type.includes('.report.') && evt.report) {
+      const cond = (evt.report.filterCond || '').replace(/ order .*/i, '');
+      if (cond) return cond;
+    }
+    // 一覧ビューまたはクエリ付きレポート
+    if (typeof evt.query === 'string' && evt.query) {
+      return evt.query.replace(/ order .*/i, '');
+    }
+    // 保存されている条件
+    const saved = appApi.getQueryCondition && appApi.getQueryCondition();
+    return saved ? saved.replace(/ order .*/i, '') : '';
+  }
+
+  /* ---------- 2. コンテナ生成と配置 ---------- */
+  function createContainer(id) {
+    const el = document.createElement('div');
+    el.id = id;
+    el.style.cssText = [
+      'padding:4px 8px',
+      'font-size:85%',
+      'background:#f5f5f5',
+      'border-radius:4px',
+      'margin:4px 0',
+      'white-space:pre-wrap',
+      'max-width:100%',
+      // ヘッダーが取得できない場合のフォールバック（画面上部に固定表示）
+      'position:sticky',
+      'top:0',
+      // ビュー切替ドロップダウン（z-index:100）より下に配置
+      'z-index:1',
+      // クリック操作を透過させる
+      'pointer-events:none'
+    ].join(';');
+    return el;
+  }
+
+  // レポートヘッダーの候補を広くカバーするセレクタ
+  const HEADER_SELECTORS = [
+    '.gaia-argoui-app-report-header',
+    '.gaia-argoui-app-report-title',
+    '.gaia-argoui-app-report-toolbar',
+    '[class*="app-report"][class*="header"]',
+    '[class*="app-report"][class*="toolbar"]'
+  ].join(',');
+
+  function findReportHeader() {
+    return document.querySelector(HEADER_SELECTORS);
+  }
+
+  // ヘッダーが存在すればコンテナを移動
+  function moveToHeader(container) {
+    const header = findReportHeader();
+    if (header && !header.contains(container)) header.prepend(container);
+  }
+
+  // ヘッダー生成を監視し、生成されたら移動
+  function observeHeader(container) {
+    if (findReportHeader()) return moveToHeader(container);
+    const obs = new MutationObserver(() => {
+      if (findReportHeader()) {
+        moveToHeader(container);
+        obs.disconnect();
+      }
+    });
+    obs.observe(document.body, { childList: true, subtree: true });
+  }
+
+  // コンテナを適切な場所に配置
+  function placeContainer(isMobile, isReport) {
+    const id = isMobile ? 'filter-cond-mobile' : 'filter-cond';
+    let el = document.getElementById(id);
     if (el) return el;
 
-    el = document.createElement('div');
-    el.id = id;
-    el.style.cssText = 'padding:4px 8px;font-size:85%;background:#f5f5f5;border-radius:4px;margin:4px 0;white-space:pre-wrap;';
+    el = createContainer(id);
+    const appApi = isMobile ? kintone.mobile.app : kintone.app;
+    const listHeader = appApi.getHeaderSpaceElement && appApi.getHeaderSpaceElement();
 
-    var headSpace = (isMobile ? kintone.mobile.app : kintone.app).getHeaderSpaceElement();
-    if (headSpace) {
-      headSpace.appendChild(el);
+    if (listHeader) {
+      // 一覧ビューのヘッダーへ
+      listHeader.prepend(el);
+    } else if (isReport) {
+      // レポートビュー：一旦 body に置き、ヘッダー出現を待つ
+      document.body.prepend(el);
+      observeHeader(el);
     } else {
-      document.body.insertBefore(el, document.body.firstChild);
+      document.body.prepend(el);
     }
     return el;
   }
 
-  /** 抽出条件を可読化して表示 */
-  function render(event) {
-    // 認証が途中で失効していないか都度チェック
-    if (window.isAuthenticated && !window.isAuthenticated()) return event;
+  /* ------------------- 3. レンダリング ------------------ */
+  function render(evt) {
+    if (window.isAuthenticated && !window.isAuthenticated()) return evt;
 
-    var isMobile = detectMobile(event.type);
-    var appApi   = isMobile ? kintone.mobile.app : kintone.app;
+    const isMobile = isMobileEvent(evt.type);
+    const isReport = evt.type.includes('.report.');
+    const appApi   = isMobile ? kintone.mobile.app : kintone.app;
 
-    // event.query がある場合はそれを使用（レポートなど）
-    var raw = typeof event.query === 'string'
-      ? event.query.replace(/ order .*/i, '')
-      : appApi.getQueryCondition();
+    const raw = getRawCondition(evt, appApi);
+    const box = placeContainer(isMobile, isReport);
 
-    var box = getContainer(isMobile);
     if (!raw) {
       box.textContent = '抽出条件は設定されていません';
-      return event;
+      return evt;
     }
 
     fetchFieldMap(appApi.getId())
-      .then(function (map) {
+      .then((map) => {
         box.textContent = '抽出条件: ' + replaceCodes(raw, map);
       })
-      .catch(function () {
-        box.textContent = '抽出条件: ' + raw; // フォールバック
+      .catch(() => {
+        box.textContent = '抽出条件: ' + raw;
       });
 
-    return event;
+    return evt;
   }
 
-  /** 2. イベント登録（PC / モバイル） */
-  var evts = [
+  /* ---------------- 4. イベント登録 ------------------ */
+  kintone.events.on([
     'app.record.index.show',
     'app.report.show',
     'mobile.app.record.index.show',
     'mobile.app.report.show'
-  ];
-
-  kintone.events.on(evts, render);
+  ], render);
 
 })(kintone.$PLUGIN_ID);
