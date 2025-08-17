@@ -26,45 +26,26 @@
 let fields = [];
 
 try {
-  // もとの取得
+  // 通常のフィールド取得
   fields = await KintoneConfigHelper.getFields(['SINGLE_LINE_TEXT', 'NUMBER']);
 
-  // --- 追加：レイアウトAPIからサブテーブル内フィールドのcodeを収集し除外 ---
-  const app = kintone.app.getId();
-  const res = await kintone.api(
-    kintone.api.url('/k/v1/app/form/layout', true),
-    'GET',
-    { app }
-  );
+  // フォーム情報を取得
+  const formFields = await kintone.api(kintone.api.url('/k/v1/app/form/fields', true), 'GET', {
+    app: kintone.app.getId()
+  });
 
-  /** @type {Set<string>} */
+  // サブテーブル内のフィールドコードを収集
   const subtableFieldCodes = new Set();
-
-  // レイアウトを走査して SUBTABLE の内側の各フィールドの code を集める
-  (function collect(blocks) {
-    for (const b of (blocks || [])) {
-      if (!b) continue;
-
-      if (b.type === 'ROW') {
-        for (const f of (b.fields || [])) {
-          if (f && f.type === 'SUBTABLE') {
-            for (const sf of (f.fields || [])) {
-              if (sf && sf.code) subtableFieldCodes.add(sf.code);
-            }
-          }
-        }
-      } else if (b.type === 'GROUP') {
-        // グループ配下も再帰
-        collect(b.layout || []);
-      }
-      // ここで SUBTABLE を個別に再帰する必要は基本なし
-      // （kintoneのレイアウトでは SUBTABLE はROW配下のfieldとして出る）
+  Object.values(formFields.properties).forEach(field => {
+    if (field.type === 'SUBTABLE') {
+      Object.values(field.fields).forEach(subField => {
+        subtableFieldCodes.add(subField.code);
+      });
     }
-  })(res.layout || []);
+  });
 
-  // 取得済みfieldsからサブテーブル内のcodeを除外
-  fields = fields.filter(f => !subtableFieldCodes.has(f.code));
-  // --- 追加ここまで ---
+  // サブテーブル内のフィールドを除外
+  fields = fields.filter(field => !subtableFieldCodes.has(field.code));
 
   // 以降、セレクトに詰める処理はそのまま
   fields.forEach((field) => {
