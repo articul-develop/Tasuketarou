@@ -28,24 +28,32 @@ let fields = [];
 try {
   // 通常のフィールド取得
   fields = await KintoneConfigHelper.getFields(['SINGLE_LINE_TEXT', 'NUMBER']);
+  console.log('KintoneConfigHelperで取得したフィールド:', fields);
 
   // フォーム情報を取得
   const formFields = await kintone.api(kintone.api.url('/k/v1/app/form/fields', true), 'GET', {
     app: kintone.app.getId()
   });
+  console.log('APIで取得したフォーム情報:', formFields);
 
   // サブテーブル内のフィールドコードを収集
   const subtableFieldCodes = new Set();
   Object.values(formFields.properties).forEach(field => {
     if (field.type === 'SUBTABLE') {
+      console.log('サブテーブルフィールド検出:', field);
       Object.values(field.fields).forEach(subField => {
+        console.log('サブテーブル内のフィールド:', subField);
         subtableFieldCodes.add(subField.code);
       });
     }
   });
+  console.log('除外対象のフィールドコード:', Array.from(subtableFieldCodes));
 
   // サブテーブル内のフィールドを除外
-  fields = fields.filter(field => !subtableFieldCodes.has(field.code));
+  const filteredFields = fields.filter(field => !subtableFieldCodes.has(field.code));
+  console.log('フィルタリング後のフィールド:', filteredFields);
+
+  fields = filteredFields;
 
   // 以降、セレクトに詰める処理はそのまま
   fields.forEach((field) => {
