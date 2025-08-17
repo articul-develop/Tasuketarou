@@ -23,26 +23,57 @@
   // -----------------------------
   // 3. フィールド一覧を取得して <select> に反映
   // -----------------------------
-  let fields = [];
+let fields = [];
 
-  try {
-    // 例と同じユーティリティを使用（SINGLE_LINE_TEXT / NUMBER を対象）
-    fields = await KintoneConfigHelper.getFields(['SINGLE_LINE_TEXT', 'NUMBER']);
+try {
+  fields = await KintoneConfigHelper.getFields(['SINGLE_LINE_TEXT', 'NUMBER']);
 
-    // サブテーブル内のフィールドを除外
-    fields = fields.filter(field => !field.$parent); // $parentがあればサブテーブル内
+  // ---- ここから追加：レイアウトAPIでサブテーブル内フィールドを特定して除外 ----
+  const app = kintone.app.getId();
+  const layout = await kintone.api(
+    kintone.api.url('/k/v1/app/form/layout', true),
+    'GET',
+    { app }
+  );
 
-    fields.forEach((field) => {
-      const opt = document.createElement('option');
-      opt.value = field.code;
-      opt.textContent = `${field.label} (${field.code})`;
-      if (field.code === revField) opt.selected = true; // 既存設定があれば初期選択
-      revFieldSelect.appendChild(opt);
-    });
-  } catch (err) {
-    console.error('Error fetching fields:', err);
-    alert('対象フィールドの取得に失敗しました。');
-  }
+  // レイアウトを走査してサブテーブル内のフィールドコードを集める
+  const subtableFieldCodes = new Set();
+
+  const walk = (blocks) => {
+    for (const b of (blocks || [])) {
+      if (!b) continue;
+      if (b.type === 'ROW') {
+        for (const f of (b.fields || [])) {
+          if (f && f.type === 'SUBTABLE') {
+            for (const sf of (f.fields || [])) {
+              if (sf && sf.code) subtableFieldCodes.add(sf.code);
+            }
+          }
+        }
+      } else if (b.type === 'GROUP') {
+        // グループ内も再帰
+        walk(b.layout || []);
+      }
+    }
+  };
+  walk(layout.layout || []);
+
+  // KintoneConfigHelper が flatten 済みでも、コード一致で除外できる
+  fields = fields.filter(field => !subtableFieldCodes.has(field.code));
+
+
+  revFieldSelect.innerHTML = ''; // 念のためクリア
+  fields.forEach((field) => {
+    const opt = document.createElement('option');
+    opt.value = field.code;
+    opt.textContent = `${field.label} (${field.code})`;
+    if (field.code === revField) opt.selected = true; // 既存設定があれば初期選択
+    revFieldSelect.appendChild(opt);
+  });
+} catch (err) {
+  console.error('Error fetching fields:', err);
+  alert('対象フィールドの取得に失敗しました。');
+}
 
   // -----------------------------
   // 4. 保存ボタン
