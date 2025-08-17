@@ -26,22 +26,25 @@
 let fields = [];
 
 try {
+  // もとの取得
   fields = await KintoneConfigHelper.getFields(['SINGLE_LINE_TEXT', 'NUMBER']);
 
-  // ---- ここから追加：レイアウトAPIでサブテーブル内フィールドを特定して除外 ----
+  // --- 追加：レイアウトAPIからサブテーブル内フィールドのcodeを収集し除外 ---
   const app = kintone.app.getId();
-  const layout = await kintone.api(
+  const res = await kintone.api(
     kintone.api.url('/k/v1/app/form/layout', true),
     'GET',
     { app }
   );
 
-  // レイアウトを走査してサブテーブル内のフィールドコードを集める
+  /** @type {Set<string>} */
   const subtableFieldCodes = new Set();
 
-  const walk = (blocks) => {
+  // レイアウトを走査して SUBTABLE の内側の各フィールドの code を集める
+  (function collect(blocks) {
     for (const b of (blocks || [])) {
       if (!b) continue;
+
       if (b.type === 'ROW') {
         for (const f of (b.fields || [])) {
           if (f && f.type === 'SUBTABLE') {
@@ -51,29 +54,31 @@ try {
           }
         }
       } else if (b.type === 'GROUP') {
-        // グループ内も再帰
-        walk(b.layout || []);
+        // グループ配下も再帰
+        collect(b.layout || []);
       }
+      // ここで SUBTABLE を個別に再帰する必要は基本なし
+      // （kintoneのレイアウトでは SUBTABLE はROW配下のfieldとして出る）
     }
-  };
-  walk(layout.layout || []);
+  })(res.layout || []);
 
-  // KintoneConfigHelper が flatten 済みでも、コード一致で除外できる
-  fields = fields.filter(field => !subtableFieldCodes.has(field.code));
+  // 取得済みfieldsからサブテーブル内のcodeを除外
+  fields = fields.filter(f => !subtableFieldCodes.has(f.code));
+  // --- 追加ここまで ---
 
-
-  revFieldSelect.innerHTML = ''; // 念のためクリア
+  // 以降、セレクトに詰める処理はそのまま
   fields.forEach((field) => {
     const opt = document.createElement('option');
     opt.value = field.code;
     opt.textContent = `${field.label} (${field.code})`;
-    if (field.code === revField) opt.selected = true; // 既存設定があれば初期選択
+    if (field.code === revField) opt.selected = true;
     revFieldSelect.appendChild(opt);
   });
 } catch (err) {
   console.error('Error fetching fields:', err);
   alert('対象フィールドの取得に失敗しました。');
 }
+
 
   // -----------------------------
   // 4. 保存ボタン
