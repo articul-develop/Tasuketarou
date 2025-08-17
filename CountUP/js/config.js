@@ -29,6 +29,9 @@
     // 例と同じユーティリティを使用（SINGLE_LINE_TEXT / NUMBER を対象）
     fields = await KintoneConfigHelper.getFields(['SINGLE_LINE_TEXT', 'NUMBER']);
 
+    // サブテーブル内のフィールドを除外
+    fields = fields.filter(field => !field.$parent); // $parentがあればサブテーブル内
+
     fields.forEach((field) => {
       const opt = document.createElement('option');
       opt.value = field.code;
