@@ -98,11 +98,7 @@
         newConfig.Trial_enddate = data.response.Trial_enddate;
       }
 
-      kintone.plugin.app.setConfig(newConfig, () => {
-        alert('設定を保存しました。');
-        // プラグイン一覧へ戻る
-        window.location.href = `/k/admin/app/${kintone.app.getId()}/plugin/`;
-      });
+      kintone.plugin.app.setConfig(newConfig);
     } catch (err) {
       console.error('認証API呼び出しエラー:', err);
       alert('認証中にエラーが発生しました。');
