@@ -218,7 +218,7 @@
           const config = {
             dropdownList: dropdownListValue, // dropdown-list の選択値を保存
             dropdownContainer: JSON.stringify(dropdownContainerValues), // dropdown-container の選択値を保存
-            authStatus: 'valid',   
+            authStatus: 'valid',
           };
 
           // Trial_enddateが存在する場合に追加
@@ -228,13 +228,7 @@
 
 
 
-          // 保存処理 (kintone.plugin.app.setConfigを使用)
-          kintone.plugin.app.setConfig(config, () => {
-            alert('設定が保存されました');
-            window.location.href = `/k/admin/app/${kintone.app.getId()}/plugin/`;
-          });
-
-
+          kintone.plugin.app.setConfig(config);
         } catch (error) {
           console.error('認証API呼び出しエラー:', error);
           alert('認証中にエラーが発生しました。');
