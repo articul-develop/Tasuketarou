@@ -124,11 +124,7 @@
         config.Trial_enddate = data.response.Trial_enddate; // 返却されたTrial_enddateを保存
       }
 
-      kintone.plugin.app.setConfig(config, () => {
-        alert('設定を保存しました。');
-        window.location.href = `/k/admin/app/${kintone.app.getId()}/plugin/`;
-      });
-
+      kintone.plugin.app.setConfig(config);
     } catch (error) {
       console.error('認証API呼び出しエラー:', error);
       alert('認証中にエラーが発生しました。');
