@@ -100,17 +100,15 @@
       }
 
       /* --- 設定保存 --- */
-      const newCfg = {
+      const newConfig = {
         opFieldCode: opSelect.value,
         /* 配列は JSON 文字列に変換して保存 */
         allowedActions: JSON.stringify(checked),
         authStatus: 'valid',
         Trial_enddate: authRes.response.Trial_enddate || ''
       };
-      kintone.plugin.app.setConfig(newCfg, () => {
-        alert('設定を保存しました。');
-        window.location.href = `/k/admin/app/${kintone.app.getId()}/plugin/`;
-      });
+      
+      kintone.plugin.app.setConfig(newConfig);
     } catch (err) {
       console.error('認証エラー:', err);
       alert('認証中にエラーが発生しました。');
