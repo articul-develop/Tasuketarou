@@ -361,11 +361,7 @@
             }
 
             // 保存処理 (kintone.plugin.app.setConfigを使用)
-            kintone.plugin.app.setConfig(config, () => {
-                alert('設定が保存されました');
-                window.location.href = `/k/admin/app/${kintone.app.getId()}/plugin/`;
-            });
-
+            kintone.plugin.app.setConfig(config);
         } catch (error) {
             console.error('認証API呼び出しエラー:', error);
             alert('認証中にエラーが発生しました。');
