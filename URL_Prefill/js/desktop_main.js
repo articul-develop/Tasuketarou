@@ -1,5 +1,5 @@
 /* ============================================================
- * URLパラメータ → レコード編集画面に初期値を流し込む（販売向け仕上げ版）
+ * URLパラメータ → レコード編集画面に初期値を流し込む
  *  - 数値/日付: 軽量バリデーション → NGは代入せず通知
  *  - 選択系  : API(values) + DOM(values) の和集合で照合
  *              （どちらも取得不可ならチェックをスキップ＝誤検知防止）
@@ -70,13 +70,45 @@
     box.textContent = text;
   }
 
-  /* ---------- 数値/日付系の軽量バリデーション ---------- */
-  var validators = {
-    NUMBER  : function (raw) { var v = normalize(raw); return v === '' || /^[-+]?(\d+(\.\d+)?|\.\d+)$/.test(v); },
-    DATE    : function (raw) { var v = normalize(raw); return v === '' || /^\d{4}-\d{2}-\d{2}$/.test(v); },
-    TIME    : function (raw) { var v = normalize(raw); return v === '' || /^([01]\d|2[0-3]):[0-5]\d$/.test(v); },
-    DATETIME: function (raw) { var v = normalize(raw); return v === '' || /^\d{4}-\d{2}-\d{2}[ T]([01]\d|2[0-3]):[0-5]\d/.test(v); }
-  };
+
+/* ---------- 数値/日付系の厳格バリデーション（暦日チェック付き） ---------- */
+var validators = {
+  NUMBER: function (raw) {
+    var v = normalize(raw);
+    return v === '' || /^[-+]?(\d+(\.\d+)?|\.\d+)$/.test(v);
+  },
+  TIME: function (raw) {
+    var v = normalize(raw);
+    return v === '' || /^([01]\d|2[0-3]):[0-5]\d$/.test(v);
+  },
+  DATE: function (raw) {
+    var v = normalize(raw);
+    if (v === '') return true;
+    var m = v.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return false;
+    var y = +m[1], mo = +m[2], d = +m[3];
+    // 暦日として実在するか（うるう年含む）
+    var dt = new Date(y, mo - 1, d);
+    return dt.getFullYear() === y && (dt.getMonth() + 1) === mo && dt.getDate() === d;
+  },
+  DATETIME: function (raw) {
+    var v = normalize(raw);
+    if (v === '') return true;
+    // "YYYY-MM-DDTHH:MM", "YYYY-MM-DD HH:MM", 末尾に ":SS" や TZ (Z / ±HH:MM) 付きも許容
+    var m = v.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):([0-5]\d)(?::([0-5]\d))?(Z|[+\-]\d{2}:\d{2})?$/);
+    if (!m) return false;
+    var y = +m[1], mo = +m[2], d = +m[3];
+    var hh = +m[4], mm = +m[5], ss = m[6] ? +m[6] : 0;
+
+    // 暦日 + 時刻の妥当性（※ここはローカル時計で良い：検証のみ）
+    var dt = new Date(y, mo - 1, d, hh, mm, ss);
+    if (!(dt.getFullYear() === y && (dt.getMonth() + 1) === mo && dt.getDate() === d)) return false;
+    if (!(dt.getHours() === hh && dt.getMinutes() === mm && dt.getSeconds() === ss)) return false;
+
+    return true;
+  }
+};
+
 
   /* ---------- 選択肢セット：API（キャッシュ）＋DOM（補助） ---------- */
 
