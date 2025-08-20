@@ -2,64 +2,62 @@
   'use strict';
 
   // -----------------------------
-  // 1. 既存設定の読み込み
+  // 1. 既存設定の読み込み（参考JSと同じ取得パターン）
   // -----------------------------
-  const config = kintone.plugin.app.getConfig(PLUGIN_ID);
+  const cfg = kintone.plugin.app.getConfig(PLUGIN_ID) || {};
+  const featureEnabled = (cfg.featureEnabled ?? 'true'); // 既定：'true'（使用する）
 
   // -----------------------------
-  // 2. DOM 取得
+  // 2. DOM 取得（参考JSの命名/取得スタイルに倣う）
   // -----------------------------
-  const activateBtn = document.getElementById('activate-button');
+  const onRadio = document.getElementById('feature-on');
+  const offRadio = document.getElementById('feature-off');
+  const saveBtn = document.getElementById('save-button');
+  const cancelBtn = document.getElementById('cancel-button');
 
-  // -----------------------------
-  // 3. ボタン初期テキスト
-  // -----------------------------
-  if (config.authStatus === 'valid') {
-    activateBtn.textContent = '再認証';
+  // 既存設定の反映（初期表示）
+  if (featureEnabled === 'false') {
+    offRadio.checked = true;
+  } else {
+    onRadio.checked = true; // 既定：使用する
   }
 
   // -----------------------------
-  // 4. 認証ボタン
+  // 3. 保存ボタン（クリック時に認証→設定保存）
   // -----------------------------
-  activateBtn.addEventListener('click', async () => {
-    activateBtn.disabled = true;
-    activateBtn.textContent = '認証中…';
-
+  saveBtn.addEventListener('click', async () => {
     try {
-      // -------▼ API 認証部分（テンプレート共通） ▼-------
-      const data = await AuthModule.authenticateDomain(API_CONFIG);
-
-      if (data.status !== 'success' ||
-          !data.response ||
-          data.response.status !== 'valid') {
-        const message = data.response?.message || '不明なエラー';
-        kintone.plugin.app.setConfig({ authStatus: 'invalid' }, () => {
-          alert(`認証失敗: ${message}`);
-          activateBtn.disabled = false;
-          activateBtn.textContent = '認証';
-        });
+      // --- 認証 ---
+      const authRes = await AuthModule.authenticateDomain(API_CONFIG);
+      if (authRes.status !== 'success' ||
+          !authRes.response ||
+          authRes.response.status !== 'valid') {
+        const msg = authRes.response?.message || '不明なエラー';
+        alert(`認証失敗: ${msg}`);
         return;
       }
-      // -------▲ API 認証部分ここまで（変更なし） ▲-------
 
-      // 認証成功 → 設定を保存
+      // 選択値の確定
+      const selected = onRadio.checked ? 'true' : 'false';
+
+      // --- 設定保存 ---
       const newConfig = {
-        authStatus: 'valid'
+        featureEnabled: selected,
+        authStatus: 'valid',
+        Trial_enddate: authRes.response.Trial_enddate || ''
       };
-      if (data.response.Trial_enddate) {
-        newConfig.Trial_enddate = data.response.Trial_enddate;
-      }
 
-    kintone.plugin.app.setConfig(newConfig);
+      kintone.plugin.app.setConfig(newConfig);
     } catch (err) {
-      console.error('認証API呼び出しエラー:', err);
+      console.error('認証中にエラーが発生しました。', err);
       alert('認証中にエラーが発生しました。');
-      activateBtn.disabled = false;
-      activateBtn.textContent = '認証';
     }
   });
 
   // -----------------------------
-  // 5. 画面ロード完了
+  // 4. キャンセルボタン（参考JSと同じ遷移）
   // -----------------------------
+  cancelBtn.addEventListener('click', () => {
+    window.location.href = `/k/admin/app/${kintone.app.getId()}/plugin/`;
+  });
 })(kintone.$PLUGIN_ID);
