@@ -653,3 +653,33 @@
   cursor: pointer;
   background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAATCAYAAAByUDbMAAACi0lEQVQ4jZ2UT0hUQRzHp0uHDtFVk0QqTGtdddXVN/Pe7ubuuu3Me7sY2s1jRZcOQX+kQC+dkrr15xAIElhIEBSZloKHPHTMIlHS9r2ZNdvUNK1Evh3S1WVdNX/wuf1+H+bHzHcIyVET4ZoiJViLjLKrjmBtUtBrdpSetwVzE0L25JrLKBlkh6RgHZJTWwmGLDidk5x2qYhWvaXIidKQ5Gx0U8kGkoJBCfpTcXZpU5HNNS45+7WdaKNwJmZgJORtz1wtqhVKQSd3Klpj2tSRMg28NtzhdZlgHf8rUoJBCoZZy8B4Q+27+578fWQiXFMkOfu6W5kSFL8bA3hQUWwRJVhLdqMOZW7Daq/NKVaa6tFdV9ZJJKetGRLLgBOogENL4bAc0FI4QQ+UZUByipSpIylYP3EEa0vLIrWQfjcWeh5hOTGBP2OfshkfxfLkZ8zduw1HOwZlGZgSOuZjvgGiOL2Rlp2qg6yvxNzdDiwNvsJi3/Ns+l9gaaAX329eh2OcgDR1TJs6Zi3jDVFcuyA3rhnzwa4tRsKVj4S7IJuyAiRcB+Hox6HifticYrHRj7eBqh6SiHjLFGcLGRdgGVAxP1TMlwP/vx7BYEcpcCaEO+6j59Zi1L2bp5HgFPNxH2Ysw24tKcwjhBDyJaJVJ9OZ2xkOp1CCAc1BdFaXXMyI1CTXrkybOr6ZOuQOTpRcFY2E6540EbI3K+zvQ972pGBIWQaSpg6bU0i+/todTmFzioW4D2iux8eG2p6n5eUHcn5Dw4Gq6FhEG0qZOlZOBzAb8yG5GuqlRj/QHMSU0Me7akoub/mfpYXeI/uHfJXmM8318EPY2/sj7h+ctfS+4ZOex7dch8++9JTkbTb3FyHXv8RgEtykAAAAAElFTkSuQmCC) center center no-repeat;
 }
+
+/*ARTICUL*/
+/* 共通スタイル */
+.kintoneplugin-input-common {
+  display: inline-block;
+  box-sizing: border-box;
+  height: 48px;
+  min-width: 200px;
+  max-width: 600px;
+  border: 1px solid #e3e7e8;
+  background-color: #f7f9fa;   /* ① selectと同じ背景色に統一 */
+  font-size: 14px;
+  color: #000;
+  padding-left: 8px;           /* ② input / select 共通の左padding */
+}
+
+/* input用 */
+input.kintoneplugin-input-common {
+  line-height: 48px;
+  padding-right: 8px;          /* 右側もバランス取り */
+}
+
+/* select用 */
+select.kintoneplugin-input-common {
+  padding-right: 8px;          /* ブラウザ標準の▼があるので少し余白 */
+  appearance: auto;            /* ▼は標準のものを使用 */
+  -webkit-appearance: auto;
+  -moz-appearance: auto;
+}
+
