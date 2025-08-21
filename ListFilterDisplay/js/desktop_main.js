@@ -56,7 +56,7 @@
     el.style.cssText = [
       'padding:4px 8px',
       'font-size:85%',
-      'background:#f5f5f5',
+      'background:#D4D7D7',
       'border-radius:4px',
       'margin:4px 0',
       'white-space:pre-wrap',
