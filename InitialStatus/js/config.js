@@ -1,4 +1,4 @@
-/* eslint @typescript-eslint/no-unused-vars: 0 */
+
 (async (PLUGIN_ID) => {
   'use strict';
 
@@ -6,18 +6,19 @@
   // 1. 既存設定の読み込み
   // -----------------------------
   const config = kintone.plugin.app.getConfig(PLUGIN_ID) || {};
-  const draftBtnLabel   = config.draftBtnLabel || '下書き保存';
+  const draftBtnLabel = config.draftBtnLabel || '下書き保存';
   const actionToComplete = config.actionToComplete || '';
-  const initialStatus    = config.initialStatus || '';
+  const initialStatus = config.initialStatus || '';
+  const initialStatusIndex = config.initialStatusIndex ?? '';
 
   // -----------------------------
   // 2. DOM 取得
   // -----------------------------
   const draftBtnInput = document.getElementById('draft-btn-label');
-  const actionSelect  = document.getElementById('action-to-complete');
-  const statusSelect  = document.getElementById('initial-status');
-  const saveBtn       = document.getElementById('save-button');
-  const cancelBtn     = document.getElementById('cancel-button');
+  const actionSelect = document.getElementById('action-to-complete');
+  const statusSelect = document.getElementById('initial-status');
+  const saveBtn = document.getElementById('save-button');
+  const cancelBtn = document.getElementById('cancel-button');
 
   if (draftBtnInput) draftBtnInput.value = draftBtnLabel;
 
@@ -26,10 +27,13 @@
   // -----------------------------
   try {
     const apiUrl = kintone.api.url('/k/v1/app/status', true);
-    const resp   = await kintone.api(apiUrl, 'GET', { app: kintone.app.getId() });
+    const resp = await kintone.api(apiUrl, 'GET', { app: kintone.app.getId() });
 
     // ▼ ステータス
-    const stateList = Object.values(resp.states || {});
+    const stateList = Object
+      .values(resp.states || {})
+      .sort((a, b) => Number(a.index ?? Infinity) - Number(b.index ?? Infinity));
+
     if (stateList.length === 0) {
       alert('プロセス管理でステータスが設定されていません。');
     }
@@ -37,7 +41,12 @@
       const opt = document.createElement('option');
       opt.value = item.name;
       opt.textContent = item.name;
-      if (item.name === initialStatus) opt.selected = true;
+      opt.dataset.index = String(item.index ?? i); // ← ★ indexを保持
+
+      // 復元: index が保存済みなら index 優先、無ければ name で選択
+      if (String(item.index) === String(initialStatusIndex) || item.name === initialStatus) {
+        opt.selected = true;
+      }
       statusSelect.appendChild(opt);
     });
 
@@ -61,13 +70,15 @@
   // 4. 保存ボタン
   // -----------------------------
   saveBtn.addEventListener('click', async () => {
-    const newDraftLabel   = draftBtnInput.value.trim() || '下書き保存';
-    const newAction       = actionSelect.value;
+    const newDraftLabel = draftBtnInput.value.trim() || '下書き保存';
+    const newAction = actionSelect.value;
     const newInitialState = statusSelect.value;
+    const selOpt = statusSelect.options[statusSelect.selectedIndex];
+    const newInitialStateIndex = selOpt?.dataset?.index ?? '';
 
     // 必須チェック
     if (!newAction || !newInitialState) {
-      alert('アクション / 初期ステータスを選択してください。');
+      alert('自動で実施するアクションを選択してください。');
       return;
     }
 
@@ -76,8 +87,8 @@
       const data = await AuthModule.authenticateDomain(API_CONFIG);
 
       if (data.status !== 'success' ||
-          !data.response ||
-          data.response.status !== 'valid') {
+        !data.response ||
+        data.response.status !== 'valid') {
         const message = data.response?.message || '不明なエラー';
         kintone.plugin.app.setConfig({ authStatus: 'invalid' }, () => {
           alert(`認証失敗: ${message}`);
@@ -88,10 +99,11 @@
 
       // 認証成功 → 設定を保存
       const newConfig = {
-        draftBtnLabel:   newDraftLabel,
+        draftBtnLabel: newDraftLabel,
         actionToComplete: newAction,
-        initialStatus:    newInitialState,
-        authStatus:       'valid'
+        initialStatus: newInitialState,
+        initialStatusIndex: String(newInitialStateIndex),
+        authStatus: 'valid'
       };
 
       if (data.response.Trial_enddate) {
