@@ -2,12 +2,16 @@
 (async (PLUGIN_ID) => {
   'use strict';
 
+
+  
   // -----------------------------
   // 1. 既存設定の読み込み
   // -----------------------------
   const cfg = kintone.plugin.app.getConfig(PLUGIN_ID) || {};
   const opFieldCode = cfg.opFieldCode || '';
   const allowedActions = cfg.allowedActions ? JSON.parse(cfg.allowedActions) : [];
+  const hideOnInput = cfg.hideOnInput === 'true';
+
   // -----------------------------
   // 2. DOM 取得
   // -----------------------------
@@ -15,6 +19,10 @@
   const actArea = document.getElementById('actions-container');
   const saveBtn = document.getElementById('save-button');
   const cancelBtn = document.getElementById('cancel-button');
+  const hideInputCb = document.getElementById('hide-on-input');
+
+  // 既存設定のチェック状態を反映（初期描画時）
+  if (hideInputCb) hideInputCb.checked = hideOnInput;
 
   // -----------------------------
   // 3. フィールド一覧を取得して <select> に反映
@@ -104,10 +112,11 @@
         opFieldCode: opSelect.value,
         /* 配列は JSON 文字列に変換して保存 */
         allowedActions: JSON.stringify(checked),
+        hideOnInput: hideInputCb && hideInputCb.checked ? 'true' : 'false',
         authStatus: 'valid',
         Trial_enddate: authRes.response.Trial_enddate || ''
       };
-      
+
       kintone.plugin.app.setConfig(newConfig);
     } catch (err) {
       console.error('認証エラー:', err);
@@ -121,4 +130,7 @@
   cancelBtn.addEventListener('click', () => {
     window.location.href = `/k/admin/app/${kintone.app.getId()}/plugin/`;
   });
+
+
+
 })(kintone.$PLUGIN_ID);
