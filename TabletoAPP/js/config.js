@@ -22,27 +22,42 @@
 
     async function fetchAllApps() {
         try {
-            // REST API を使ってアプリ情報を取得
-            const response = await kintone.api('/k/v1/apps', 'GET', {});
+            // ページングで全件取得
+            const allApps = [];
+            const limit = 100;
+            let offset = 0;
 
-            // アプリ情報を取得
-            const apps = response.apps;
+            while (true) {
+                const res = await kintone.api('/k/v1/apps', 'GET', { limit, offset });
+                if (res && Array.isArray(res.apps)) allApps.push(...res.apps);
+                if (!res || !res.apps || res.apps.length < limit) break;
+                offset += limit;
+            }
 
-            // 選択肢にアプリを追加
-            apps.forEach((app) => {
-                const option = document.createElement('option');
-                option.value = app.appId; // アプリIDを値として設定
-                option.textContent = app.name; // アプリ名を選択肢として表示
-                if (option.value === targetAppId) {
-                    option.selected = true; // 初期値を設定
-                }
-                targetAppSelect.appendChild(option);
-            });
+            // 名前順でソート
+            allApps.sort((a, b) => (a.name || '').localeCompare((b.name || ''), 'ja'));
+
+            // セレクトボックスを初期化して option を生成
+            if (targetAppSelect) {
+                targetAppSelect.innerHTML = '';
+                const frag = document.createDocumentFragment();
+
+                allApps.forEach(app => {
+                    const option = document.createElement('option');
+                    option.value = String(app.appId);
+                    option.textContent = app.name;
+                    if (option.value === String(targetAppId)) option.selected = true;
+                    frag.appendChild(option);
+                });
+
+                targetAppSelect.appendChild(frag);
+            }
         } catch (error) {
             console.error('Error fetching apps:', error);
             alert('アプリ情報の取得に失敗しました');
         }
     }
+
 
     // アプリのリストを取得
     fetchAllApps();
