@@ -33,12 +33,29 @@
     const appOptions = [];
     let activeLinkageIndex = 0;
     let linkageConfigs = getSavedLinkageConfigs(savedConfig);
+    const authState = {
+        checked: false,
+        isValid: false,
+        trialEndDate: savedConfig.Trial_enddate || ''
+    };
     if (linkageConfigs.length === 0) {
         linkageConfigs = [createDefaultLinkageConfig(0)];
     }
 
     dom.hideKeyField.checked = savedConfig.hideKeyField === 'true';
     dom.suppressSuccessMessage.checked = savedConfig.suppressSuccessMessage === 'true';
+    function buildReloadPromptMessage(message) {
+        return `${message}\n設定内容を確認後、画面をリロードして再試行してください。`;
+    }
+
+    function updateSaveButtonState(isBlocked, title = '') {
+        dom.saveButton.setAttribute('aria-disabled', isBlocked ? 'true' : 'false');
+        if (title) {
+            dom.saveButton.title = title;
+            return;
+        }
+        dom.saveButton.removeAttribute('title');
+    }
 
     function formatFieldDisplayName(label, code) {
         return `${label || code}（${code}）`;
@@ -955,6 +972,34 @@
         };
     }
 
+    async function authenticateOnInitialize() {
+        updateSaveButtonState(true, '認証状態を確認しています。');
+        try {
+            const data = await AuthModule.authenticateDomain(API_CONFIG);
+            if (data.status === 'success' && data.response?.status === 'valid') {
+                authState.checked = true;
+                authState.isValid = true;
+                authState.trialEndDate = data.response.Trial_enddate || authState.trialEndDate;
+                updateSaveButtonState(false);
+                return true;
+            }
+
+            const message = data.response?.message || '不明なエラー';
+            authState.checked = true;
+            authState.isValid = false;
+            updateSaveButtonState(true, '認証に失敗したため保存できません。');
+            alert(buildReloadPromptMessage(`認証失敗: ${message}`));
+            return false;
+        } catch (error) {
+            console.error('起動時認証エラー:', error);
+            authState.checked = true;
+            authState.isValid = false;
+            updateSaveButtonState(true, '認証に失敗したため保存できません。');
+            alert(buildReloadPromptMessage('認証中にエラーが発生しました。'));
+            return false;
+        }
+    }
+
     async function initialize() {
         try {
             await fetchAllApps();
@@ -967,6 +1012,8 @@
 
         renderTabs();
         renderActiveLinkage();
+
+        await authenticateOnInitialize();
 
         for (let i = 0; i < linkageConfigs.length; i++) {
             const linkage = linkageConfigs[i];
@@ -1251,6 +1298,11 @@
 
     dom.saveButton.addEventListener('click', async () => {
         try {
+            if (!authState.checked || !authState.isValid) {
+                alert(buildReloadPromptMessage('認証が完了していないため保存できません。'));
+                return;
+            }
+
             syncActiveFormToState();
 
             const linkageConfigsToSave = linkageConfigs
@@ -1274,20 +1326,6 @@
                 return;
             }
 
-            const data = await AuthModule.authenticateDomain(API_CONFIG);
-            if (data.status !== 'success' || !data.response || data.response.status !== 'valid') {
-                const message = data.response?.message || '不明なエラー';
-                kintone.plugin.app.setConfig(
-                    {
-                        authStatus: 'invalid'
-                    },
-                    () => {
-                        alert(`認証失敗: ${message}`);
-                    }
-                );
-                return;
-            }
-
             const firstLinkage = linkageConfigsToSave[0];
             const configToSave = {
                 linkageConfigsJson: JSON.stringify(linkageConfigsToSave),
@@ -1301,8 +1339,8 @@
                 authStatus: 'valid'
             };
 
-            if (data.response.Trial_enddate) {
-                configToSave.Trial_enddate = data.response.Trial_enddate;
+            if (authState.trialEndDate) {
+                configToSave.Trial_enddate = authState.trialEndDate;
             }
 
             for (let i = 1; i <= MAX_MAPPINGS; i++) {
@@ -1312,8 +1350,8 @@
 
             kintone.plugin.app.setConfig(configToSave);
         } catch (error) {
-            console.error('認証API呼び出しエラー:', error);
-            alert('認証中にエラーが発生しました。');
+            console.error('設定保存エラー:', error);
+            alert('設定保存中にエラーが発生しました。');
         }
     });
 
