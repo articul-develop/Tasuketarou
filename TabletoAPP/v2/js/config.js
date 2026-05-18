@@ -2,7 +2,7 @@
     'use strict';
 
     const MAX_LINKAGES = 5;
-    const MAX_MAPPINGS = 20;
+    const MAX_MAPPINGS = 50;
     const savedConfig = kintone.plugin.app.getConfig(PLUGIN_ID) || {};
 
     const dom = {
@@ -434,6 +434,10 @@
         return targetDefinitions.filter(targetDefinition => targetDefinition.type === sourceDefinition.type);
     }
 
+    function filterCompatibleSources(targetDefinition, sourceDefinitions) {
+        return sourceDefinitions.filter(sourceDefinition => sourceDefinition.type === targetDefinition.type);
+    }
+
     function resolveDefaultTargetField(sourceFieldCode, targetDefinitions) {
         const sameCode = targetDefinitions.find(targetDefinition => targetDefinition.code === sourceFieldCode);
         return sameCode ? sameCode.code : '';
@@ -450,14 +454,25 @@
 
     function enrichMapping(mapping, sourceDefinitions, targetDefinitions) {
         const sourceDefinition = getDefinitionByCode(sourceDefinitions, mapping.sourceFieldCode);
-        if (!sourceDefinition) {
+        const targetDefinition = getDefinitionByCode(targetDefinitions, mapping.targetFieldCode);
+
+        if (!sourceDefinition && !targetDefinition) {
             return createEmptyMapping();
+        }
+
+        if (!sourceDefinition && targetDefinition) {
+            return {
+                sourceFieldCode: '',
+                sourceLabel: '',
+                sourceType: '',
+                targetFieldCode: targetDefinition.code
+            };
         }
 
         const compatibleTargets = filterCompatibleTargets(sourceDefinition, targetDefinitions);
         const targetFieldCode = compatibleTargets.some(target => target.code === mapping.targetFieldCode)
             ? mapping.targetFieldCode
-            : resolveDefaultTargetField(sourceDefinition.code, compatibleTargets);
+            : '';
 
         return {
             sourceFieldCode: sourceDefinition.code,
@@ -470,7 +485,7 @@
     function sanitizeMappings(sourceDefinitions, targetDefinitions, existingMappings) {
         return (existingMappings || [])
             .map(mapping => enrichMapping(mapping, sourceDefinitions, targetDefinitions))
-            .filter(mapping => mapping.sourceFieldCode)
+            .filter(mapping => mapping.sourceFieldCode || mapping.targetFieldCode)
             .slice(0, MAX_MAPPINGS);
     }
 
@@ -479,10 +494,7 @@
             return mappings;
         }
 
-        const usedSources = new Set(mappings.map(mapping => mapping.sourceFieldCode).filter(Boolean));
-        const nextSource = sourceDefinitions.find(definition => !usedSources.has(definition.code)) || sourceDefinitions[0];
-        const nextMapping = enrichMapping({ sourceFieldCode: nextSource?.code || '', targetFieldCode: '' }, sourceDefinitions, targetDefinitions);
-        return [...mappings, nextMapping];
+        return [...mappings, createEmptyMapping()];
     }
 
     function autoAppendMappings(mappings, sourceDefinitions, targetDefinitions) {
@@ -619,6 +631,52 @@
             const row = document.createElement('div');
             row.className = 'mapping-row';
 
+            const target = document.createElement('div');
+            target.className = 'mapping-target';
+
+            const targetSelect = document.createElement('select');
+            targetSelect.dataset.mappingType = mappingType;
+            targetSelect.dataset.mappingRole = 'target';
+            targetSelect.dataset.mappingIndex = String(index);
+
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = '選択してください';
+            targetSelect.appendChild(defaultOption);
+
+            const sourceDefinition = getDefinitionByCode(sourceDefinitions, mapping.sourceFieldCode);
+            const usedTargetCodes = new Set(
+                mappings
+                    .filter((item, itemIndex) => itemIndex !== index)
+                    .map(item => item.targetFieldCode)
+                    .filter(Boolean)
+            );
+            const targetOptions = sourceDefinition
+                ? filterCompatibleTargets(sourceDefinition, targetDefinitions)
+                : targetDefinitions;
+            targetOptions
+                .filter(targetDefinition =>
+                    targetDefinition.code === mapping.targetFieldCode || !usedTargetCodes.has(targetDefinition.code)
+                )
+                .forEach(targetDefinition => {
+                const option = document.createElement('option');
+                option.value = targetDefinition.code;
+                option.textContent = formatFieldDisplayName(targetDefinition.label, targetDefinition.code);
+                if (targetDefinition.code === mapping.targetFieldCode) {
+                    option.selected = true;
+                }
+                targetSelect.appendChild(option);
+            });
+
+            target.appendChild(targetSelect);
+            row.appendChild(target);
+
+            const arrow = document.createElement('div');
+            arrow.className = 'mapping-arrow';
+            arrow.setAttribute('aria-hidden', 'true');
+            arrow.textContent = '←';
+            row.appendChild(arrow);
+
             const source = document.createElement('div');
             source.className = 'mapping-source';
             const sourceSelect = document.createElement('select');
@@ -631,44 +689,21 @@
             sourceDefaultOption.textContent = '選択してください';
             sourceSelect.appendChild(sourceDefaultOption);
 
-            sourceDefinitions.forEach(sourceDefinition => {
+            const selectedTargetDefinition = getDefinitionByCode(targetDefinitions, mapping.targetFieldCode);
+            const sourceOptions = selectedTargetDefinition
+                ? filterCompatibleSources(selectedTargetDefinition, sourceDefinitions)
+                : sourceDefinitions;
+            sourceOptions.forEach(sourceDefinitionOption => {
                 const option = document.createElement('option');
-                option.value = sourceDefinition.code;
-                option.textContent = formatFieldDisplayName(sourceDefinition.label, sourceDefinition.code);
-                if (sourceDefinition.code === mapping.sourceFieldCode) {
+                option.value = sourceDefinitionOption.code;
+                option.textContent = formatFieldDisplayName(sourceDefinitionOption.label, sourceDefinitionOption.code);
+                if (sourceDefinitionOption.code === mapping.sourceFieldCode) {
                     option.selected = true;
                 }
                 sourceSelect.appendChild(option);
             });
             source.appendChild(sourceSelect);
-
-            const target = document.createElement('div');
-            target.className = 'mapping-target';
-
-            const select = document.createElement('select');
-            select.dataset.mappingType = mappingType;
-            select.dataset.mappingRole = 'target';
-            select.dataset.mappingIndex = String(index);
-
-            const defaultOption = document.createElement('option');
-            defaultOption.value = '';
-            defaultOption.textContent = '選択してください';
-            select.appendChild(defaultOption);
-
-            const sourceDefinition = getDefinitionByCode(sourceDefinitions, mapping.sourceFieldCode);
-            filterCompatibleTargets(sourceDefinition || { type: '' }, targetDefinitions).forEach(targetDefinition => {
-                const option = document.createElement('option');
-                option.value = targetDefinition.code;
-                option.textContent = formatFieldDisplayName(targetDefinition.label, targetDefinition.code);
-                if (targetDefinition.code === mapping.targetFieldCode) {
-                    option.selected = true;
-                }
-                select.appendChild(option);
-            });
-
-            target.appendChild(select);
             row.appendChild(source);
-            row.appendChild(target);
 
             const remove = document.createElement('button');
             remove.type = 'button';
@@ -798,7 +833,7 @@
             linkage.normalMappings,
             linkage.sourceNormalDefinitions,
             linkage.targetDefinitions,
-            '項目取得を行うと、通常フィールドの候補が表示されます。',
+            'テーブル名と更新先アプリを選択すると、通常フィールドの候補が表示されます。必要に応じて「項目再取得」を押してください。',
             'normal'
         );
         renderMappingEditor(
@@ -806,7 +841,7 @@
             linkage.tableMappings,
             linkage.sourceTableDefinitions,
             linkage.targetDefinitions,
-            '項目取得を行うと、テーブル内フィールドの候補が表示されます。',
+            'テーブル名と更新先アプリを選択すると、テーブル内フィールドの候補が表示されます。必要に応じて「項目再取得」を押してください。',
             'table'
         );
     }
@@ -948,6 +983,21 @@
         }
     }
 
+    async function reloadFieldSettingsForActiveLinkage(showSuccessMessage = false, showErrorAlert = true) {
+        syncActiveFormToState();
+        const linkage = getActiveLinkage();
+        if (!linkage || !linkage.tableFieldCode || !linkage.targetAppId) {
+            return;
+        }
+
+        try {
+            await loadFieldSettingsForLinkage(activeLinkageIndex, showSuccessMessage, showErrorAlert);
+        } catch (error) {
+            console.error('エラー:', error);
+            alert('更新先アプリの項目取得中にエラーが発生しました。更新先アプリとルックアップ参照先アプリの閲覧権限があること、および更新先アプリで「アプリを更新」済みであることを確認してください。');
+        }
+    }
+
     function createSerializableLinkage(linkage, index) {
         const syncConditions = sanitizeConditions(linkage, linkage.syncConditions)
             .filter(condition => condition.fieldCode && condition.operator);
@@ -1043,7 +1093,7 @@
         renderActiveLinkage();
     });
 
-    dom.tableName.addEventListener('change', () => {
+    dom.tableName.addEventListener('change', async () => {
         const linkage = getActiveLinkage();
         if (!linkage) {
             return;
@@ -1052,9 +1102,10 @@
         clearLinkageFieldState(linkage);
         renderTabs();
         renderActiveLinkage();
+        await reloadFieldSettingsForActiveLinkage(false, true);
     });
 
-    dom.targetAppId.addEventListener('change', () => {
+    dom.targetAppId.addEventListener('change', async () => {
         const linkage = getActiveLinkage();
         if (!linkage) {
             return;
@@ -1062,6 +1113,7 @@
         linkage.targetAppId = dom.targetAppId.value;
         clearLinkageFieldState(linkage);
         renderActiveLinkage();
+        await reloadFieldSettingsForActiveLinkage(false, true);
     });
 
     dom.sourceRowIdentifierField.addEventListener('change', () => {
@@ -1191,7 +1243,12 @@
         if (role === 'source') {
             mappings[index] = enrichMapping({ sourceFieldCode: value, targetFieldCode: mappings[index].targetFieldCode }, sourceDefinitions, linkage.targetDefinitions);
         } else if (role === 'target') {
-            mappings[index].targetFieldCode = value;
+            const currentSourceDefinition = getDefinitionByCode(sourceDefinitions, mappings[index].sourceFieldCode);
+            const nextTargetDefinition = getDefinitionByCode(linkage.targetDefinitions, value);
+            const nextSourceFieldCode = currentSourceDefinition && nextTargetDefinition && currentSourceDefinition.type !== nextTargetDefinition.type
+                ? ''
+                : mappings[index].sourceFieldCode;
+            mappings[index] = enrichMapping({ sourceFieldCode: nextSourceFieldCode, targetFieldCode: value }, sourceDefinitions, linkage.targetDefinitions);
         }
 
         if (mappingType === 'normal') {
@@ -1287,13 +1344,7 @@
     });
 
     dom.fetchFieldsButton.addEventListener('click', async () => {
-        syncActiveFormToState();
-        try {
-            await loadFieldSettingsForLinkage(activeLinkageIndex, true, true);
-        } catch (error) {
-            console.error('エラー:', error);
-            alert('更新先アプリの項目取得中にエラーが発生しました。更新先アプリとルックアップ参照先アプリの閲覧権限があること、および更新先アプリで「アプリを更新」済みであることを確認してください。');
-        }
+        await reloadFieldSettingsForActiveLinkage(true, true);
     });
 
     dom.saveButton.addEventListener('click', async () => {

@@ -2,7 +2,7 @@
   'use strict';
 
   const config = kintone.plugin.app.getConfig(PLUGIN_ID) || {};
-  const MAX_MAPPINGS = 20;
+  const MAX_MAPPINGS = 50;
 
   function getLegacyMappings(configObject, prefix) {
     const values = [];

@@ -119,6 +119,18 @@ hr.custom-line {
   box-sizing: border-box;
 }
 
+.key-setting-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.key-setting-header h2 {
+  margin-bottom: 0 !important;
+}
+
 .key-setting-headings {
   display: grid;
   grid-template-columns: minmax(260px, 1fr) 28px minmax(260px, 1fr);
@@ -279,7 +291,7 @@ hr.custom-line {
 
 .mapping-row {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(220px, 1fr) 40px;
+  grid-template-columns: minmax(220px, 1fr) 28px minmax(220px, 1fr) 40px;
   gap: 12px;
   align-items: center;
   margin-bottom: 10px;
@@ -291,6 +303,19 @@ hr.custom-line {
 
 .mapping-source {
   min-width: 0;
+}
+
+.mapping-target {
+  min-width: 0;
+}
+
+.mapping-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #1E90FF;
+  font-weight: bold;
 }
 
 .mapping-source select,
