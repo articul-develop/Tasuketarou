@@ -57,34 +57,6 @@ h2 {
   font-size: 15px;
 }
 
-.config-hero-links {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.config-hero-links a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 34px;
-  padding: 0 14px;
-  border: 1px solid #c8d6ea;
-  border-radius: 999px;
-  background: #ffffff;
-  color: #1f55b5;
-  font-size: 13px;
-  font-weight: 700;
-  text-decoration: none;
-  box-shadow: 0 6px 14px rgba(53, 90, 150, 0.06);
-}
-
-.config-hero-links a:hover {
-  border-color: #9cb8ee;
-  color: #1c4da1;
-  text-decoration: none;
-}
-
 .auth-status {
   display: inline-flex;
   width: auto;
@@ -353,10 +325,6 @@ h2 {
   .config-toolbar {
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .config-hero-links {
-    justify-content: flex-start;
   }
 
   .auth-status {
