@@ -56,6 +56,56 @@
     ).then((response) => response.properties);
   }
 
+  function fetchFormLayout() {
+    return kintone.api(
+      kintone.api.url('/k/v1/preview/app/form/layout.json', true),
+      'GET',
+      { app: kintone.app.getId() }
+    ).then((response) => response.layout);
+  }
+
+  function buildLayoutOrder(layout) {
+    const order = [];
+
+    function walk(items) {
+      (items || []).forEach((item) => {
+        if (item.type === 'ROW' && Array.isArray(item.fields)) {
+          item.fields.forEach((field) => {
+            if (field.code) {
+              order.push(field.code);
+            }
+          });
+        } else if (item.type === 'SUBTABLE' && Array.isArray(item.fields)) {
+          if (item.code) {
+            order.push(item.code);
+          }
+          item.fields.forEach((field) => {
+            if (field.code) {
+              order.push(field.code);
+            }
+          });
+        } else if (item.type === 'GROUP' && Array.isArray(item.layout)) {
+          if (item.code) {
+            order.push(item.code);
+          }
+          walk(item.layout);
+        }
+      });
+    }
+
+    walk(layout);
+    return order;
+  }
+
+  function sortByLayoutOrder(copyFields, layoutOrder) {
+    const indexOf = (code) => {
+      const index = layoutOrder.indexOf(code);
+      return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+    };
+
+    return copyFields.slice().sort((a, b) => indexOf(a.code) - indexOf(b.code));
+  }
+
   function collectCopyFields(properties, parentTableLabel, result) {
     Object.keys(properties || {}).forEach((fieldCode) => {
       const field = properties[fieldCode];
@@ -202,8 +252,9 @@
   });
 
   try {
-    const properties = await fetchFormProperties();
-    renderCopyFieldList(buildCopyFieldList(properties));
+    const [properties, layout] = await Promise.all([fetchFormProperties(), fetchFormLayout()]);
+    const copyFields = sortByLayoutOrder(buildCopyFieldList(properties), buildLayoutOrder(layout));
+    renderCopyFieldList(copyFields);
     await authenticateOnInitialize();
   } catch (error) {
     console.error(error);
