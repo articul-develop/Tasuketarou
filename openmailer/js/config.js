@@ -268,12 +268,15 @@
       <div class="setting-card-header">
         <div>
           <h3>設定 ${index + 1}</h3>
-          <p>1セットで「表示位置・宛先・ボタン名・テンプレート」を設定します。</p>
+          <p>メール送信ボタン・テンプレート・送信済み更新を1セットとして設定します。</p>
         </div>
         <button type="button" class="setting-remove-button" data-action="remove-setting">削除</button>
       </div>
 
       <div class="form-stack">
+        <section class="setting-section">
+          <h4 class="setting-section-title">メール送信ボタン設定</h4>
+          <div class="setting-section-body">
         <div class="form-field">
           <label class="kintoneplugin-label">表示位置タイプ</label>
           <div class="radio-group">
@@ -337,7 +340,12 @@
           <input type="text" class="kintoneplugin-input-text" data-field="buttonLabel" value="${escapeHtml(setting.buttonLabel)}" placeholder="例: 注文メール作成">
           <span class="field-note">初期値は「メール作成」です。</span>
         </div>
+          </div>
+        </section>
 
+        <section class="setting-section">
+          <h4 class="setting-section-title">テンプレート設定</h4>
+          <div class="setting-section-body">
         <div class="form-field">
           <label class="kintoneplugin-label">件名テンプレート</label>
           <input type="text" class="kintoneplugin-input-text" data-field="subjectTemplate" data-template-target value="${escapeHtml(setting.subjectTemplate)}" placeholder="例: 注文書送付の件：{案件番号}">
@@ -345,7 +353,6 @@
         <div class="form-field">
           <label class="kintoneplugin-label">本文テンプレート</label>
           <textarea class="kintoneplugin-textarea" rows="10" data-field="bodyTemplate" data-template-target placeholder="例:&#10;{会社名} 御中&#10;&#10;お世話になっております。&#10;案件番号：{案件番号}">${escapeHtml(setting.bodyTemplate)}</textarea>
-          <span class="field-note">{フィールドコード} 形式で差し込みできます。テーブル内ボタンは押下行のテーブル項目も差し込み可能（行の値を優先）。</span>
         </div>
 
         <div class="form-field field-inserter">
@@ -356,11 +363,14 @@
         </div>
 
         <div class="template-validation" data-role="validation"${validationText ? '' : ' hidden'}>${escapeHtml(validationText)}</div>
+          </div>
+        </section>
 
-        <div class="manage-section">
+        <section class="setting-section manage-section">
+          <h4 class="setting-section-title">送信済み自動更新</h4>
           <label class="checkbox-item checkbox-inline">
             <input type="checkbox" data-field="manageEnabled"${setting.manageEnabled ? ' checked' : ''}>
-            <span>メール送信管理を有効にする</span>
+            <span>メール送信済みを自動更新する</span>
           </label>
           <span class="field-note">有効にすると、ボタン押下後に「送信済みにするか」を確認し、選択した場合に指定項目を更新します。</span>
           <div class="manage-block"${setting.manageEnabled ? '' : ' hidden'}>
@@ -375,7 +385,7 @@
               <span class="field-note">送信済みにした際に、上記項目へ設定する値です。</span>
             </div>
           </div>
-        </div>
+        </section>
       </div>
     `;
 
@@ -644,10 +654,10 @@
 
     if (setting.manageEnabled) {
       if (!setting.manageFieldCode) {
-        throw new Error(`${label}: メール送信管理の「更新する項目」を選択してください。`);
+        throw new Error(`${label}: 送信済み自動更新の「更新する項目」を選択してください。`);
       }
       if (!String(setting.manageValue).trim()) {
-        throw new Error(`${label}: メール送信管理の「設定値」を入力してください。`);
+        throw new Error(`${label}: 送信済み自動更新の「設定値」を入力してください。`);
       }
       saved.manageEnabled = true;
       saved.manageFieldCode = setting.manageFieldCode;
