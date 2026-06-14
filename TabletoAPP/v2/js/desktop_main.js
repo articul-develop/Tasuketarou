@@ -383,21 +383,47 @@
       }
     }
 
+    async function updateSourceRowIdentifiers(recordNumber, linkage, tableRecords) {
+      const latestRecordResponse = await kintone.api(kintone.api.url('/k/v1/record', true), 'GET', {
+        app: getAppId(),
+        id: recordNumber
+      });
+      const persistedTableRows = latestRecordResponse.record?.[linkage.tableFieldCode]?.value || [];
+      const tableValue = persistedTableRows.map((persistedRow, index) => {
+        const currentRow = tableRecords[index];
+        const nextIdentifierValue = currentRow?.value?.[linkage.sourceRowIdentifierField]?.value ?? '';
+        const persistedIdentifierValue = persistedRow?.value?.[linkage.sourceRowIdentifierField]?.value ?? '';
+        if (nextIdentifierValue === persistedIdentifierValue) {
+          return { id: persistedRow.id };
+        }
+        return {
+          id: persistedRow.id,
+          value: {
+            [linkage.sourceRowIdentifierField]: {
+              value: nextIdentifierValue
+            }
+          }
+        };
+      });
+
+      await kintone.api(kintone.api.url('/k/v1/record', true), 'PUT', {
+        app: getAppId(),
+        id: recordNumber,
+        record: {
+          [linkage.tableFieldCode]: {
+            value: tableValue
+          }
+        }
+      });
+    }
+
     async function revertRowIdentifiers(recordNumber, linkage, tableRecords, newIdentifierIndexes) {
       newIdentifierIndexes.forEach(index => {
         tableRecords[index].value[linkage.sourceRowIdentifierField].value = '';
       });
 
       try {
-        await kintone.api(kintone.api.url('/k/v1/record', true), 'PUT', {
-          app: getAppId(),
-          id: recordNumber,
-          record: {
-            [linkage.tableFieldCode]: {
-              value: tableRecords
-            }
-          }
-        });
+        await updateSourceRowIdentifiers(recordNumber, linkage, tableRecords);
       } catch (err) {
         console.error('行識別子のクリアに失敗しました:', err);
       }
@@ -465,18 +491,10 @@
       }
 
       try {
-        await kintone.api(kintone.api.url('/k/v1/record', true), 'PUT', {
-          app: getAppId(),
-          id: recordNumber,
-          record: {
-            [linkage.tableFieldCode]: {
-              value: tableRecords
-            }
-          }
-        });
+        await updateSourceRowIdentifiers(recordNumber, linkage, tableRecords);
       } catch (error) {
         const errorMessage = parseApiErrors(error);
-        alert(`プラグインエラー：${linkageContext} の更新キー項目の更新に失敗しました。\n${errorMessage}`);
+        alert(`プラグインエラー：${linkageContext} の自アプリ（更新元アプリ）テーブル更新に失敗しました。\n更新元テーブルの更新キー項目、または同じ行に含まれる項目の制約を確認してください。\n${errorMessage}`);
         await AuthModule.sendErrorLog(API_CONFIG, '当アプリの更新キー項目更新', `${linkageContext}\n${errorMessage}`);
         hasError = true;
       }
