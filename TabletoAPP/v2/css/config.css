@@ -17,6 +17,44 @@ h2 {
   font-weight: bold; /* 文字を太字に */
 }
 
+.auth-panel {
+  margin-bottom: 20px;
+}
+
+.auth-status {
+  display: inline-flex;
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #bcd6ff;
+  border-radius: 12px;
+  background: #eef6ff;
+  color: #104f9f;
+  line-height: 1.6;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.auth-status.is-error {
+  border-color: #f2b8b5;
+  background: #fff5f5;
+  color: #c0392b;
+}
+
+.trial-status {
+  width: fit-content;
+  margin-top: 8px;
+  padding: 7px 12px;
+  border: 1px solid #bfe3c9;
+  border-radius: 999px;
+  background: #f0fbf3;
+  color: #237044;
+  line-height: 1.5;
+  font-size: 13px;
+  font-weight: 700;
+}
+
 hr.custom-line {
   border: none;
   border-top: 1px solid #ccc;

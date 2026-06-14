@@ -25,6 +25,8 @@
         addConditionButton: document.getElementById('add-condition-button'),
         hideKeyField: document.getElementById('hideKeyField'),
         suppressSuccessMessage: document.getElementById('suppressSuccessMessage'),
+        authStatus: document.getElementById('auth-status'),
+        trialStatus: document.getElementById('trial-status'),
         saveButton: document.getElementById('save-button'),
         cancelButton: document.getElementById('cancel-button')
     };
@@ -55,6 +57,32 @@
             return;
         }
         dom.saveButton.removeAttribute('title');
+    }
+
+    function setAuthStatus(message, isError) {
+        dom.authStatus.textContent = message;
+        dom.authStatus.classList.toggle('is-error', Boolean(isError));
+    }
+
+    function formatTrialEndDate(trialEndDate) {
+        const match = String(trialEndDate).match(/^(\d{4})[-/]?(\d{2})[-/]?(\d{2})$/);
+        if (!match) {
+            return '';
+        }
+
+        return `${Number(match[2])}月${Number(match[3])}日`;
+    }
+
+    function setTrialStatus(trialEndDate) {
+        const formattedDate = formatTrialEndDate(trialEndDate);
+        if (!formattedDate) {
+            dom.trialStatus.hidden = true;
+            dom.trialStatus.textContent = '';
+            return;
+        }
+
+        dom.trialStatus.textContent = `トライアル中（～${formattedDate}まで）`;
+        dom.trialStatus.hidden = false;
     }
 
     function formatFieldDisplayName(label, code) {
@@ -1024,6 +1052,7 @@
 
     async function authenticateOnInitialize() {
         updateSaveButtonState(true, '認証状態を確認しています。');
+        setAuthStatus('認証状態を確認しています。', false);
         try {
             const data = await AuthModule.authenticateDomain(API_CONFIG);
             if (data.status === 'success' && data.response?.status === 'valid') {
@@ -1031,6 +1060,8 @@
                 authState.isValid = true;
                 authState.trialEndDate = data.response.Trial_enddate || authState.trialEndDate;
                 updateSaveButtonState(false);
+                setAuthStatus('認証済みです。設定を保存できます。', false);
+                setTrialStatus(authState.trialEndDate);
                 return true;
             }
 
@@ -1038,6 +1069,8 @@
             authState.checked = true;
             authState.isValid = false;
             updateSaveButtonState(true, '認証に失敗したため保存できません。');
+            setAuthStatus(`認証失敗: ${message}`, true);
+            setTrialStatus('');
             alert(buildReloadPromptMessage(`認証失敗: ${message}`));
             return false;
         } catch (error) {
@@ -1045,6 +1078,8 @@
             authState.checked = true;
             authState.isValid = false;
             updateSaveButtonState(true, '認証に失敗したため保存できません。');
+            setAuthStatus('認証中にエラーが発生しました。', true);
+            setTrialStatus('');
             alert(buildReloadPromptMessage('認証中にエラーが発生しました。'));
             return false;
         }
