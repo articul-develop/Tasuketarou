@@ -155,6 +155,9 @@
       tableEmailFieldCode: setting.tableEmailFieldCode || '',
       tableEmailFieldLabel: setting.tableEmailFieldLabel || setting.tableEmailFieldCode || '',
       buttonLabel: setting.buttonLabel || 'メール作成',
+      allowBlankAddress: setting.allowBlankAddress === true || setting.allowBlankAddress === 'true',
+      ccTemplate: setting.ccTemplate || '',
+      bccTemplate: setting.bccTemplate || '',
       subjectTemplate: setting.subjectTemplate || '',
       bodyTemplate: setting.bodyTemplate || '',
       manageEnabled: setting.manageEnabled === true || setting.manageEnabled === 'true',
@@ -228,7 +231,7 @@
 
     removeButtonArea(space, settings.id);
 
-    if (!email) {
+    if (!email && !settings.allowBlankAddress) {
       return;
     }
 
@@ -249,7 +252,7 @@
     hideOriginalContentOnce(fieldEl);
     removeButtonArea(fieldEl, settings.id);
 
-    if (!email) {
+    if (!email && !settings.allowBlankAddress) {
       return;
     }
 
@@ -307,7 +310,7 @@
       }
       removeButtonArea(cell, settings.id);
 
-      if (!email) {
+      if (!email && !settings.allowBlankAddress) {
         return;
       }
 
@@ -351,9 +354,17 @@
 
       const subject = applyTemplate(settings.subjectTemplate, record, rowValue);
       const body = applyTemplate(settings.bodyTemplate, record, rowValue);
+      const cc = applyTemplate(settings.ccTemplate, record, rowValue);
+      const bcc = applyTemplate(settings.bccTemplate, record, rowValue);
 
-      let mailtoUrl = `mailto:${email}`;
+      let mailtoUrl = `mailto:${email || ''}`;
       const params = [];
+      if (cc) {
+        params.push(`cc=${encodeURIComponent(cc)}`);
+      }
+      if (bcc) {
+        params.push(`bcc=${encodeURIComponent(bcc)}`);
+      }
       if (subject) {
         params.push(`subject=${encodeURIComponent(subject)}`);
       }

@@ -145,6 +145,9 @@
       tableEmailFieldCode: setting.tableEmailFieldCode || '',
       tableEmailFieldLabel: setting.tableEmailFieldLabel || '',
       buttonLabel: setting.buttonLabel || DEFAULT_BUTTON_LABEL,
+      allowBlankAddress: setting.allowBlankAddress === true || setting.allowBlankAddress === 'true',
+      ccTemplate: setting.ccTemplate || '',
+      bccTemplate: setting.bccTemplate || '',
       subjectTemplate: setting.subjectTemplate || '',
       bodyTemplate: setting.bodyTemplate || '',
       manageEnabled: setting.manageEnabled === true || setting.manageEnabled === 'true',
@@ -188,7 +191,10 @@
   function findInvalidTemplateCodes(setting) {
     const valid = new Set(getInsertableFieldsForSetting(setting).map((field) => field.code));
     const codes = unique(
-      extractTemplateCodes(setting.subjectTemplate).concat(extractTemplateCodes(setting.bodyTemplate))
+      extractTemplateCodes(setting.ccTemplate)
+        .concat(extractTemplateCodes(setting.bccTemplate))
+        .concat(extractTemplateCodes(setting.subjectTemplate))
+        .concat(extractTemplateCodes(setting.bodyTemplate))
     );
     return codes.filter((code) => code && !valid.has(code));
   }
@@ -340,12 +346,29 @@
           <input type="text" class="kintoneplugin-input-text" data-field="buttonLabel" value="${escapeHtml(setting.buttonLabel)}" placeholder="例: 注文メール作成">
           <span class="field-note">初期値は「メール作成」です。</span>
         </div>
+        <div class="form-field">
+          <label class="checkbox-item checkbox-inline">
+            <input type="checkbox" data-field="allowBlankAddress"${setting.allowBlankAddress ? ' checked' : ''}>
+            <span>宛先が空でもボタンを表示する</span>
+          </label>
+          <span class="field-note">有効にすると、宛先フィールドが空欄でも件名・本文テンプレート入りのメール作成画面を開けます。宛先はメールアプリ側で手入力してください。</span>
+        </div>
           </div>
         </section>
 
         <section class="setting-section">
           <h4 class="setting-section-title">テンプレート設定</h4>
           <div class="setting-section-body">
+        <div class="form-field">
+          <label class="kintoneplugin-label">CCテンプレート</label>
+          <input type="text" class="kintoneplugin-input-text" data-field="ccTemplate" data-template-target value="${escapeHtml(setting.ccTemplate)}" placeholder="例: {担当者メール}, cc@example.com">
+          <span class="field-note">複数指定する場合はカンマ区切りで入力してください。フィールドコードも挿入できます。</span>
+        </div>
+        <div class="form-field">
+          <label class="kintoneplugin-label">BCCテンプレート</label>
+          <input type="text" class="kintoneplugin-input-text" data-field="bccTemplate" data-template-target value="${escapeHtml(setting.bccTemplate)}" placeholder="例: bcc@example.com">
+          <span class="field-note">複数指定する場合はカンマ区切りで入力してください。フィールドコードも挿入できます。</span>
+        </div>
         <div class="form-field">
           <label class="kintoneplugin-label">件名テンプレート</label>
           <input type="text" class="kintoneplugin-input-text" data-field="subjectTemplate" data-template-target value="${escapeHtml(setting.subjectTemplate)}" placeholder="例: 注文書送付の件：{案件番号}">
@@ -357,7 +380,7 @@
 
         <div class="form-field field-inserter">
           <label class="kintoneplugin-label">フィールドコードの挿入</label>
-          <span class="field-note">挿入先（件名／本文）の入力欄をクリックしてから、下のボタンで {フィールドコード} を挿入できます。通常フィールドと、対象テーブルで選択したテーブルの項目のみ表示されます。</span>
+          <span class="field-note">挿入先（CC／BCC／件名／本文）の入力欄をクリックしてから、下のボタンで {フィールドコード} を挿入できます。通常フィールドと、対象テーブルで選択したテーブルの項目のみ表示されます。</span>
           <input type="text" class="kintoneplugin-input-text" data-field="fieldSearch" placeholder="フィールド名またはコードで検索" autocomplete="off">
           <div class="field-insert-list" data-role="insert-list">${insertListHtml(setting, '')}</div>
         </div>
@@ -425,6 +448,10 @@
     setting.tableFieldCode = getInputValue(card, 'tableField');
     setting.tableEmailFieldCode = getInputValue(card, 'tableEmailField');
     setting.buttonLabel = getInputValue(card, 'buttonLabel');
+    const allowBlankAddressCheckbox = card.querySelector('[data-field="allowBlankAddress"]');
+    setting.allowBlankAddress = allowBlankAddressCheckbox ? allowBlankAddressCheckbox.checked : false;
+    setting.ccTemplate = getInputValue(card, 'ccTemplate');
+    setting.bccTemplate = getInputValue(card, 'bccTemplate');
     setting.subjectTemplate = getInputValue(card, 'subjectTemplate');
     setting.bodyTemplate = getInputValue(card, 'bodyTemplate');
     const manageCheckbox = card.querySelector('[data-field="manageEnabled"]');
@@ -518,7 +545,7 @@
       return;
     }
 
-    if (field === 'subjectTemplate' || field === 'bodyTemplate') {
+    if (field === 'ccTemplate' || field === 'bccTemplate' || field === 'subjectTemplate' || field === 'bodyTemplate') {
       setting[field] = event.target.value;
       updateCardValidation(setting, card);
     }
@@ -526,7 +553,7 @@
 
   settingsListEl.addEventListener('focusin', (event) => {
     const field = event.target.dataset.field;
-    if (field === 'subjectTemplate' || field === 'bodyTemplate') {
+    if (field === 'ccTemplate' || field === 'bccTemplate' || field === 'subjectTemplate' || field === 'bodyTemplate') {
       activeTemplateTarget = event.target;
     }
   });
@@ -610,6 +637,9 @@
       id: setting.id,
       displayType: setting.displayType === 'field' ? 'field' : 'space',
       buttonLabel: setting.buttonLabel.trim() || DEFAULT_BUTTON_LABEL,
+      allowBlankAddress: Boolean(setting.allowBlankAddress),
+      ccTemplate: setting.ccTemplate,
+      bccTemplate: setting.bccTemplate,
       subjectTemplate: setting.subjectTemplate,
       bodyTemplate: setting.bodyTemplate
     };
@@ -647,7 +677,7 @@
     const invalidCodes = findInvalidTemplateCodes(setting);
     if (invalidCodes.length > 0) {
       throw new Error(
-        `${label}: 件名・本文に存在しないフィールドコードがあります:\n${invalidCodes.map((code) => `{${code}}`).join(', ')}\n\n` +
+        `${label}: CC・BCC・件名・本文に存在しないフィールドコードがあります:\n${invalidCodes.map((code) => `{${code}}`).join(', ')}\n\n` +
         '通常フィールド、または対象テーブルで選択したテーブルの項目のみ使用できます。'
       );
     }
