@@ -34,11 +34,12 @@
     const isMobile = isMobileEvent(event.type);
     const delays = isMobile ? MOBILE_APPLY_DELAYS : APPLY_DELAYS;
 
-    delays.forEach((delay) => {
+    delays.forEach((delay, index) => {
       setTimeout(() => {
+        const isFinalAttempt = index === delays.length - 1;
         settingsList.forEach((settings) => {
           try {
-            render(event.record, settings, recordApi, isMobile);
+            render(event.record, settings, recordApi, isMobile, isFinalAttempt);
           } catch (error) {
             console.error('[openmailer] 描画エラー', error);
           }
@@ -204,7 +205,7 @@
     }
   }
 
-  function render(record, settings, recordApi, isMobile) {
+  function render(record, settings, recordApi, isMobile, isFinalAttempt) {
     if (settings.displayType === 'space') {
       renderSpaceButton(record, settings, recordApi, isMobile);
       return;
@@ -216,7 +217,7 @@
     }
 
     if (settings.addressFieldType === 'table') {
-      renderTableButtons(record, settings, recordApi, isMobile);
+      renderTableButtons(record, settings, recordApi, isMobile, isFinalAttempt);
     }
   }
 
@@ -262,7 +263,7 @@
   }
 
   // ---------- テーブル内フィールド表示 ----------
-  function renderTableButtons(record, settings, recordApi, isMobile) {
+  function renderTableButtons(record, settings, recordApi, isMobile, isFinalAttempt) {
     const tableField = record[settings.tableFieldCode];
     if (!tableField || !Array.isArray(tableField.value)) {
       console.warn('[openmailer] 対象テーブルが見つかりません:', settings.tableFieldCode);
@@ -287,6 +288,9 @@
     }
 
     if (rowTargets.length === 0) {
+      if (!isFinalAttempt) {
+        return;
+      }
       console.warn('[openmailer] メールアドレス列が画面上で見つかりませんでした:', {
         tableFieldCode: settings.tableFieldCode,
         tableEmailFieldLabel: settings.tableEmailFieldLabel,
