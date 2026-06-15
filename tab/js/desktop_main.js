@@ -5,6 +5,7 @@
   const ROOT_ID = 'detail-tabs-plugin-root';
   const ACTIVE_CLASS = 'detail-tabs-plugin-button-active';
   const APPLY_DELAYS = [0, 100, 300, 700, 1500];
+  const TAB_URL_PARAM = 'detailTab';
   const EVENTS = [
     'app.record.detail.show',
     'app.record.create.show',
@@ -19,10 +20,12 @@
   let fieldParentGroupMap = null;
   let fieldParentGroupMapPromise = null;
   let activeTabId = null;
+  let currentEventType = '';
+  let currentRecordId = '';
+  let editHandoffBound = false;
+  let editHandoffClickHandler = null;
 
   kintone.events.on(EVENTS, (event) => {
-    activeTabId = null;
-
     const existingRoot = document.getElementById(ROOT_ID);
     if (existingRoot) {
       existingRoot.remove();
@@ -33,7 +36,16 @@
       return event;
     }
 
+    currentEventType = event.type;
+    currentRecordId = getRecordIdFromEvent(event);
+    activeTabId = resolveInitialTabId(event.type);
+
     injectStyle();
+
+    if (isDetailEvent(event.type)) {
+      setupEditHandoff();
+    }
+
     scheduleRender(event.type);
     return event;
   });
@@ -138,6 +150,226 @@
     return normalized;
   }
 
+  function getAppId() {
+    if (kintone.app && typeof kintone.app.getId === 'function') {
+      return kintone.app.getId();
+    }
+
+    if (kintone.mobile && kintone.mobile.app && typeof kintone.mobile.app.getId === 'function') {
+      return kintone.mobile.app.getId();
+    }
+
+    return '';
+  }
+
+  function getRecordIdFromEvent(event) {
+    return event?.record?.$id?.value || '';
+  }
+
+  function isDetailEvent(eventType) {
+    return eventType === 'app.record.detail.show' || eventType === 'mobile.app.record.detail.show';
+  }
+
+  function isEditEvent(eventType) {
+    return eventType === 'app.record.edit.show' || eventType === 'mobile.app.record.edit.show';
+  }
+
+  function isCreateEvent(eventType) {
+    return eventType === 'app.record.create.show' || eventType === 'mobile.app.record.create.show';
+  }
+
+  function isDetailPage() {
+    return /\/show(?:\/|$|\?|#)/.test(location.pathname)
+      || (isDetailEvent(currentEventType) && !/\/edit(?:\/|$|\?|#)/.test(location.pathname));
+  }
+
+  function readUrlParams() {
+    const rawQuery = [
+      location.search.replace(/^\?/, ''),
+      location.hash.replace(/^#/, '')
+    ].filter(Boolean).join('&');
+
+    if (!rawQuery) {
+      return new URLSearchParams();
+    }
+
+    return new URLSearchParams(rawQuery);
+  }
+
+  function buildUrlWithParams(params) {
+    const query = params.toString();
+
+    if (!query) {
+      return `${location.pathname}${location.search}`;
+    }
+
+    if (location.hash || params.has('record')) {
+      return `${location.pathname}${location.search}#${query}`;
+    }
+
+    return `${location.pathname}?${query}`;
+  }
+
+  function readTabIdFromUrl() {
+    return readUrlParams().get(TAB_URL_PARAM) || '';
+  }
+
+  function writeTabIdToUrl(tabId) {
+    if (!tabId) {
+      return;
+    }
+
+    const params = readUrlParams();
+    params.set(TAB_URL_PARAM, tabId);
+    history.replaceState(null, '', buildUrlWithParams(params));
+  }
+
+  function removeTabIdFromUrl() {
+    const params = readUrlParams();
+
+    if (!params.has(TAB_URL_PARAM)) {
+      return;
+    }
+
+    params.delete(TAB_URL_PARAM);
+    history.replaceState(null, '', buildUrlWithParams(params));
+  }
+
+  function appendTabIdToUrl(url, tabId) {
+    if (!tabId || !url) {
+      return url;
+    }
+
+    const parsed = new URL(url, location.origin);
+
+    if (parsed.hash) {
+      const hashParams = new URLSearchParams(parsed.hash.replace(/^#/, ''));
+      hashParams.set(TAB_URL_PARAM, tabId);
+      parsed.hash = hashParams.toString();
+    } else {
+      const searchParams = new URLSearchParams(parsed.search.replace(/^\?/, ''));
+      searchParams.set(TAB_URL_PARAM, tabId);
+      parsed.search = searchParams.toString() ? `?${searchParams.toString()}` : '';
+    }
+
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  }
+
+  function buildHandoffStorageKey(recordId) {
+    return `detail_tabs_handoff_${PLUGIN_ID}_${getAppId()}_${recordId}`;
+  }
+
+  function saveTabHandoffFallback(recordId, tabId) {
+    if (!recordId || !tabId) {
+      return;
+    }
+
+    sessionStorage.setItem(buildHandoffStorageKey(recordId), tabId);
+  }
+
+  function readTabHandoffFallback(recordId) {
+    if (!recordId) {
+      return '';
+    }
+
+    return sessionStorage.getItem(buildHandoffStorageKey(recordId)) || '';
+  }
+
+  function clearTabHandoffFallback(recordId) {
+    if (!recordId) {
+      return;
+    }
+
+    sessionStorage.removeItem(buildHandoffStorageKey(recordId));
+  }
+
+  function isValidTabId(tabId) {
+    return Boolean(findTab(tabId));
+  }
+
+  function resolveInitialTabId(eventType) {
+    const defaultTabId = currentSettings.tabs[0].id;
+
+    if (isCreateEvent(eventType)) {
+      return defaultTabId;
+    }
+
+    if (isEditEvent(eventType)) {
+      const candidate = readTabIdFromUrl() || readTabHandoffFallback(currentRecordId);
+      return isValidTabId(candidate) ? candidate : defaultTabId;
+    }
+
+    if (isDetailEvent(eventType)) {
+      const candidate = readTabIdFromUrl();
+      return isValidTabId(candidate) ? candidate : defaultTabId;
+    }
+
+    return defaultTabId;
+  }
+
+  function resolveTabIdForHandoff() {
+    if (activeTabId && isValidTabId(activeTabId)) {
+      return activeTabId;
+    }
+
+    const fromUrl = readTabIdFromUrl();
+    if (isValidTabId(fromUrl)) {
+      return fromUrl;
+    }
+
+    return currentSettings.tabs[0].id;
+  }
+
+  function findEditLink(target) {
+    if (!isDetailPage()) {
+      return null;
+    }
+
+    const toolbarLink = target.closest('.gaia-argoui-app-toolbar-statusmenu-edit a[href*="/edit"]');
+    if (toolbarLink) {
+      return toolbarLink;
+    }
+
+    const link = target.closest('a[href*="/edit"]');
+    if (!link) {
+      return null;
+    }
+
+    const href = link.getAttribute('href') || '';
+    if (href.indexOf('/edit') === -1) {
+      return null;
+    }
+
+    return link;
+  }
+
+  function setupEditHandoff() {
+    if (editHandoffBound) {
+      return;
+    }
+
+    editHandoffClickHandler = (clickEvent) => {
+      const link = findEditLink(clickEvent.target);
+      if (!link) {
+        return;
+      }
+
+      const tabId = resolveTabIdForHandoff();
+      if (!tabId) {
+        return;
+      }
+
+      clickEvent.preventDefault();
+      clickEvent.stopPropagation();
+
+      saveTabHandoffFallback(currentRecordId, tabId);
+      location.href = appendTabIdToUrl(link.href, tabId);
+    };
+
+    document.addEventListener('click', editHandoffClickHandler, true);
+    editHandoffBound = true;
+  }
+
   function scheduleRender(eventType) {
     APPLY_DELAYS.forEach((delay) => {
       setTimeout(() => {
@@ -156,7 +388,8 @@
     }
 
     if (!document.getElementById(ROOT_ID)) {
-      renderTabs(eventType, currentSettings.tabs[0].id);
+      const initialTabId = activeTabId || currentSettings.tabs[0].id;
+      renderTabs(eventType, initialTabId);
       return;
     }
 
@@ -165,7 +398,7 @@
     activateTab(eventType, nextActiveTabId);
   }
 
-  function renderTabs(eventType, activeTabId) {
+  function renderTabs(eventType, initialActiveTabId) {
     const recordApi = getRecordApi(eventType);
     const spaceElement = getSpaceElement(recordApi, currentSettings.spaceId);
     if (!spaceElement) {
@@ -189,7 +422,7 @@
       button.textContent = tab.label;
       button.dataset.tabId = tab.id;
       button.style.setProperty('--detail-tabs-color', tab.color);
-      button.setAttribute('aria-pressed', tab.id === activeTabId ? 'true' : 'false');
+      button.setAttribute('aria-pressed', tab.id === initialActiveTabId ? 'true' : 'false');
 
       button.addEventListener('click', () => {
         activateTab(eventType, tab.id);
@@ -199,7 +432,7 @@
     });
 
     spaceElement.appendChild(root);
-    activateTab(eventType, activeTabId);
+    activateTab(eventType, initialActiveTabId);
   }
 
   async function activateTab(eventType, nextActiveTabId) {
@@ -224,6 +457,15 @@
     });
 
     updateButtonState(activeTab.id);
+
+    if (isDetailEvent(eventType)) {
+      writeTabIdToUrl(activeTab.id);
+    }
+
+    if (isEditEvent(eventType)) {
+      removeTabIdFromUrl();
+      clearTabHandoffFallback(currentRecordId);
+    }
   }
 
   function showField(recordApi, fieldCode, parentMap) {
