@@ -540,6 +540,7 @@
       case 'DATETIME':
         return formatDateFieldValue(value, field.type, csvOptions.dateFormat);
       case 'USER_SELECT':
+        return (value || []).map((item) => item.code || item.name || '').join(',');
       case 'ORGANIZATION_SELECT':
       case 'GROUP_SELECT':
       case 'STATUS_ASSIGNEE':
