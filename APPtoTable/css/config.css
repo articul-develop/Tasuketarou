@@ -1,0 +1,176 @@
+/* 入力欄全体の余白を統一 */
+.setting {
+  margin-bottom: 30px;
+}
+
+h2 {
+  font-size: 1.5em !important;
+  color: #1e90ff !important;
+  margin-bottom: 16px !important;
+  font-weight: bold !important;
+  padding-bottom: 4px !important;
+}
+
+.kintoneplugin-highlight {
+  color: #0073e6;
+  font-weight: bold;
+}
+
+hr.custom-line {
+  border: none;
+  border-top: 1px solid #ccc;
+  margin: 20px 0;
+}
+
+.condition-toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 10px 0;
+}
+
+.condition-headings {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) 120px minmax(180px, 1fr) 40px;
+  gap: 12px;
+  margin: 12px 0 8px;
+}
+
+.condition-heading {
+  font-weight: bold;
+  color: #333;
+}
+
+.condition-editor {
+  border: 2px solid #ccc;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+  width: 100%;
+  min-width: 200px;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.condition-empty {
+  color: #666;
+  margin: 0;
+}
+
+.condition-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) 120px minmax(180px, 1fr) 40px;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.condition-row:last-child {
+  margin-bottom: 0;
+}
+
+.condition-source,
+.condition-scope,
+.condition-target {
+  min-width: 0;
+}
+
+.condition-source select,
+.condition-scope select,
+.condition-target select {
+  width: 100%;
+}
+
+.condition-remove {
+  border: 1px solid #d0d7de;
+  background: #fff;
+  color: #666;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  line-height: 1;
+}
+
+.mapping-toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 10px 0;
+}
+
+.mapping-headings {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) 120px minmax(180px, 1fr) 40px;
+  gap: 12px;
+  margin: 12px 0 8px;
+}
+
+.mapping-heading {
+  font-weight: bold;
+  color: #333;
+}
+
+.mapping-editor {
+  border: 2px solid #ccc;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+  width: 100%;
+  min-width: 200px;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.mapping-empty {
+  color: #666;
+  margin: 0;
+}
+
+.mapping-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) 120px minmax(180px, 1fr) 40px;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.mapping-row:last-child {
+  margin-bottom: 0;
+}
+
+.mapping-source,
+.mapping-scope,
+.mapping-target {
+  min-width: 0;
+}
+
+.mapping-source select,
+.mapping-scope select,
+.mapping-target select {
+  width: 100%;
+}
+
+.mapping-remove {
+  border: 1px solid #d0d7de;
+  background: #fff;
+  color: #666;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  line-height: 1;
+}
+
+@media (max-width: 900px) {
+  .condition-headings,
+  .condition-row,
+  .mapping-headings,
+  .mapping-row {
+    grid-template-columns: 1fr;
+  }
+}
