@@ -23,6 +23,7 @@
 
   let editSnapshot = null;
   let indexSnapshots = {};
+  let historyTableRowSnap = {};
 
   const authOk = () => !window.isAuthenticated || window.isAuthenticated();
 
@@ -72,6 +73,10 @@
     editSnapshot = CH.deepCopy(event.record);
     CH.ensureFieldTypesLoaded();
     CH.applyDestinationFieldUi(event, allSettings, { hideDestOnEdit, lockDestOnEdit });
+    if (lockDestOnEdit) {
+      historyTableRowSnap = CH.captureHistoryTableRows(event.record, allSettings);
+      CH.armHistoryTableRowGuard(allSettings, historyTableRowSnap, event.type);
+    }
     return event;
   });
 
@@ -88,6 +93,10 @@
     }
 
     CH.applyDestinationFieldUi(event, allSettings, { hideDestOnEdit, lockDestOnEdit });
+    if (lockDestOnEdit) {
+      historyTableRowSnap = CH.captureHistoryTableRows(event.record, allSettings);
+      CH.armHistoryTableRowGuard(allSettings, historyTableRowSnap, event.type);
+    }
     return event;
   });
 
@@ -207,7 +216,7 @@
     }).catch((error) => rejectWithWriteError(event, error, '一覧編集の変更履歴処理に失敗しました'));
   });
 
-  // 明細行内の履歴文字列／履歴テーブルは、行追加後も編集不可にする
+  // 明細行内の履歴文字列／履歴テーブルの更新対象列は、行追加後も編集不可にする
   const destTargets = CH.collectDestinationTargets(allSettings);
   const lockTableCodes = Array.from(new Set([
     ...destTargets.historyTables,
@@ -224,6 +233,9 @@
   });
   if (lockTableChangeEvents.length) {
     kintone.events.on(lockTableChangeEvents, (event) => {
+      if (lockDestOnEdit) {
+        CH.restoreHistoryTableStructure(event.record, historyTableRowSnap);
+      }
       CH.applyDestinationFieldUi(event, allSettings, { lockDestOnEdit });
       return event;
     });

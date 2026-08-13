@@ -487,6 +487,30 @@ window.ChangeHistory = window.ChangeHistory || {};
   };
 
   /**
+   * 履歴テーブルごとに、プラグインが書き込む列コードを収集する
+   * @returns {Object<string, Set<string>>}
+   */
+  CH.collectHistoryTableLockColumns = (settings) => {
+    const byTable = {};
+    (settings || []).forEach((setting) => {
+      if (!setting || setting.saveType !== 'subtable' || !setting.historyTable) {
+        return;
+      }
+      const tableCode = setting.historyTable;
+      if (!byTable[tableCode]) {
+        byTable[tableCode] = new Set();
+      }
+      const cols = setting.historyColumns || {};
+      Object.keys(cols).forEach((key) => {
+        if (cols[key]) {
+          byTable[tableCode].add(cols[key]);
+        }
+      });
+    });
+    return byTable;
+  };
+
+  /**
    * 入力画面で非表示にする履歴保存先フィールドコードを収集
    */
   CH.collectHiddenDestinationCodes = (settings, hideDestOnEdit) => {
@@ -496,15 +520,19 @@ window.ChangeHistory = window.ChangeHistory || {};
     return CH.collectDestinationTargets(settings).fieldCodes;
   };
 
-  const lockSubtableCells = (tableField) => {
+  const lockSubtableCells = (tableField, columnCodes) => {
     if (!tableField || !Array.isArray(tableField.value)) {
       return;
     }
+    const allow = columnCodes && columnCodes.size ? columnCodes : null;
     tableField.value.forEach((row) => {
       if (!row || !row.value) {
         return;
       }
       Object.keys(row.value).forEach((innerCode) => {
+        if (allow && !allow.has(innerCode)) {
+          return;
+        }
         if (row.value[innerCode]) {
           row.value[innerCode].disabled = true;
         }
@@ -514,14 +542,18 @@ window.ChangeHistory = window.ChangeHistory || {};
 
   /**
    * 新規・編集・一覧編集で履歴保存先を編集不可にする（権限は落とさない）
+   * 履歴テーブルは行の追加・削除と、プラグインが書き込む列のみ編集不可。他列は編集可。
    */
   CH.lockDestinationFieldsOnEdit = (record, settings, lockDestOnEdit) => {
     if (!lockDestOnEdit || !record) {
       return;
     }
     const targets = CH.collectDestinationTargets(settings);
+    const historyTableSet = new Set(targets.historyTables);
+    const lockColumnsByTable = CH.collectHistoryTableLockColumns(settings);
+
     targets.fieldCodes.forEach((code) => {
-      if (!record[code]) {
+      if (!record[code] || historyTableSet.has(code)) {
         return;
       }
       record[code].disabled = true;
@@ -529,10 +561,12 @@ window.ChangeHistory = window.ChangeHistory || {};
         lockSubtableCells(record[code]);
       }
     });
-    targets.historyTables.forEach((tableCode) => {
-      if (record[tableCode] && record[tableCode].type === 'SUBTABLE') {
-        lockSubtableCells(record[tableCode]);
+    Object.keys(lockColumnsByTable).forEach((tableCode) => {
+      const tableField = record[tableCode];
+      if (!tableField || tableField.type !== 'SUBTABLE') {
+        return;
       }
+      lockSubtableCells(tableField, lockColumnsByTable[tableCode]);
     });
     targets.rowFields.forEach((item) => {
       const rows = CH.getTableRows(record, item.tableCode);
@@ -540,6 +574,91 @@ window.ChangeHistory = window.ChangeHistory || {};
         if (row && row.value && row.value[item.fieldCode]) {
           row.value[item.fieldCode].disabled = true;
         }
+      });
+    });
+  };
+
+  const HISTORY_TABLE_ROW_BUTTON_SELECTOR = [
+    '.add-row-image-gaia',
+    '.remove-row-image-gaia',
+    '.add-row-image-action-gaia',
+    '.subtable-operation-gaia',
+    '.subtable-row-add-gaia',
+    '.subtable-row-delete-gaia',
+    '.subtable-row-buttons-gaia',
+    '[class*="add-row"]',
+    '[class*="remove-row"]',
+    '[class*="addRow"]',
+    '[class*="removeRow"]',
+    '[class*="AddRow"]',
+    '[class*="RemoveRow"]',
+    '[class*="deleteRow"]',
+    '[class*="DeleteRow"]',
+    'button[title="行を追加"]',
+    'button[title="行を削除"]',
+    'button[title="Add row"]',
+    'button[title="Delete row"]',
+    'button[aria-label="行を追加"]',
+    'button[aria-label="行を削除"]',
+    'button[aria-label="Add row"]',
+    'button[aria-label="Delete row"]',
+    'img[alt="行を追加する"]',
+    'img[alt="行を削除する"]'
+  ].join(',');
+
+  CH.captureHistoryTableRows = (record, settings) => {
+    const snap = {};
+    CH.collectDestinationTargets(settings).historyTables.forEach((code) => {
+      snap[code] = CH.deepCopy(CH.getTableRows(record, code));
+    });
+    return snap;
+  };
+
+  const sameRowStructure = (original, current) => {
+    if (original.length !== current.length) {
+      return false;
+    }
+    for (let i = 0; i < original.length; i += 1) {
+      const origId = original[i] ? original[i].id : null;
+      const currId = current[i] ? current[i].id : null;
+      if (origId !== currId) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  /**
+   * 履歴テーブルの行追加・削除を元に戻す（他列の入力は残す）
+   */
+  CH.restoreHistoryTableStructure = (record, rowSnapshot) => {
+    if (!record || !rowSnapshot) {
+      return;
+    }
+    Object.keys(rowSnapshot).forEach((tableCode) => {
+      const tableField = record[tableCode];
+      if (!tableField || tableField.type !== 'SUBTABLE') {
+        return;
+      }
+      const original = Array.isArray(rowSnapshot[tableCode]) ? rowSnapshot[tableCode] : [];
+      const current = Array.isArray(tableField.value) ? tableField.value : [];
+      if (sameRowStructure(original, current)) {
+        return;
+      }
+      const currentById = {};
+      current.forEach((row) => {
+        if (row && row.id != null && row.id !== '') {
+          currentById[String(row.id)] = row;
+        }
+      });
+      tableField.value = original.map((origRow) => {
+        if (origRow && origRow.id != null && origRow.id !== '') {
+          const live = currentById[String(origRow.id)];
+          if (live) {
+            return live;
+          }
+        }
+        return CH.deepCopy(origRow);
       });
     });
   };
@@ -555,11 +674,160 @@ window.ChangeHistory = window.ChangeHistory || {};
       '.ch-history-table-locked .add-row-image-gaia,',
       '.ch-history-table-locked .remove-row-image-gaia,',
       '.ch-history-table-locked .add-row-image-action-gaia,',
-      '.ch-history-table-locked .subtable-operation-gaia {',
+      '.ch-history-table-locked .subtable-operation-gaia,',
+      '.ch-history-table-locked .subtable-row-add-gaia,',
+      '.ch-history-table-locked .subtable-row-delete-gaia,',
+      '.ch-history-table-locked .subtable-row-buttons-gaia,',
+      '.ch-history-table-locked [class*="add-row"],',
+      '.ch-history-table-locked [class*="remove-row"],',
+      '.ch-history-table-locked [class*="addRow"],',
+      '.ch-history-table-locked [class*="removeRow"],',
+      '.ch-history-table-locked [class*="AddRow"],',
+      '.ch-history-table-locked [class*="RemoveRow"],',
+      '.ch-history-table-locked [class*="deleteRow"],',
+      '.ch-history-table-locked [class*="DeleteRow"],',
+      '.ch-history-table-locked button[title="行を追加"],',
+      '.ch-history-table-locked button[title="行を削除"],',
+      '.ch-history-table-locked button[title="Add row"],',
+      '.ch-history-table-locked button[title="Delete row"],',
+      '.ch-history-table-locked button[aria-label="行を追加"],',
+      '.ch-history-table-locked button[aria-label="行を削除"],',
+      '.ch-history-table-locked button[aria-label="Add row"],',
+      '.ch-history-table-locked button[aria-label="Delete row"],',
+      '.ch-history-table-locked img[alt="行を追加する"],',
+      '.ch-history-table-locked img[alt="行を削除する"] {',
       '  display: none !important;',
+      '  visibility: hidden !important;',
+      '  pointer-events: none !important;',
       '}'
     ].join('\n');
     document.head.appendChild(style);
+  };
+
+  const hideRowButtonsIn = (root) => {
+    if (!root || !root.querySelectorAll) {
+      return;
+    }
+    root.querySelectorAll(HISTORY_TABLE_ROW_BUTTON_SELECTOR).forEach((btn) => {
+      btn.style.setProperty('display', 'none', 'important');
+      btn.style.setProperty('visibility', 'hidden', 'important');
+      btn.style.setProperty('pointer-events', 'none', 'important');
+      btn.setAttribute('aria-hidden', 'true');
+      btn.tabIndex = -1;
+    });
+  };
+
+  const markHistoryTableLockTarget = (el) => {
+    if (!el || !el.classList) {
+      return;
+    }
+    el.classList.add('ch-history-table-locked');
+    hideRowButtonsIn(el);
+    let node = el.parentElement;
+    for (let i = 0; i < 4 && node; i += 1) {
+      if (node.classList) {
+        node.classList.add('ch-history-table-locked');
+      }
+      hideRowButtonsIn(node);
+      if (node.querySelector && node.querySelector('.subtable-gaia, .subtable-operation-gaia, .subtable-row-buttons-gaia')) {
+        break;
+      }
+      node = node.parentElement;
+    }
+  };
+
+  const findHistoryTableRoots = (code, eventType) => {
+    const roots = [];
+    const seen = new Set();
+    const add = (el) => {
+      if (!el || seen.has(el)) {
+        return;
+      }
+      seen.add(el);
+      roots.push(el);
+    };
+    try {
+      add(CH.isMobileEvent(eventType)
+        ? kintone.mobile.app.record.getFieldElement(code)
+        : kintone.app.record.getFieldElement(code));
+    } catch (e) {
+      // フィールド未表示など
+    }
+    try {
+      const esc = window.CSS && CSS.escape ? CSS.escape(code) : code;
+      document.querySelectorAll(`[data-group-code="${esc}"]`).forEach(add);
+    } catch (e) {
+      // selector 不正時は無視
+    }
+    return roots;
+  };
+
+  CH.armHistoryTableRowGuard = (settings, rowSnapshot, eventType) => {
+    CH._historyTableGuard = {
+      settings,
+      rowSnapshot,
+      eventType
+    };
+  };
+
+  CH.enforceHistoryTableStructureFromUi = () => {
+    const guard = CH._historyTableGuard;
+    if (!guard || CH._restoringHistoryTable) {
+      return;
+    }
+    const isMobile = CH.isMobileEvent(guard.eventType);
+    const api = isMobile ? kintone.mobile.app.record : kintone.app.record;
+    if (!api || typeof api.get !== 'function' || typeof api.set !== 'function') {
+      return;
+    }
+    let recObj;
+    try {
+      recObj = api.get();
+    } catch (e) {
+      return;
+    }
+    if (!recObj || !recObj.record) {
+      return;
+    }
+    const idsOf = (record) => CH.collectDestinationTargets(guard.settings).historyTables.map((code) => (
+      CH.getTableRows(record, code).map((row) => (row && row.id != null ? String(row.id) : '')).join(',')
+    )).join('|');
+    const before = idsOf(recObj.record);
+    CH.restoreHistoryTableStructure(recObj.record, guard.rowSnapshot);
+    if (before === idsOf(recObj.record)) {
+      return;
+    }
+    CH._restoringHistoryTable = true;
+    try {
+      api.set(recObj);
+      CH.lockDestinationFieldsOnEdit(recObj.record, guard.settings, true);
+    } finally {
+      setTimeout(() => {
+        CH._restoringHistoryTable = false;
+      }, 50);
+    }
+  };
+
+  CH.startHistoryTableButtonObserver = () => {
+    if (CH._historyTableButtonObserver || !document.body) {
+      return;
+    }
+    CH._historyTableButtonObserver = new MutationObserver(() => {
+      document.querySelectorAll('.ch-history-table-locked').forEach((el) => {
+        hideRowButtonsIn(el);
+      });
+      if (!CH._historyTableGuard) {
+        return;
+      }
+      clearTimeout(CH._historyTableGuardTimer);
+      CH._historyTableGuardTimer = setTimeout(() => {
+        CH.enforceHistoryTableStructureFromUi();
+      }, 50);
+    });
+    CH._historyTableButtonObserver.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
   };
 
   /**
@@ -571,16 +839,17 @@ window.ChangeHistory = window.ChangeHistory || {};
       return;
     }
     CH.ensureHistoryTableLockStyles();
+    CH.startHistoryTableButtonObserver();
     const hideOnce = () => {
       tables.forEach((code) => {
         try {
-          const el = CH.isMobileEvent(eventType)
-            ? kintone.mobile.app.record.getFieldElement(code)
-            : kintone.app.record.getFieldElement(code);
-          if (!el) {
+          const roots = findHistoryTableRoots(code, eventType);
+          if (!roots.length) {
             return;
           }
-          el.classList.add('ch-history-table-locked');
+          roots.forEach((el) => {
+            markHistoryTableLockTarget(el);
+          });
         } catch (e) {
           console.warn('変更履歴: 履歴テーブル操作ボタンの非表示に失敗しました', code, e);
         }
@@ -589,6 +858,7 @@ window.ChangeHistory = window.ChangeHistory || {};
     hideOnce();
     setTimeout(hideOnce, 0);
     setTimeout(hideOnce, 200);
+    setTimeout(hideOnce, 800);
   };
 
   /**
