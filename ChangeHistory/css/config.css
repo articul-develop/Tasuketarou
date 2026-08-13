@@ -57,6 +57,20 @@ h2 {
   font-size: 15px;
 }
 
+.config-hero-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  margin-top: 14px;
+}
+
+.config-hero-links a {
+  color: #315fc4;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
 .auth-status {
   display: inline-flex;
   width: auto;
