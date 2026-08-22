@@ -1,0 +1,1216 @@
+﻿/*
+ * スマート一覧プラグイン 一覧画面スタイル
+ * kintone標準の一覧画面から浮かないよう、彩度を抑えた業務向けの配色にしている。
+ * すべてのセレクタを .dl- 接頭辞でスコープし、kintone本体のスタイルへ影響させない。
+ */
+
+.dl-fallback-container {
+  margin: 8px 0 0;
+}
+
+.dl-root {
+  --dl-border: #dfe4ea;
+  --dl-border-strong: #c3ccd6;
+  --dl-head-bg: #eef2f7;
+  --dl-head-text: #33415c;
+  --dl-text: #2b3648;
+  --dl-muted: #6b7a90;
+  --dl-accent: #3b7ad9;
+  --dl-accent-weak: #eaf2fd;
+  --dl-hover: #eaf3ff;
+  --dl-group-h: 26px;
+  --dl-row-h: 32px;
+
+  position: relative;
+  box-sizing: border-box;
+  margin: 0 0 12px;
+  color: var(--dl-text);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.dl-root[data-density="normal"] {
+  --dl-row-h: 40px;
+}
+
+.dl-root[data-density="relax"] {
+  --dl-row-h: 48px;
+}
+
+.dl-root[data-list-mode="parent"] {
+  --dl-group-h: 0px;
+}
+
+.dl-root *,
+.dl-root *::before,
+.dl-root *::after {
+  box-sizing: border-box;
+}
+
+/*
+ * hidden属性による非表示を確実に効かせる。
+ * ブラウザ標準の [hidden] { display: none } は作者スタイルの display 指定に負けるため、
+ * display: flex を持つローディング・サイドパネル・ポップオーバー等が閉じられなくなる。
+ */
+.dl-root [hidden],
+.dl-root[hidden],
+.dl-overlay[hidden],
+.dl-side-panel[hidden],
+.dl-popover[hidden] {
+  display: none !important;
+}
+
+/* ------------------------------------------------------------------ *
+ * ツールバー
+ * ------------------------------------------------------------------ */
+
+.dl-toolbar {
+  padding: 12px 14px;
+  border: 1px solid var(--dl-border);
+  border-radius: 6px 6px 0 0;
+  background: #fff;
+}
+
+.dl-toolbar-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.dl-title {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  color: #1b2536 !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  line-height: 1.4 !important;
+}
+
+.dl-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.dl-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 260px;
+  max-width: 420px;
+  min-width: 200px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--dl-border-strong);
+  border-radius: 4px;
+  background: #fff;
+}
+
+.dl-search:focus-within {
+  border-color: var(--dl-accent);
+  box-shadow: 0 0 0 3px rgba(59, 122, 217, 0.14);
+}
+
+.dl-search-icon {
+  margin-right: 6px;
+  color: var(--dl-muted);
+  font-size: 13px;
+}
+
+.dl-search-input {
+  flex: 1 1 auto;
+  height: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--dl-text);
+  font-size: 13px;
+  outline: none;
+}
+
+.dl-search-input:disabled {
+  color: var(--dl-muted);
+}
+
+.dl-search-clear {
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: var(--dl-muted);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.dl-view-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 8px;
+  border-right: 1px solid var(--dl-border);
+}
+
+.dl-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--dl-border-strong);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--dl-text);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.dl-btn:hover:not(:disabled) {
+  border-color: var(--dl-accent);
+  color: var(--dl-accent);
+}
+
+.dl-btn:disabled {
+  color: #a6b0bd;
+  cursor: default;
+  opacity: 0.7;
+}
+
+.dl-btn.is-active {
+  border-color: var(--dl-accent);
+  background: var(--dl-accent-weak);
+  color: #1f4f9e;
+}
+
+.dl-btn-primary {
+  border-color: var(--dl-accent);
+  background: var(--dl-accent);
+  color: #fff;
+}
+
+.dl-btn-primary:hover:not(:disabled) {
+  background: #2f68c0;
+  color: #fff;
+}
+
+.dl-btn-primary.is-error {
+  border-color: #c43d3d;
+  background: #c43d3d;
+}
+
+.dl-btn-icon {
+  padding: 0 9px;
+  font-size: 15px;
+}
+
+.dl-btn-block {
+  width: 100%;
+  justify-content: center;
+}
+
+.dl-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--dl-accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.dl-btn.is-active .dl-badge {
+  background: #1f4f9e;
+}
+
+/* ------------------------------------------------------------------ *
+ * 適用中の条件チップ
+ * ------------------------------------------------------------------ */
+
+.dl-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--dl-border);
+}
+
+.dl-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 320px;
+  padding: 3px 4px 3px 10px;
+  border: 1px solid #bcd3f2;
+  border-radius: 999px;
+  background: var(--dl-accent-weak);
+  color: #1f4f9e;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dl-chip-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dl-chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #1f4f9e;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.dl-chip-remove:hover {
+  background: rgba(31, 79, 158, 0.14);
+}
+
+.dl-chip-clear {
+  margin-left: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--dl-muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ------------------------------------------------------------------ *
+ * 通知
+ * ------------------------------------------------------------------ */
+
+.dl-notices:empty {
+  display: none;
+}
+
+.dl-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 1px solid var(--dl-border);
+  border-top: 0;
+  font-size: 12px;
+}
+
+.dl-notice-info {
+  background: #f1f6fd;
+  color: #285394;
+}
+
+.dl-notice-warn {
+  background: #fff8e8;
+  color: #8a5b00;
+}
+
+.dl-notice-error {
+  background: #fdf2f2;
+  color: #b23c33;
+}
+
+.dl-notice-text {
+  flex: 1 1 auto;
+}
+
+.dl-notice-action {
+  padding: 3px 10px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  background: #fff;
+  color: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ------------------------------------------------------------------ *
+ * 件数・表示設定
+ * ------------------------------------------------------------------ */
+
+.dl-statusbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 7px 14px;
+  border: 1px solid var(--dl-border);
+  border-top: 0;
+  background: #fbfcfd;
+}
+
+.dl-count {
+  color: #1b2536;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.dl-statusbar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--dl-muted);
+  font-size: 12px;
+}
+
+.dl-inline-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dl-select {
+  height: 28px;
+  padding: 0 6px;
+  border: 1px solid var(--dl-border-strong);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--dl-text);
+  font-size: 12px;
+}
+
+.dl-select-block {
+  width: 100%;
+  height: 32px;
+  font-size: 13px;
+}
+
+/* ------------------------------------------------------------------ *
+ * テーブル
+ * ------------------------------------------------------------------ */
+
+.dl-scroll {
+  overflow: auto;
+  max-height: calc(100vh - 320px);
+  border: 1px solid var(--dl-border);
+  border-top: 0;
+  background: #fff;
+}
+
+.dl-table {
+  /* 実際の幅は列幅の合計からJSで設定する */
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  font-size: 13px;
+}
+
+/* ---- ヘッダー（縦スクロールしても常に見える） ---- */
+
+.dl-group-row .dl-group-th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  height: var(--dl-group-h);
+  padding: 0 10px;
+  border-right: 1px solid var(--dl-border);
+  border-bottom: 1px solid var(--dl-border);
+  background: #e4eaf2;
+  color: #4a5972;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.dl-th {
+  position: sticky;
+  top: var(--dl-group-h);
+  z-index: 2;
+  height: 34px;
+  padding: 0;
+  border-right: 1px solid var(--dl-border);
+  border-bottom: 1px solid var(--dl-border-strong);
+  background: var(--dl-head-bg);
+  color: var(--dl-head-text);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* 固定列は横スクロール時も残す。背景を必ず不透明にして下の行を透かさない。 */
+.dl-group-row .dl-group-th.dl-frozen,
+.dl-th.dl-frozen {
+  z-index: 3;
+  background-clip: padding-box;
+}
+
+.dl-th-inner {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  height: 34px;
+  padding: 0 18px 0 10px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dl-th-inner:hover {
+  background: #e2e9f3;
+}
+
+.dl-th-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dl-sort-mark {
+  flex: 0 0 auto;
+  color: var(--dl-accent);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dl-sort-order {
+  margin-left: 1px;
+  font-size: 10px;
+  vertical-align: super;
+}
+
+.dl-th-menu {
+  position: absolute;
+  top: 50%;
+  right: 7px;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: #8a97a8;
+  font-size: 10px;
+  line-height: 1;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.dl-th-menu:hover {
+  background: #d6e0ec;
+  color: var(--dl-head-text);
+}
+
+.dl-th-menu.is-active {
+  background: var(--dl-accent);
+  color: #fff;
+}
+
+.dl-th-builtin {
+  padding: 0;
+}
+
+.dl-resizer {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  z-index: 4;
+  width: 7px;
+  height: 100%;
+  cursor: col-resize;
+  user-select: none;
+}
+
+.dl-resizer:hover {
+  background: rgba(59, 122, 217, 0.28);
+}
+
+/* ---- 本体 ---- */
+
+.dl-td {
+  height: var(--dl-row-h);
+  padding: 0 10px;
+  border-right: 1px solid #eef1f5;
+  border-bottom: 1px solid #eef1f5;
+  background: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.dl-row:hover .dl-td {
+  background: var(--dl-hover);
+}
+
+.dl-td[data-color="gray"] {
+  background: #e8ecf1;
+  color: #2b3648;
+}
+
+.dl-td[data-color="blue"] {
+  background: #d7e6fb;
+  color: #1f4f9e;
+}
+
+.dl-td[data-color="green"] {
+  background: #d8f0e3;
+  color: #1f6b45;
+}
+
+.dl-td[data-color="yellow"] {
+  background: #f8ebc2;
+  color: #7a5a12;
+}
+
+.dl-td[data-color="orange"] {
+  background: #f8dfc8;
+  color: #8a4b16;
+}
+
+.dl-td[data-color="red"] {
+  background: #f6d6d6;
+  color: #8f2d2d;
+}
+
+.dl-td[data-color="purple"] {
+  background: #e6ddf5;
+  color: #5b3d8f;
+}
+
+.dl-row:hover .dl-td[data-color="gray"] {
+  background: #dce2ea;
+}
+
+.dl-row:hover .dl-td[data-color="blue"] {
+  background: #c6daf8;
+}
+
+.dl-row:hover .dl-td[data-color="green"] {
+  background: #c6e8d6;
+}
+
+.dl-row:hover .dl-td[data-color="yellow"] {
+  background: #f0e0a8;
+}
+
+.dl-row:hover .dl-td[data-color="orange"] {
+  background: #f0d1b4;
+}
+
+.dl-row:hover .dl-td[data-color="red"] {
+  background: #efc4c4;
+}
+
+.dl-row:hover .dl-td[data-color="purple"] {
+  background: #d8cceb;
+}
+
+.dl-td.dl-frozen {
+  position: sticky;
+  z-index: 1;
+  background-clip: padding-box;
+}
+
+.dl-td.dl-frozen[data-color] {
+  background-clip: padding-box;
+}
+
+/* 固定列と横スクロール領域の境目 */
+.dl-frozen-edge {
+  border-right: 1px solid var(--dl-border-strong) !important;
+}
+
+/* 親レコード項目と明細項目の境目 */
+.dl-scope-boundary {
+  border-left: 2px solid #cfd8e3;
+}
+
+.dl-td-number {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* 親レコードが切り替わる行に区切り線を入れる（セル結合はしない） */
+.dl-row-parent-start .dl-td {
+  border-top: 1px solid #9aabc0;
+}
+
+.dl-td-long {
+  cursor: zoom-in;
+}
+
+.dl-link-icon,
+.dl-cell-link {
+  color: var(--dl-accent);
+  text-decoration: none;
+}
+
+.dl-link-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  font-size: 13px;
+}
+
+.dl-cell-link:hover,
+.dl-link-icon:hover {
+  text-decoration: underline;
+}
+
+.dl-td[data-color] .dl-cell-link,
+.dl-td[data-color] .dl-link-icon,
+.dl-td[data-color] .dl-cell-link-mark {
+  color: inherit;
+}
+
+.dl-cell-link-mark {
+  margin-left: 3px;
+  color: #9aa8b8;
+  font-size: 10px;
+}
+
+body.dl-resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+
+/* ------------------------------------------------------------------ *
+ * 0件表示・ページャ
+ * ------------------------------------------------------------------ */
+
+.dl-empty {
+  padding: 40px 16px;
+  border: 1px solid var(--dl-border);
+  border-top: 0;
+  background: #fff;
+  color: var(--dl-muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+.dl-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  border: 1px solid var(--dl-border);
+  border-top: 0;
+  border-radius: 0 0 6px 6px;
+  background: #fbfcfd;
+}
+
+.dl-pager:empty {
+  padding: 0;
+  border: 0;
+}
+
+.dl-page-btn {
+  min-width: 30px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--dl-border-strong);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--dl-text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dl-page-btn:hover:not(:disabled):not(.is-current) {
+  border-color: var(--dl-accent);
+  color: var(--dl-accent);
+}
+
+.dl-page-btn.is-current {
+  border-color: var(--dl-accent);
+  background: var(--dl-accent);
+  color: #fff;
+  cursor: default;
+}
+
+.dl-page-btn:disabled {
+  color: #b9c2ce;
+  cursor: default;
+}
+
+.dl-page-gap {
+  padding: 0 2px;
+  color: var(--dl-muted);
+}
+
+/* ------------------------------------------------------------------ *
+ * 長文セルの全文表示
+ * ------------------------------------------------------------------ */
+
+.dl-text-popover {
+  position: absolute;
+  z-index: 60;
+  max-width: 520px;
+  max-height: 240px;
+  overflow: auto;
+  padding: 10px 12px;
+  border: 1px solid var(--dl-border-strong);
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(30, 45, 70, 0.18);
+  color: var(--dl-text);
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* ------------------------------------------------------------------ *
+ * ローディング
+ * ------------------------------------------------------------------ */
+
+.dl-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(24, 34, 51, 0.28);
+}
+
+.dl-loading-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 24px;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(20, 32, 50, 0.28);
+  color: var(--dl-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.dl-spinner {
+  width: 22px;
+  height: 22px;
+  border: 3px solid #dbe3ee;
+  border-top-color: var(--dl-accent);
+  border-radius: 50%;
+  animation: dl-spin 0.8s linear infinite;
+}
+
+@keyframes dl-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * 絞り込みサイドパネル
+ * ------------------------------------------------------------------ */
+
+.dl-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  background: rgba(24, 34, 51, 0.24);
+}
+
+.dl-side-panel {
+  --dl-border: #dfe4ea;
+  --dl-border-strong: #c3ccd6;
+  --dl-text: #2b3648;
+  --dl-muted: #6b7a90;
+  --dl-accent: #3b7ad9;
+  --dl-accent-weak: #eaf2fd;
+
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 901;
+  display: flex;
+  flex-direction: column;
+  width: 400px;
+  max-width: 92vw;
+  background: #fff;
+  box-shadow: -8px 0 28px rgba(20, 32, 50, 0.2);
+  color: var(--dl-text, #2b3648);
+  font-size: 13px;
+}
+
+.dl-side-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid #dfe4ea;
+}
+
+.dl-side-title {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  color: #1b2536 !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+}
+
+.dl-side-close {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #6b7a90;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.dl-side-close:hover {
+  background: #eef2f7;
+}
+
+.dl-side-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 16px 18px;
+}
+
+.dl-condition-list {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.dl-condition {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #dfe4ea;
+  border-radius: 6px;
+  background: #fbfcfd;
+}
+
+.dl-condition-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dl-condition-remove {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid #dfe4ea;
+  border-radius: 4px;
+  background: #fff;
+  color: #6b7a90;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.dl-condition-remove:hover {
+  border-color: #e0a8a2;
+  color: #b23c33;
+}
+
+.dl-condition-value:empty {
+  display: none;
+}
+
+.dl-side-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 18px;
+  border-top: 1px solid #dfe4ea;
+  background: #fbfcfd;
+  box-shadow: 0 -4px 12px rgba(30, 45, 70, 0.08);
+}
+
+.dl-input {
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid #c3ccd6;
+  border-radius: 4px;
+  background: #fff;
+  box-sizing: border-box;
+  color: #2b3648;
+  font-size: 13px;
+}
+
+.dl-input:focus {
+  border-color: #3b7ad9;
+  box-shadow: 0 0 0 3px rgba(59, 122, 217, 0.14);
+  outline: none;
+}
+
+.dl-range {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dl-range-sep {
+  flex: 0 0 auto;
+  color: #6b7a90;
+}
+
+.dl-note {
+  margin: 0;
+  color: #6b7a90;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.dl-note-warn {
+  color: #8a5b00;
+}
+
+/* ------------------------------------------------------------------ *
+ * ポップオーバー（表示列・列ヘッダーフィルタ）
+ * ------------------------------------------------------------------ */
+
+.dl-popover {
+  --dl-border: #dfe4ea;
+  --dl-border-strong: #c3ccd6;
+  --dl-text: #2b3648;
+  --dl-muted: #6b7a90;
+  --dl-accent: #3b7ad9;
+  --dl-accent-weak: #eaf2fd;
+
+  position: fixed;
+  z-index: 910;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 300px;
+  max-height: 70vh;
+  padding: 12px;
+  border: 1px solid #c3ccd6;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 10px 28px rgba(20, 32, 50, 0.2);
+  color: #2b3648;
+  font-size: 13px;
+}
+
+.dl-popover-columns {
+  width: 380px;
+}
+
+.dl-popover-title {
+  color: #1b2536;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.dl-popover-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dl-link-btn {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #3b7ad9;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.dl-popover-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin: 0 -12px -12px;
+  padding: 10px 12px 12px;
+  border-top: 1px solid #eef1f5;
+  border-radius: 0 0 6px 6px;
+  background: #fff;
+  box-shadow: 0 -4px 10px rgba(30, 45, 70, 0.06);
+}
+
+.dl-column-list {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 80px;
+  overflow: auto;
+  max-height: 46vh;
+  padding: 4px;
+  border: 1px solid #eef1f5;
+  border-radius: 4px;
+}
+
+.dl-column-list.is-sortable-dragging {
+  cursor: grabbing;
+}
+
+.dl-column-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 6px;
+  border-radius: 4px;
+  cursor: grab;
+}
+
+.dl-column-item:hover {
+  background: #f4f7fb;
+}
+
+.dl-column-item.is-dragging {
+  opacity: 0.5;
+}
+
+.dl-column-item.is-drop-target {
+  box-shadow: inset 0 2px 0 #3b7ad9;
+}
+
+.dl-drag-handle {
+  flex: 0 0 auto;
+  color: #a6b0bd;
+  font-size: 12px;
+}
+
+.dl-column-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1 1 auto;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.dl-column-name {
+  overflow: hidden;
+  flex: 1 1 auto;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dl-column-frozen-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  padding-left: 8px;
+  border-left: 1px solid #dce3ec;
+  color: #526173;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.dl-column-frozen-label:has(input:disabled) {
+  color: #a6b0bd;
+  cursor: default;
+}
+
+.dl-scope-tag {
+  flex: 0 0 auto;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.dl-scope-p {
+  background: #e8eef7;
+  color: #4a5972;
+}
+
+.dl-scope-t {
+  background: #e6f2ea;
+  color: #35704c;
+}
+
+.dl-token-list {
+  overflow: auto;
+  max-height: 200px;
+  padding: 4px;
+  border: 1px solid #eef1f5;
+  border-radius: 4px;
+}
+
+.dl-token-list-tall {
+  max-height: 44vh;
+}
+
+.dl-token-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.dl-token-item:hover {
+  background: #f4f7fb;
+}
+
+.dl-token-label {
+  overflow: hidden;
+  flex: 1 1 auto;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dl-token-empty {
+  color: #6b7a90;
+  font-style: italic;
+}
+
+.dl-token-count {
+  flex: 0 0 auto;
+  color: #98a3b2;
+  font-size: 11px;
+}
