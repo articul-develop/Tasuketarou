@@ -2,6 +2,14 @@
   'use strict';
 
   const ALL_TAB_ID = 'all';
+  const SPACE_TARGET_PREFIX = 'space:';
+  const HR_TARGET_PREFIX = 'hr:';
+  const LABEL_TARGET_PREFIX = 'label:';
+  const LAYOUT_ONLY_TYPES = {
+    SPACER: { prefix: SPACE_TARGET_PREFIX, fallbackName: 'スペース' },
+    HR: { prefix: HR_TARGET_PREFIX, fallbackName: '罫線' },
+    LABEL: { prefix: LABEL_TARGET_PREFIX, fallbackName: 'ラベル' }
+  };
 
   const config = kintone.plugin.app.getConfig(PLUGIN_ID) || {};
   const authState = {
@@ -11,6 +19,8 @@
   };
   const state = {
     fields: [],
+    resolveFields: [],
+    nestedToParent: {},
     spacers: [],
     tabs: []
   };
@@ -189,16 +199,98 @@
       .sort((a, b) => a.localeCompare(b, 'ja'));
   }
 
+  function findField(fieldCode, fieldList) {
+    return (fieldList || state.fields).find((item) => item.code === fieldCode);
+  }
+
+  function getFieldTypeSuffix(field) {
+    if (!field) {
+      return '';
+    }
+    if (field.type === 'GROUP') {
+      return '［グループ］';
+    }
+    if (field.type === 'SUBTABLE') {
+      return '［テーブル］';
+    }
+    if (field.type === 'SPACER') {
+      return '［スペース］';
+    }
+    if (field.type === 'HR') {
+      return '［罫線］';
+    }
+    if (field.type === 'LABEL') {
+      return '［ラベル］';
+    }
+    return '';
+  }
+
+  function getTabBarSpaceId() {
+    return String((spaceIdSelect && spaceIdSelect.value) || config.spaceId || '').trim();
+  }
+
+  function isTabBarSpaceField(field) {
+    const tabSpaceId = getTabBarSpaceId();
+    if (!tabSpaceId || !field || field.type !== 'SPACER') {
+      return false;
+    }
+
+    return field.elementId === tabSpaceId || field.code === `${SPACE_TARGET_PREFIX}${tabSpaceId}`;
+  }
+
+  function getSelectableFields() {
+    return state.fields.filter((field) => !isTabBarSpaceField(field));
+  }
+
   function getFieldLabel(fieldCode) {
-    const field = state.fields.find((item) => item.code === fieldCode);
+    const field = findField(fieldCode, state.resolveFields) || findField(fieldCode, state.fields);
     if (!field) {
       return fieldCode;
     }
-    return field.label ? `${field.label} (${field.code})` : field.code;
+    if (field.type === 'SPACER' || field.type === 'HR' || field.type === 'LABEL') {
+      return `${field.label || field.code}${getFieldTypeSuffix(field)}`;
+    }
+    const base = field.label ? `${field.label} (${field.code})` : field.code;
+    return `${base}${getFieldTypeSuffix(field)}`;
+  }
+
+  function remapFieldCodeToUnit(fieldCode) {
+    const trimmed = String(fieldCode || '').trim();
+    if (!trimmed) {
+      return '';
+    }
+
+    let code = trimmed;
+    const seen = new Set();
+    while (state.nestedToParent[code] && !seen.has(code)) {
+      seen.add(code);
+      code = state.nestedToParent[code];
+    }
+    return code;
+  }
+
+  function remapTabFieldCodes() {
+    state.tabs.forEach((tab) => {
+      if (isAllTab(tab)) {
+        tab.fieldCodes = [];
+        return;
+      }
+
+      tab.fieldCodes = unique(tab.fieldCodes.map(remapFieldCodeToUnit).filter((code) => {
+        return code && !isTabBarSpaceField({
+          code,
+          type: code.indexOf(SPACE_TARGET_PREFIX) === 0 ? 'SPACER' : '',
+          elementId: code.indexOf(SPACE_TARGET_PREFIX) === 0 ? code.slice(SPACE_TARGET_PREFIX.length) : ''
+        });
+      }));
+      if (tab.fieldCodes.length === 0) {
+        tab.fieldCodes = [''];
+      }
+    });
   }
 
   function getDatalistOptionsHtml() {
-    const knownCodes = new Set(state.fields.map((field) => field.code));
+    const knownCodes = new Set(getSelectableFields().map((field) => field.code));
     const missingCodes = [];
 
     state.tabs.forEach((tab) => {
@@ -206,13 +298,18 @@
         return;
       }
       tab.fieldCodes.forEach((code) => {
-        if (code && !knownCodes.has(code) && missingCodes.indexOf(code) === -1) {
+        if (
+          code
+          && !knownCodes.has(code)
+          && !state.nestedToParent[code]
+          && missingCodes.indexOf(code) === -1
+        ) {
           missingCodes.push(code);
         }
       });
     });
 
-    const optionFields = state.fields.concat(missingCodes.map((code) => ({ code, label: code })));
+    const optionFields = getSelectableFields().concat(missingCodes.map((code) => ({ code, label: code })));
 
     return optionFields.map((field) => {
       return `<option value="${escapeHtml(getFieldLabel(field.code))}"></option>`;
@@ -225,36 +322,45 @@
       return '';
     }
 
-    const exactCode = state.fields.find((field) => field.code === trimmed);
+    const lookupFields = state.resolveFields.length > 0 ? state.resolveFields : state.fields;
+
+    const exactCode = lookupFields.find((field) => field.code === trimmed);
     if (exactCode) {
-      return exactCode.code;
+      return remapFieldCodeToUnit(exactCode.code);
     }
 
-    const exactLabel = state.fields.find((field) => {
+    const exactElementId = lookupFields.find((field) => {
+      return field.elementId && field.elementId === trimmed;
+    });
+    if (exactElementId) {
+      return remapFieldCodeToUnit(exactElementId.code);
+    }
+
+    const exactLabel = lookupFields.find((field) => {
       return getFieldLabel(field.code) === trimmed;
     });
     if (exactLabel) {
-      return exactLabel.code;
+      return remapFieldCodeToUnit(exactLabel.code);
     }
 
-    const labelMatch = state.fields.find((field) => {
+    const labelMatch = lookupFields.find((field) => {
       return field.label === trimmed;
     });
     if (labelMatch) {
-      return labelMatch.code;
+      return remapFieldCodeToUnit(labelMatch.code);
     }
 
     const parenMatch = trimmed.match(/\(([^)]+)\)$/);
     if (parenMatch) {
       const codeFromLabel = parenMatch[1].trim();
-      const field = state.fields.find((item) => item.code === codeFromLabel);
+      const field = lookupFields.find((item) => item.code === codeFromLabel);
       if (field) {
-        return field.code;
+        return remapFieldCodeToUnit(field.code);
       }
-      return codeFromLabel;
+      return remapFieldCodeToUnit(codeFromLabel);
     }
 
-    return trimmed;
+    return remapFieldCodeToUnit(trimmed);
   }
 
   function getFieldRowsHtml(tab) {
@@ -271,7 +377,7 @@
             list="${listId}"
             value="${escapeHtml(displayValue)}"
             data-field="fieldCode"
-            placeholder="フィールド名またはコードで検索"
+            placeholder="フィールド名・スペース・罫線・ラベルで検索"
             autocomplete="off"
           >
           <datalist id="${listId}">
@@ -362,6 +468,7 @@
           <div class="field-rows" data-field-rows>
             ${getFieldRowsHtml(tab)}
           </div>
+          <span class="field-note">グループ・テーブルに属する項目は選べません。グループまたはテーブル単位で指定してください。グループ外のスペース・罫線・ラベルは指定できます。</span>
         </div>
       `;
 
@@ -435,11 +542,277 @@
     tab.fieldCodes = inputs.map((input) => resolveFieldCode(input.value));
   }
 
-  async function loadFields() {
-    const fields = await KintoneConfigHelper.getFields();
-    state.fields = fields.filter((field) => {
-      return field.code && field.type !== 'SPACER';
+  function syncFieldInputDisplay(input) {
+    const resolvedCode = resolveFieldCode(input.value);
+    if (!resolvedCode) {
+      return;
+    }
+
+    const unitLabel = getFieldLabel(resolvedCode);
+    if (unitLabel && input.value !== unitLabel) {
+      input.value = unitLabel;
+    }
+  }
+
+  async function fetchFormProperties() {
+    const url = kintone.api.url('/k/v1/preview/app/form/fields', true);
+    const resp = await kintone.api(url, 'GET', { app: kintone.app.getId() });
+    return resp.properties || {};
+  }
+
+  function normalizeLayout(layout) {
+    if (Array.isArray(layout)) {
+      return layout;
+    }
+    if (layout && Array.isArray(layout.layout)) {
+      return layout.layout;
+    }
+    return [];
+  }
+
+  async function fetchFormLayout() {
+    try {
+      const url = kintone.api.url('/k/v1/preview/app/form/layout', true);
+      const resp = await kintone.api(url, 'GET', { app: kintone.app.getId() });
+      return normalizeLayout(resp);
+    } catch (error) {
+      if (kintone.app && typeof kintone.app.getFormLayout === 'function') {
+        return normalizeLayout(await kintone.app.getFormLayout());
+      }
+      throw error;
+    }
+  }
+
+  function mergeNestedFieldMap(target, source) {
+    Object.keys(source || {}).forEach((code) => {
+      if (!target[code] && source[code]) {
+        target[code] = source[code];
+      }
     });
+    return target;
+  }
+
+  function collectNestedFieldMapFromProperties(properties) {
+    const nestedToParent = {};
+
+    function assignChildren(parentCode, childFields) {
+      if (!childFields || typeof childFields !== 'object') {
+        return;
+      }
+
+      Object.keys(childFields).forEach((childCode) => {
+        const child = childFields[childCode];
+        if (!child || typeof child !== 'object') {
+          return;
+        }
+
+        nestedToParent[childCode] = parentCode;
+
+        if (child.type === 'SUBTABLE' && child.fields) {
+          assignChildren(childCode, child.fields);
+        }
+      });
+    }
+
+    Object.keys(properties || {}).forEach((code) => {
+      const field = properties[code];
+      if (!field || typeof field !== 'object') {
+        return;
+      }
+
+      if (field.type === 'GROUP' && field.fields) {
+        assignChildren(code, field.fields);
+      }
+
+      if (field.type === 'SUBTABLE' && field.fields) {
+        assignChildren(code, field.fields);
+      }
+    });
+
+    return nestedToParent;
+  }
+
+  function createLayoutTargetCode(type, field, counters, parentCode) {
+    const layoutOnly = LAYOUT_ONLY_TYPES[type];
+    if (layoutOnly) {
+      const elementId = String(field.elementId || '').trim();
+      const text = String(field.label || '').trim();
+
+      if (elementId) {
+        return {
+          code: `${layoutOnly.prefix}${elementId}`,
+          label: text || `${layoutOnly.fallbackName} (${elementId})`,
+          elementId
+        };
+      }
+
+      if (parentCode) {
+        return null;
+      }
+
+      const counterKey = type === 'SPACER' ? 'anonSpace' : type === 'HR' ? 'anonHr' : 'anonLabel';
+      const index = counters[counterKey]++;
+      return {
+        code: `${layoutOnly.prefix}#${index}`,
+        label: text || `${layoutOnly.fallbackName} ${index + 1}`,
+        elementId: ''
+      };
+    }
+
+    if (!field.code) {
+      return null;
+    }
+
+    return {
+      code: field.code,
+      label: '',
+      elementId: String(field.elementId || '').trim()
+    };
+  }
+
+  function collectFieldsFromLayout(layoutList) {
+    const result = {
+      allFields: [],
+      selectable: [],
+      nestedToParent: {}
+    };
+    const counters = {
+      anonSpace: 0,
+      anonHr: 0,
+      anonLabel: 0
+    };
+
+    function registerField(field, parentCode) {
+      if (!field || !field.type) {
+        return;
+      }
+
+      const target = createLayoutTargetCode(field.type, field, counters, parentCode);
+      if (!target) {
+        return;
+      }
+
+      if (parentCode) {
+        result.nestedToParent[target.code] = parentCode;
+        if (field.code && field.code !== target.code) {
+          result.nestedToParent[field.code] = parentCode;
+        }
+      }
+
+      const entry = {
+        code: target.code,
+        type: field.type,
+        label: target.label,
+        elementId: target.elementId,
+        parentCode: parentCode || ''
+      };
+
+      result.allFields.push(entry);
+      if (!parentCode) {
+        result.selectable.push(entry);
+      }
+    }
+
+    function walk(layoutItems, parentCode) {
+      (layoutItems || []).forEach((item) => {
+        if (!item || !item.type) {
+          return;
+        }
+
+        if (item.type === 'ROW') {
+          (item.fields || []).forEach((field) => {
+            registerField(field, parentCode);
+          });
+          return;
+        }
+
+        if (item.type === 'GROUP') {
+          registerField(item, parentCode);
+          walk(item.layout, item.code);
+          return;
+        }
+
+        if (item.type === 'SUBTABLE') {
+          registerField(item, parentCode);
+          (item.fields || []).forEach((field) => {
+            registerField(field, item.code);
+          });
+        }
+      });
+    }
+
+    walk(layoutList, '');
+    return result;
+  }
+
+  function applyFormLabels(fields, properties) {
+    return fields.map((field) => {
+      if (field.label || !field.code) {
+        return field;
+      }
+
+      const property = properties[field.code];
+      if (property && property.label) {
+        return Object.assign({}, field, { label: property.label });
+      }
+
+      return field;
+    });
+  }
+
+  async function loadFields() {
+    const helperFieldsPromise = KintoneConfigHelper.getFields().catch((error) => {
+      console.error('フィールド一覧の取得に失敗しました。', error);
+      return [];
+    });
+
+    let layout = [];
+    let properties = {};
+
+    try {
+      const fetched = await Promise.all([fetchFormLayout(), fetchFormProperties()]);
+      layout = fetched[0] || [];
+      properties = fetched[1] || {};
+    } catch (error) {
+      console.error('フォーム定義の取得に失敗しました。', error);
+    }
+
+    const layoutResult = collectFieldsFromLayout(layout);
+    state.nestedToParent = mergeNestedFieldMap(
+      layoutResult.nestedToParent,
+      collectNestedFieldMapFromProperties(properties)
+    );
+
+    const helperFields = (await helperFieldsPromise)
+      .filter((field) => field && field.code && field.type !== 'SPACER' && field.type !== 'HR' && field.type !== 'LABEL')
+      .map((field) => ({
+        code: field.code,
+        type: field.type,
+        label: field.label || '',
+        elementId: field.elementId || '',
+        parentCode: field.subtableCode || state.nestedToParent[field.code] || ''
+      }));
+
+    const labeledLayoutFields = applyFormLabels(layoutResult.allFields, properties);
+    const resolveByCode = new Map();
+
+    labeledLayoutFields.concat(helperFields).forEach((field) => {
+      if (!field.code || resolveByCode.has(field.code)) {
+        return;
+      }
+      resolveByCode.set(field.code, field);
+    });
+
+    state.resolveFields = Array.from(resolveByCode.values());
+    state.fields = applyFormLabels(layoutResult.selectable, properties).filter((field) => {
+      return field.code && !state.nestedToParent[field.code];
+    });
+
+    if (state.fields.length === 0 && helperFields.length > 0) {
+      state.fields = helperFields.filter((field) => {
+        return !field.subtableCode && !state.nestedToParent[field.code];
+      });
+    }
   }
 
   async function authenticateOnInitialize() {
@@ -497,7 +870,17 @@
       const includeAllTargets = isAllTab(tab);
       const fieldCodes = includeAllTargets
         ? []
-        : unique(tab.fieldCodes.map((code) => resolveFieldCode(code)).filter(Boolean));
+        : unique(tab.fieldCodes.map((code) => remapFieldCodeToUnit(resolveFieldCode(code))).filter((code) => {
+          if (!code) {
+            return false;
+          }
+
+          return !isTabBarSpaceField({
+            code,
+            type: code.indexOf(SPACE_TARGET_PREFIX) === 0 ? 'SPACER' : '',
+            elementId: code.indexOf(SPACE_TARGET_PREFIX) === 0 ? code.slice(SPACE_TARGET_PREFIX.length) : ''
+          });
+        }));
 
       if (!label) {
         throw new Error(`${includeAllTargets ? '全項目タブ' : `${index + 1}件目`}: タブ名を入力してください。`);
@@ -549,6 +932,7 @@
       loadFormValues();
       renderSpaceSelect();
       await loadFields();
+      remapTabFieldCodes();
       renderTabs();
       await authenticateOnInitialize();
     } catch (error) {
@@ -564,6 +948,11 @@
     syncAllTabsFromDom();
     const allTab = getAllTab();
     state.tabs = getRegularTabs().concat([createDefaultTab(), allTab]);
+    renderTabs();
+  });
+
+  spaceIdSelect.addEventListener('change', () => {
+    syncAllTabsFromDom();
     renderTabs();
   });
 
@@ -606,6 +995,7 @@
 
     if (input.dataset.field === 'fieldCode') {
       syncFieldCodesFromDom(tab, card);
+      syncFieldInputDisplay(input);
       return;
     }
 
