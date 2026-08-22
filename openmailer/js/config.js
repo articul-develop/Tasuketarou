@@ -381,7 +381,15 @@
         <div class="form-field field-inserter">
           <label class="kintoneplugin-label">フィールドコードの挿入</label>
           <span class="field-note">挿入先（CC／BCC／件名／本文）の入力欄をクリックしてから、下のボタンで {フィールドコード} を挿入できます。通常フィールドと、対象テーブルで選択したテーブルの項目のみ表示されます。</span>
-          <input type="text" class="kintoneplugin-input-text" data-field="fieldSearch" placeholder="フィールド名またはコードで検索" autocomplete="off">
+          <div class="field-search-box">
+            <span class="field-search-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="10.5" cy="10.5" r="6.5"></circle>
+                <path d="M15.5 15.5L21 21"></path>
+              </svg>
+            </span>
+            <input type="search" class="field-search-input" data-field="fieldSearch" placeholder="フィールド名またはコードで絞り込み" autocomplete="off">
+          </div>
           <div class="field-insert-list" data-role="insert-list">${insertListHtml(setting, '')}</div>
         </div>
 
