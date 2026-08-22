@@ -4,6 +4,20 @@
   const STYLE_ID = 'detail-tabs-plugin-style';
   const ROOT_ID = 'detail-tabs-plugin-root';
   const ACTIVE_CLASS = 'detail-tabs-plugin-button-active';
+  const SPACE_TARGET_PREFIX = 'space:';
+  const HR_TARGET_PREFIX = 'hr:';
+  const LABEL_TARGET_PREFIX = 'label:';
+  const GROUP_CONTAINER_SELECTOR = [
+    '.group-gaia',
+    '.control-group-field-gaia',
+    '.subtable-gaia',
+    '.control-subtable-field-gaia',
+    '[class*="group-field"]',
+    '[class*="subtable-field"]'
+  ].join(', ');
+  const SPACER_SELECTOR = '.control-spacer-field-gaia, [class*="spacer-field"]';
+  const HR_SELECTOR = '.control-hr-field-gaia, [class*="hr-field"]';
+  const LABEL_SELECTOR = '.control-label-field-gaia, [class*="label-field"]';
   const APPLY_DELAYS = [0, 100, 300, 700, 1500];
   const TAB_URL_PARAM = 'detailTab';
   const EVENTS = [
@@ -443,9 +457,9 @@
 
     activeTabId = nextActiveTabId;
     const activeTab = findTab(nextActiveTabId) || currentSettings.tabs[0];
-    const activeFieldCodes = getTargetFieldCodes(activeTab);
-    const allFieldCodes = getAllTargetFieldCodes();
     const parentMap = await getFieldParentGroupMap();
+    const activeFieldCodes = remapFieldCodesToUnit(getTargetFieldCodes(activeTab), parentMap);
+    const allFieldCodes = remapFieldCodesToUnit(getAllTargetFieldCodes(), parentMap);
 
     allFieldCodes.forEach((fieldCode) => {
       if (activeFieldCodes.indexOf(fieldCode) !== -1) {
@@ -485,6 +499,15 @@
   }
 
   function setFieldShown(recordApi, fieldCode, isShown) {
+    if (isTabBarSpaceCode(fieldCode)) {
+      return;
+    }
+
+    if (isLayoutTargetCode(fieldCode)) {
+      setLayoutTargetShown(recordApi, fieldCode, isShown);
+      return;
+    }
+
     if (recordApi && typeof recordApi.setFieldShown === 'function') {
       recordApi.setFieldShown(fieldCode, isShown);
       return;
@@ -496,16 +519,149 @@
       return;
     }
 
-    if (isShown) {
-      fieldElement.style.display = fieldElement.dataset.detailTabsPluginOriginalDisplay || '';
+    setElementShown(fieldElement, isShown);
+  }
+
+  function isTabBarSpaceCode(fieldCode) {
+    const spaceId = currentSettings && currentSettings.spaceId;
+    if (!spaceId || !fieldCode) {
+      return false;
+    }
+
+    return fieldCode === `${SPACE_TARGET_PREFIX}${spaceId}` || fieldCode === spaceId;
+  }
+
+  function isLayoutTargetCode(fieldCode) {
+    return fieldCode.indexOf(SPACE_TARGET_PREFIX) === 0
+      || fieldCode.indexOf(HR_TARGET_PREFIX) === 0
+      || fieldCode.indexOf(LABEL_TARGET_PREFIX) === 0;
+  }
+
+  function setLayoutTargetShown(recordApi, fieldCode, isShown) {
+    const element = getLayoutTargetElement(recordApi, fieldCode);
+    if (!element) {
+      console.warn('[detail tabs] 項目が見つかりません: ' + fieldCode);
       return;
     }
 
-    if (fieldElement.dataset.detailTabsPluginOriginalDisplay === undefined) {
-      fieldElement.dataset.detailTabsPluginOriginalDisplay = fieldElement.style.display || '';
+    setElementShown(getLayoutTargetContainer(element), isShown);
+  }
+
+  function setElementShown(element, isShown) {
+    if (!element) {
+      return;
     }
 
-    fieldElement.style.display = 'none';
+    if (isShown) {
+      element.style.display = element.dataset.detailTabsPluginOriginalDisplay || '';
+      return;
+    }
+
+    if (element.dataset.detailTabsPluginOriginalDisplay === undefined) {
+      element.dataset.detailTabsPluginOriginalDisplay = element.style.display || '';
+    }
+
+    element.style.display = 'none';
+  }
+
+  function getLayoutTargetElement(recordApi, fieldCode) {
+    if (fieldCode.indexOf(SPACE_TARGET_PREFIX) === 0) {
+      const key = fieldCode.slice(SPACE_TARGET_PREFIX.length);
+      if (key.charAt(0) === '#') {
+        const index = Number.parseInt(key.slice(1), 10);
+        return getAnonymousTopLevelSpacers()[index] || null;
+      }
+
+      return getSpaceElement(recordApi, key) || document.getElementById(key);
+    }
+
+    if (fieldCode.indexOf(HR_TARGET_PREFIX) === 0) {
+      const key = fieldCode.slice(HR_TARGET_PREFIX.length);
+      if (key.charAt(0) === '#') {
+        const index = Number.parseInt(key.slice(1), 10);
+        return getAnonymousTopLevelHrs()[index] || null;
+      }
+
+      return document.getElementById(key) || findTopLevelHrByElementId(key);
+    }
+
+    if (fieldCode.indexOf(LABEL_TARGET_PREFIX) === 0) {
+      const key = fieldCode.slice(LABEL_TARGET_PREFIX.length);
+      if (key.charAt(0) === '#') {
+        const index = Number.parseInt(key.slice(1), 10);
+        return getAnonymousTopLevelLabels()[index] || null;
+      }
+
+      return document.getElementById(key) || findTopLevelLabelByElementId(key);
+    }
+
+    return null;
+  }
+
+  function getLayoutTargetContainer(element) {
+    const control = element.closest(
+      '.control-gaia, .control-spacer-field-gaia, .control-hr-field-gaia, .control-label-field-gaia'
+    ) || element;
+    const row = control.closest('.row-gaia, .kintone-app-row');
+    if (!row) {
+      return control;
+    }
+
+    const controls = row.querySelectorAll(
+      '.control-gaia, .control-spacer-field-gaia, .control-hr-field-gaia, .control-label-field-gaia'
+    );
+    return controls.length <= 1 ? row : control;
+  }
+
+  function isInsideGroupOrSubtable(element) {
+    return Boolean(element.closest(GROUP_CONTAINER_SELECTOR));
+  }
+
+  function isInsidePluginRoot(element) {
+    return Boolean(element.closest(`#${ROOT_ID}`));
+  }
+
+  function getTopLevelLayoutElements(selector) {
+    return Array.from(document.querySelectorAll(selector)).filter((element) => {
+      return !isInsideGroupOrSubtable(element) && !isInsidePluginRoot(element);
+    });
+  }
+
+  function getSpacerElementId(element) {
+    const withId = element.id ? element : element.querySelector('[id]');
+    return withId && withId.id ? withId.id : '';
+  }
+
+  function getAnonymousTopLevelSpacers() {
+    return getTopLevelLayoutElements(SPACER_SELECTOR).filter((element) => !getSpacerElementId(element));
+  }
+
+  function getAnonymousTopLevelHrs() {
+    return getTopLevelLayoutElements(HR_SELECTOR).filter((element) => !element.id && !element.querySelector('[id]'));
+  }
+
+  function findTopLevelHrByElementId(elementId) {
+    return getTopLevelLayoutElements(HR_SELECTOR).find((element) => {
+      return element.id === elementId || Boolean(element.querySelector(`#${cssEscape(elementId)}`));
+    }) || null;
+  }
+
+  function getAnonymousTopLevelLabels() {
+    return getTopLevelLayoutElements(LABEL_SELECTOR).filter((element) => !element.id && !element.querySelector('[id]'));
+  }
+
+  function findTopLevelLabelByElementId(elementId) {
+    return getTopLevelLayoutElements(LABEL_SELECTOR).find((element) => {
+      return element.id === elementId || Boolean(element.querySelector(`#${cssEscape(elementId)}`));
+    }) || null;
+  }
+
+  function cssEscape(value) {
+    if (window.CSS && typeof window.CSS.escape === 'function') {
+      return window.CSS.escape(value);
+    }
+
+    return String(value).replace(/["\\]/g, '\\$&');
   }
 
   function getFieldParentGroupMap() {
@@ -533,15 +689,86 @@
 
   async function buildFieldParentGroupMap() {
     const map = {};
-    const getFormFields = getFormFieldsApi();
+    const getFormLayout = getFormLayoutApi();
 
-    if (!getFormFields) {
-      return map;
+    if (getFormLayout) {
+      const layout = await getFormLayout();
+      const layoutList = Array.isArray(layout) ? layout : (layout && layout.layout) || [];
+      appendLayoutParentMap(layoutList, map);
     }
 
-    const formFields = await getFormFields();
-    appendFieldParentGroups(formFields, map);
+    const getFormFields = getFormFieldsApi();
+    if (getFormFields) {
+      const formFields = await getFormFields();
+      appendFieldParentGroups(formFields, map);
+    }
+
     return map;
+  }
+
+  function getFormLayoutApi() {
+    if (kintone.app && typeof kintone.app.getFormLayout === 'function') {
+      return kintone.app.getFormLayout.bind(kintone.app);
+    }
+
+    if (
+      kintone.mobile &&
+      kintone.mobile.app &&
+      typeof kintone.mobile.app.getFormLayout === 'function'
+    ) {
+      return kintone.mobile.app.getFormLayout.bind(kintone.mobile.app);
+    }
+
+    return null;
+  }
+
+  function appendLayoutParentMap(layoutList, map, parentCode) {
+    (layoutList || []).forEach((item) => {
+      if (!item || !item.type) {
+        return;
+      }
+
+      if (item.type === 'ROW') {
+        (item.fields || []).forEach((field) => {
+          if (!parentCode) {
+            return;
+          }
+
+          if (field.code) {
+            map[field.code] = parentCode;
+          }
+          if (field.type === 'SPACER' && field.elementId) {
+            map[`${SPACE_TARGET_PREFIX}${field.elementId}`] = parentCode;
+          }
+          if (field.type === 'HR' && field.elementId) {
+            map[`${HR_TARGET_PREFIX}${field.elementId}`] = parentCode;
+          }
+          if (field.type === 'LABEL' && field.elementId) {
+            map[`${LABEL_TARGET_PREFIX}${field.elementId}`] = parentCode;
+          }
+        });
+        return;
+      }
+
+      if (item.type === 'GROUP') {
+        if (parentCode && item.code) {
+          map[item.code] = parentCode;
+        }
+        appendLayoutParentMap(item.layout, map, item.code);
+        return;
+      }
+
+      if (item.type === 'SUBTABLE') {
+        if (parentCode && item.code) {
+          map[item.code] = parentCode;
+        }
+        (item.fields || []).forEach((field) => {
+          if (field.code) {
+            map[field.code] = item.code;
+          }
+        });
+      }
+    });
   }
 
   function getFormFieldsApi() {
@@ -578,7 +805,32 @@
       if (field.type === 'GROUP' && field.fields) {
         appendFieldParentGroups(field.fields, map, code);
       }
+
+      if (field.type === 'SUBTABLE' && field.fields) {
+        appendFieldParentGroups(field.fields, map, code);
+      }
     });
+  }
+
+  function remapFieldCodeToUnit(fieldCode, parentMap) {
+    const trimmed = String(fieldCode || '').trim();
+    if (!trimmed || !parentMap) {
+      return trimmed;
+    }
+
+    let code = trimmed;
+    const seen = new Set();
+    while (parentMap[code] && !seen.has(code)) {
+      seen.add(code);
+      code = parentMap[code];
+    }
+    return code;
+  }
+
+  function remapFieldCodesToUnit(fieldCodes, parentMap) {
+    return unique((fieldCodes || []).map((fieldCode) => {
+      return remapFieldCodeToUnit(fieldCode, parentMap);
+    }).filter(Boolean));
   }
 
   function updateButtonState(activeTabId) {
