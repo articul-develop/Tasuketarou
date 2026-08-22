@@ -529,6 +529,35 @@ h2 {
   height: 16px;
 }
 
+.table-export-option-list {
+  display: grid;
+  gap: 8px;
+}
+
+.table-export-option-header,
+.table-export-option {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(160px, 240px);
+  align-items: center;
+  gap: 12px;
+}
+
+.table-export-option-header {
+  padding: 0 12px;
+  color: #5b6b82;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.table-export-option .checkbox-item {
+  padding-left: 0;
+}
+
+.table-export-option .kintoneplugin-input-text:disabled {
+  background: #f3f6fa;
+  color: #8a97a8;
+}
+
 .config-actions {
   margin-top: 16px;
 }

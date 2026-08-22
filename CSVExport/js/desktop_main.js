@@ -11,6 +11,12 @@
   const DEFAULT_QUOTE_MODE = 'DOUBLE_ALWAYS';
   const DEFAULT_LINE_ENDING = 'CRLF';
   const DEFAULT_INCLUDE_HEADER = true;
+  const DEFAULT_INCLUDE_TABLE_ROW_NUMBER = false;
+  const DEFAULT_INCLUDE_TABLE_ROW_ID = false;
+  const DEFAULT_INCLUDE_RECORD_START_MARK = true;
+  const DEFAULT_TABLE_ROW_NUMBER_LABEL = '行番号';
+  const DEFAULT_TABLE_ROW_ID_LABEL = '行識別子';
+  const DEFAULT_RECORD_START_MARK_LABEL = 'レコードの開始行';
   const DEFAULT_DATE_FORMAT = 'YYYY-MM-DD';
   const DEFAULT_FILE_NAME_TEMPLATE = '{CSV定義名}_YYYYMMDDHHmmss';
   const SUPPORTED_UPDATE_TYPES = [
@@ -72,9 +78,13 @@
         maxExportCount: Number(definition.maxExportCount || 1000),
         quoteMode: String(definition.quoteMode || DEFAULT_QUOTE_MODE),
         lineEnding: String(definition.lineEnding || DEFAULT_LINE_ENDING),
-        includeHeader: typeof definition.includeHeader === 'boolean'
-          ? definition.includeHeader
-          : definition.includeHeader !== false && definition.includeHeader !== 'false',
+        includeHeader: parseBooleanOption(definition.includeHeader, DEFAULT_INCLUDE_HEADER),
+        includeTableRowNumber: parseBooleanOption(definition.includeTableRowNumber, DEFAULT_INCLUDE_TABLE_ROW_NUMBER),
+        includeTableRowId: parseBooleanOption(definition.includeTableRowId, DEFAULT_INCLUDE_TABLE_ROW_ID),
+        includeRecordStartMark: parseBooleanOption(definition.includeRecordStartMark, DEFAULT_INCLUDE_RECORD_START_MARK),
+        tableRowNumberLabel: normalizeLabel(definition.tableRowNumberLabel, DEFAULT_TABLE_ROW_NUMBER_LABEL),
+        tableRowIdLabel: normalizeLabel(definition.tableRowIdLabel, DEFAULT_TABLE_ROW_ID_LABEL),
+        recordStartMarkLabel: normalizeLabel(definition.recordStartMarkLabel, DEFAULT_RECORD_START_MARK_LABEL),
         dateFormat: String(definition.dateFormat || DEFAULT_DATE_FORMAT),
         fileNameTemplate: String(definition.fileNameTemplate || DEFAULT_FILE_NAME_TEMPLATE)
       }));
@@ -134,6 +144,11 @@
 
     try {
       const context = await buildExportContext(latestIndexState, definition);
+      if (countDistinctSubtables(context.columns) >= 2) {
+        alert('複数のテーブルを含む一覧表はCSV出力できません。\nテーブルを1つに絞ってからCSV出力してください。');
+        return;
+      }
+
       const totalCount = await fetchTotalCount(context.appId, context.query);
 
       if (totalCount > context.maxExportCount) {
@@ -210,6 +225,12 @@
         quoteMode: definition.quoteMode || DEFAULT_QUOTE_MODE,
         lineEnding: definition.lineEnding || DEFAULT_LINE_ENDING,
         includeHeader: definition.includeHeader !== false && definition.includeHeader !== 'false',
+        includeTableRowNumber: definition.includeTableRowNumber === true,
+        includeTableRowId: definition.includeTableRowId === true,
+        includeRecordStartMark: definition.includeRecordStartMark !== false,
+        tableRowNumberLabel: definition.tableRowNumberLabel || DEFAULT_TABLE_ROW_NUMBER_LABEL,
+        tableRowIdLabel: definition.tableRowIdLabel || DEFAULT_TABLE_ROW_ID_LABEL,
+        recordStartMarkLabel: definition.recordStartMarkLabel || DEFAULT_RECORD_START_MARK_LABEL,
         dateFormat: definition.dateFormat || DEFAULT_DATE_FORMAT
       }
     };
@@ -442,9 +463,7 @@
 
   function buildCsvFromOrderedRows(columns, orderedRows, csvOptions) {
     const lineEnding = csvOptions.lineEnding === 'LF' ? '\n' : '\r\n';
-    const headerColumns = hasSubtableColumns(columns)
-      ? [{ label: 'レコードの開始行' }].concat(columns)
-      : columns;
+    const headerColumns = buildCsvHeaderColumns(columns, csvOptions);
     const dataRows = orderedRows.map((row) => {
       return row.map((value) => escapeCsvValue(value, csvOptions.quoteMode)).join(',');
     });
@@ -455,6 +474,30 @@
 
     const headerRow = headerColumns.map((column) => escapeCsvValue(column.label, csvOptions.quoteMode)).join(',');
     return [headerRow].concat(dataRows).join(lineEnding);
+  }
+
+  function buildCsvHeaderColumns(columns, csvOptions) {
+    if (!hasSubtableColumns(columns)) {
+      return columns;
+    }
+
+    const tableExtraColumns = buildTableExtraHeaderColumns(csvOptions);
+    const withTableExtras = insertAt(columns, getFirstTableColumnIndex(columns), tableExtraColumns);
+    if (csvOptions.includeRecordStartMark) {
+      return [{ label: csvOptions.recordStartMarkLabel || DEFAULT_RECORD_START_MARK_LABEL }].concat(withTableExtras);
+    }
+    return withTableExtras;
+  }
+
+  function buildTableExtraHeaderColumns(csvOptions) {
+    const extras = [];
+    if (csvOptions.includeTableRowNumber) {
+      extras.push({ label: csvOptions.tableRowNumberLabel || DEFAULT_TABLE_ROW_NUMBER_LABEL });
+    }
+    if (csvOptions.includeTableRowId) {
+      extras.push({ label: csvOptions.tableRowIdLabel || DEFAULT_TABLE_ROW_ID_LABEL });
+    }
+    return extras;
   }
 
   function buildOrderedRows(columns, records, csvOptions) {
@@ -475,17 +518,65 @@
     return columns.some((column) => Boolean(column.subtableCode));
   }
 
+  function countDistinctSubtables(columns) {
+    return unique(
+      columns
+        .map((column) => column.subtableCode)
+        .filter((subtableCode) => Boolean(subtableCode))
+    ).length;
+  }
+
   function buildSubtableExpandedRows(columns, record, csvOptions) {
     const rowCount = getMaxSubtableRowCount(columns, record);
 
     return Array.from({ length: rowCount }).map((_, rowIndex) => {
-      return [rowIndex === 0 ? '*' : ''].concat(columns.map((column) => {
+      const values = columns.map((column) => {
         if (column.subtableCode) {
           return formatSubtableFieldValueAt(record[column.subtableCode], column.code, rowIndex, csvOptions);
         }
         return formatFieldValue(record[column.code], csvOptions);
-      }));
+      });
+      const tableExtras = [];
+      if (csvOptions.includeTableRowNumber) {
+        tableExtras.push(String(rowIndex + 1));
+      }
+      if (csvOptions.includeTableRowId) {
+        tableExtras.push(getSubtableRowId(columns, record, rowIndex));
+      }
+
+      const withTableExtras = insertAt(values, getFirstTableColumnIndex(columns), tableExtras);
+      if (csvOptions.includeRecordStartMark) {
+        return [rowIndex === 0 ? '*' : ''].concat(withTableExtras);
+      }
+      return withTableExtras;
     });
+  }
+
+  function getFirstTableColumnIndex(columns) {
+    const insertIndex = columns.findIndex((column) => Boolean(column.subtableCode));
+    return insertIndex === -1 ? columns.length : insertIndex;
+  }
+
+  function insertAt(items, index, extras) {
+    if (!extras.length) {
+      return items;
+    }
+    return items.slice(0, index).concat(extras, items.slice(index));
+  }
+
+  function getSubtableRowId(columns, record, rowIndex) {
+    const tableColumn = columns.find((column) => column.subtableCode);
+    if (!tableColumn) {
+      return '';
+    }
+
+    const tableField = record[tableColumn.subtableCode];
+    if (!tableField || !Array.isArray(tableField.value)) {
+      return '';
+    }
+
+    const row = tableField.value[rowIndex];
+    return row && row.id ? String(row.id) : '';
   }
 
   function getMaxSubtableRowCount(columns, record) {
@@ -627,6 +718,9 @@
 
   function escapeCsvValue(value, quoteMode) {
     const text = String(value || '');
+    if (quoteMode === 'NONE') {
+      return text;
+    }
     if (quoteMode === 'SINGLE') {
       return `'${text.replace(/'/g, "''")}'`;
     }
@@ -1002,6 +1096,24 @@
     }
 
     return '';
+  }
+
+  function normalizeLabel(value, defaultValue) {
+    const label = String(value || '').trim();
+    return label || defaultValue;
+  }
+
+  function parseBooleanOption(value, defaultValue) {
+    if (typeof value === 'boolean') {
+      return value;
+    }
+    if (value === 'true') {
+      return true;
+    }
+    if (value === 'false') {
+      return false;
+    }
+    return defaultValue;
   }
 
   function unique(values) {

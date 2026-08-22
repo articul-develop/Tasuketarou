@@ -16,11 +16,18 @@
   const DEFAULT_QUOTE_MODE = 'DOUBLE_ALWAYS';
   const DEFAULT_LINE_ENDING = 'CRLF';
   const DEFAULT_INCLUDE_HEADER = true;
+  const DEFAULT_INCLUDE_TABLE_ROW_NUMBER = false;
+  const DEFAULT_INCLUDE_TABLE_ROW_ID = false;
+  const DEFAULT_INCLUDE_RECORD_START_MARK = true;
+  const DEFAULT_TABLE_ROW_NUMBER_LABEL = '行番号';
+  const DEFAULT_TABLE_ROW_ID_LABEL = '行識別子';
+  const DEFAULT_RECORD_START_MARK_LABEL = 'レコードの開始行';
   const DEFAULT_DATE_FORMAT = 'YYYY-MM-DD';
   const DEFAULT_FILE_NAME_TEMPLATE = '{CSV定義名}_YYYYMMDDHHmmss';
   const QUOTE_MODE_OPTIONS = [
     { value: 'DOUBLE_ALWAYS', label: 'ダブルクォート "（常に全項目）' },
-    { value: 'SINGLE', label: "シングルクォート '（常に全項目）" }
+    { value: 'SINGLE', label: "シングルクォート '（常に全項目）" },
+    { value: 'NONE', label: '引用符なし' }
   ];
   const LINE_ENDING_OPTIONS = [
     { value: 'CRLF', label: 'CRLF（Windows / Excel）' },
@@ -103,6 +110,24 @@
       .replace(/'/g, '&#39;');
   }
 
+  function parseBooleanOption(value, defaultValue) {
+    if (typeof value === 'boolean') {
+      return value;
+    }
+    if (value === 'true') {
+      return true;
+    }
+    if (value === 'false') {
+      return false;
+    }
+    return defaultValue;
+  }
+
+  function normalizeLabel(value, defaultValue) {
+    const label = String(value || '').trim();
+    return label || defaultValue;
+  }
+
   function getSortedFieldOptions(fieldCode) {
     const field = state.fieldMap[fieldCode];
     const rawOptions = field && field.options ? field.options : {};
@@ -159,6 +184,12 @@
       quoteMode: DEFAULT_QUOTE_MODE,
       lineEnding: DEFAULT_LINE_ENDING,
       includeHeader: DEFAULT_INCLUDE_HEADER,
+      includeTableRowNumber: DEFAULT_INCLUDE_TABLE_ROW_NUMBER,
+      includeTableRowId: DEFAULT_INCLUDE_TABLE_ROW_ID,
+      includeRecordStartMark: DEFAULT_INCLUDE_RECORD_START_MARK,
+      tableRowNumberLabel: DEFAULT_TABLE_ROW_NUMBER_LABEL,
+      tableRowIdLabel: DEFAULT_TABLE_ROW_ID_LABEL,
+      recordStartMarkLabel: DEFAULT_RECORD_START_MARK_LABEL,
       dateFormat: DEFAULT_DATE_FORMAT,
       fileNameTemplate: DEFAULT_FILE_NAME_TEMPLATE
     };
@@ -178,9 +209,13 @@
       maxExportCount: String(definition.maxExportCount || DEFAULT_MAX_EXPORT_COUNT),
       quoteMode: definition.quoteMode || DEFAULT_QUOTE_MODE,
       lineEnding: definition.lineEnding || DEFAULT_LINE_ENDING,
-      includeHeader: typeof definition.includeHeader === 'boolean'
-        ? definition.includeHeader
-        : definition.includeHeader !== 'false',
+      includeHeader: parseBooleanOption(definition.includeHeader, DEFAULT_INCLUDE_HEADER),
+      includeTableRowNumber: parseBooleanOption(definition.includeTableRowNumber, DEFAULT_INCLUDE_TABLE_ROW_NUMBER),
+      includeTableRowId: parseBooleanOption(definition.includeTableRowId, DEFAULT_INCLUDE_TABLE_ROW_ID),
+      includeRecordStartMark: parseBooleanOption(definition.includeRecordStartMark, DEFAULT_INCLUDE_RECORD_START_MARK),
+      tableRowNumberLabel: normalizeLabel(definition.tableRowNumberLabel, DEFAULT_TABLE_ROW_NUMBER_LABEL),
+      tableRowIdLabel: normalizeLabel(definition.tableRowIdLabel, DEFAULT_TABLE_ROW_ID_LABEL),
+      recordStartMarkLabel: normalizeLabel(definition.recordStartMarkLabel, DEFAULT_RECORD_START_MARK_LABEL),
       dateFormat: definition.dateFormat || DEFAULT_DATE_FORMAT,
       fileNameTemplate: definition.fileNameTemplate || DEFAULT_FILE_NAME_TEMPLATE
     };
@@ -434,7 +469,7 @@
             <span class="section-card-step">04</span>
             <div>
               <h3>CSV詳細設定</h3>
-              <p>文字コード、出力件数、引用符、改行コード、ヘッダー行、日付形式を設定します。</p>
+              <p>文字コード、出力件数、引用符、改行コード、ヘッダー行、日付形式、テーブル出力項目を設定します。</p>
             </div>
           </div>
           <div class="form-stack">
@@ -457,7 +492,7 @@
                 <select id="definition-quote-mode" class="kintoneplugin-select">
                   ${getSelectOptionsHtml(QUOTE_MODE_OPTIONS, definition.quoteMode)}
                 </select>
-                <span class="field-note">すべての項目を指定した引用符で囲みます。</span>
+                <span class="field-note">引用符ありの場合はすべての項目を囲みます。引用符なしの場合はそのまま出力します。</span>
               </div>
               <div class="form-field">
                 <label class="kintoneplugin-label" for="definition-line-ending">改行コード</label>
@@ -480,6 +515,37 @@
                 </select>
                 <span class="field-note">日付・日時フィールドの出力形式です。時刻のみフィールドはそのまま出力します。</span>
               </div>
+            </div>
+            <div class="form-field">
+              <label class="kintoneplugin-label">テーブル出力オプション</label>
+              <div class="table-export-option-list">
+                <div class="table-export-option-header">
+                  <span>出力する</span>
+                  <span>列名</span>
+                </div>
+                <div class="table-export-option">
+                  <label class="checkbox-item">
+                    <input type="checkbox" id="definition-include-table-row-number"${definition.includeTableRowNumber ? ' checked' : ''}>
+                    行番号を出力する
+                  </label>
+                  <input type="text" id="definition-table-row-number-label" class="kintoneplugin-input-text" value="${escapeHtml(definition.tableRowNumberLabel)}" placeholder="${escapeHtml(DEFAULT_TABLE_ROW_NUMBER_LABEL)}"${definition.includeTableRowNumber ? '' : ' disabled'}>
+                </div>
+                <div class="table-export-option">
+                  <label class="checkbox-item">
+                    <input type="checkbox" id="definition-include-table-row-id"${definition.includeTableRowId ? ' checked' : ''}>
+                    行識別子を出力する
+                  </label>
+                  <input type="text" id="definition-table-row-id-label" class="kintoneplugin-input-text" value="${escapeHtml(definition.tableRowIdLabel)}" placeholder="${escapeHtml(DEFAULT_TABLE_ROW_ID_LABEL)}"${definition.includeTableRowId ? '' : ' disabled'}>
+                </div>
+                <div class="table-export-option">
+                  <label class="checkbox-item">
+                    <input type="checkbox" id="definition-include-record-start-mark"${definition.includeRecordStartMark ? ' checked' : ''}>
+                    レコードの開始行に＊を出力する
+                  </label>
+                  <input type="text" id="definition-record-start-mark-label" class="kintoneplugin-input-text" value="${escapeHtml(definition.recordStartMarkLabel)}" placeholder="${escapeHtml(DEFAULT_RECORD_START_MARK_LABEL)}"${definition.includeRecordStartMark ? '' : ' disabled'}>
+                </div>
+              </div>
+              <span class="field-note">テーブルを含む一覧を出力するときに使います。行番号・行識別子はテーブル列の先頭に挿入します。列名を空にすると初期値（行番号 / 行識別子 / レコードの開始行）を使います。</span>
             </div>
             <div class="form-field">
               <label class="kintoneplugin-label" for="definition-file-name-template">CSVファイル名</label>
@@ -553,6 +619,12 @@
     const quoteModeInput = document.getElementById('definition-quote-mode');
     const lineEndingInput = document.getElementById('definition-line-ending');
     const includeHeaderInput = document.getElementById('definition-include-header');
+    const includeTableRowNumberInput = document.getElementById('definition-include-table-row-number');
+    const includeTableRowIdInput = document.getElementById('definition-include-table-row-id');
+    const includeRecordStartMarkInput = document.getElementById('definition-include-record-start-mark');
+    const tableRowNumberLabelInput = document.getElementById('definition-table-row-number-label');
+    const tableRowIdLabelInput = document.getElementById('definition-table-row-id-label');
+    const recordStartMarkLabelInput = document.getElementById('definition-record-start-mark-label');
     const dateFormatInput = document.getElementById('definition-date-format');
     const fileNameTemplateInput = document.getElementById('definition-file-name-template');
     const updateFieldInput = document.getElementById('definition-update-field');
@@ -587,6 +659,33 @@
 
     includeHeaderInput.addEventListener('change', () => {
       updateDefinition(definitionId, { includeHeader: includeHeaderInput.value === 'true' });
+    });
+
+    includeTableRowNumberInput.addEventListener('change', () => {
+      tableRowNumberLabelInput.disabled = !includeTableRowNumberInput.checked;
+      updateDefinition(definitionId, { includeTableRowNumber: includeTableRowNumberInput.checked });
+    });
+
+    includeTableRowIdInput.addEventListener('change', () => {
+      tableRowIdLabelInput.disabled = !includeTableRowIdInput.checked;
+      updateDefinition(definitionId, { includeTableRowId: includeTableRowIdInput.checked });
+    });
+
+    includeRecordStartMarkInput.addEventListener('change', () => {
+      recordStartMarkLabelInput.disabled = !includeRecordStartMarkInput.checked;
+      updateDefinition(definitionId, { includeRecordStartMark: includeRecordStartMarkInput.checked });
+    });
+
+    tableRowNumberLabelInput.addEventListener('input', () => {
+      updateDefinition(definitionId, { tableRowNumberLabel: tableRowNumberLabelInput.value });
+    });
+
+    tableRowIdLabelInput.addEventListener('input', () => {
+      updateDefinition(definitionId, { tableRowIdLabel: tableRowIdLabelInput.value });
+    });
+
+    recordStartMarkLabelInput.addEventListener('input', () => {
+      updateDefinition(definitionId, { recordStartMarkLabel: recordStartMarkLabelInput.value });
     });
 
     dateFormatInput.addEventListener('change', () => {
@@ -754,6 +853,12 @@
         quoteMode: normalized.quoteMode,
         lineEnding: normalized.lineEnding,
         includeHeader: normalized.includeHeader,
+        includeTableRowNumber: normalized.includeTableRowNumber,
+        includeTableRowId: normalized.includeTableRowId,
+        includeRecordStartMark: normalized.includeRecordStartMark,
+        tableRowNumberLabel: normalized.tableRowNumberLabel,
+        tableRowIdLabel: normalized.tableRowIdLabel,
+        recordStartMarkLabel: normalized.recordStartMarkLabel,
         dateFormat: normalized.dateFormat,
         fileNameTemplate: normalized.fileNameTemplate
       };
