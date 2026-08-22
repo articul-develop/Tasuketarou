@@ -1,0 +1,917 @@
+﻿.config-page {
+  background: #f4f7fb;
+  color: #202a3a;
+  min-height: 100vh;
+  padding: 32px 20px 40px;
+}
+
+.config-shell {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.config-workspace {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 16px;
+}
+
+.definition-sidebar {
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #dce5f1;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 8px 18px rgba(44, 69, 106, 0.05);
+}
+
+.definition-sidebar-title {
+  margin: 0;
+  color: #172033;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.definition-sidebar-note {
+  margin: 4px 0 0;
+  color: #6b7a90;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.definition-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: min(52vh, 480px);
+  overflow: auto;
+}
+
+.definition-list-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e7edf5;
+  border-radius: 10px;
+  background: #fbfcfe;
+  color: #2b3648;
+  text-align: left;
+  cursor: pointer;
+}
+
+.definition-list-item:hover {
+  border-color: #c3d5ef;
+  background: #f5f9ff;
+}
+
+.definition-list-item.is-active {
+  border-color: #315fc4;
+  background: #eef5ff;
+  box-shadow: inset 3px 0 0 #315fc4;
+}
+
+.definition-list-name {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.definition-list-meta {
+  color: #6b7a90;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.definition-sidebar-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.definition-sidebar-actions .kintoneplugin-button-normal,
+.definition-sidebar-actions .kintoneplugin-button-dialog-cancel {
+  margin: 0;
+  min-width: 0;
+  width: 100%;
+  padding-left: 8px;
+  padding-right: 8px;
+  font-size: 12px;
+}
+
+.definition-sidebar-actions #definition-add-button {
+  grid-column: 1 / -1;
+}
+
+.config-workspace-main {
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .config-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .definition-sidebar {
+    position: static;
+  }
+}
+
+.config-main {
+  min-width: 0;
+}
+
+.config-hero {
+  margin-bottom: 20px;
+}
+
+.config-hero-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  padding: 24px 28px;
+  border: 1px solid #dce5f1;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+  box-shadow: 0 10px 24px rgba(44, 69, 106, 0.06);
+}
+
+.config-hero-kicker {
+  margin: 0 0 10px;
+  color: #315fc4;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h2 {
+  margin: 0 0 10px !important;
+  padding: 0 !important;
+  border: none !important;
+  color: #172033 !important;
+  font-size: 30px !important;
+  font-weight: 800 !important;
+  line-height: 1.25;
+}
+
+.config-hero-description {
+  max-width: 620px;
+  margin: 0;
+  color: #44546b;
+  line-height: 1.8;
+  font-size: 15px;
+}
+
+.auth-status {
+  display: inline-flex;
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 0;
+  margin-top: 14px;
+  padding: 11px 14px;
+  border: 1px solid #bcd6ff;
+  border-radius: 12px;
+  background: #eef6ff;
+  color: #104f9f;
+  line-height: 1.6;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.auth-status.is-error {
+  border-color: #f2b8b5;
+  background: #fff5f5;
+  color: #c0392b;
+}
+
+.trial-status {
+  width: fit-content;
+  margin-top: 8px;
+  padding: 7px 12px;
+  border: 1px solid #bfe3c9;
+  border-radius: 999px;
+  background: #f0fbf3;
+  color: #237044;
+  line-height: 1.5;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.config-panel {
+  padding: 28px;
+  border: 1px solid #d6dfec;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 12px 28px rgba(45, 70, 110, 0.07);
+}
+
+.config-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.config-toolbar-title {
+  margin: 0 0 4px;
+  color: #172033;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.config-toolbar-description {
+  margin: 0;
+  color: #4e5f78;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.definition-editor {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.definition-grid {
+  display: grid;
+  gap: 32px;
+}
+
+.section-card {
+  border: 0;
+  border-top: 1px solid #e2e8f1;
+  border-radius: 0;
+  padding: 28px 0 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.section-card:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.section-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.section-card-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: #e8f1ff;
+  color: #214fa8;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.section-card h3 {
+  margin: 0 0 6px;
+  color: #172033;
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.config-callout {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 12px 14px;
+  border: 1px solid #cfe0f7;
+  border-radius: 12px;
+  background: #f2f7ff;
+}
+
+.config-callout-icon {
+  flex: none;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.config-callout-text {
+  margin: 0;
+  color: #2b3648;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.section-card-header p {
+  margin: 0;
+  color: #53647d;
+  line-height: 1.7;
+  font-size: 14px;
+}
+
+.form-stack {
+  display: grid;
+  gap: 18px;
+}
+
+.form-field {
+  display: grid;
+  gap: 9px;
+  align-content: start;
+  align-items: start;
+}
+
+.form-field[hidden],
+.form-group[hidden] {
+  display: none !important;
+}
+
+.form-field .kintoneplugin-label {
+  margin-bottom: 0;
+  color: #24324a;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.form-field .kintoneplugin-input-text,
+.form-field .kintoneplugin-select {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid #aebdd0;
+  border-radius: 8px;
+  background: #ffffff;
+  box-sizing: border-box;
+  color: #182033;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: none;
+  line-height: 1.4;
+}
+
+.form-field .kintoneplugin-input-text::placeholder {
+  color: #65758a;
+  opacity: 1;
+}
+
+.view-select-row,
+.view-create-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.view-select-row .kintoneplugin-select,
+.view-create-row .kintoneplugin-input-text {
+  min-width: 0;
+  flex: 1;
+}
+
+.view-select-row button,
+.view-create-row button {
+  min-width: max-content;
+  white-space: nowrap;
+}
+
+.view-create-panel {
+  display: grid;
+  gap: 9px;
+  padding: 14px;
+  border: 1px solid #c7d4e4;
+  border-radius: 10px;
+  background: #f6f9fd;
+}
+
+.view-create-panel[hidden] {
+  display: none !important;
+}
+
+.view-create-message.is-error {
+  color: #b42318;
+  font-weight: 700;
+}
+
+.view-create-message.is-success {
+  color: #18794e;
+  font-weight: 700;
+}
+
+.form-field .kintoneplugin-textarea {
+  width: 100%;
+  min-height: 92px;
+  padding: 12px 14px;
+  border: 1px solid #aebdd0;
+  border-radius: 10px;
+  background: #ffffff;
+  box-sizing: border-box;
+  color: #182033;
+  font-size: 14px;
+  box-shadow: inset 0 1px 2px rgba(33, 43, 54, 0.04);
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.form-field .kintoneplugin-textarea::placeholder {
+  color: #65758a;
+  opacity: 1;
+}
+
+.form-field .kintoneplugin-input-text:focus,
+.form-field .kintoneplugin-select:focus,
+.form-field .kintoneplugin-textarea:focus {
+  border-color: #4f83df;
+  box-shadow: 0 0 0 4px rgba(79, 131, 223, 0.16);
+  outline: none;
+}
+
+.is-invalid,
+.is-invalid:focus {
+  border-color: #d0342c !important;
+  box-shadow: 0 0 0 4px rgba(208, 52, 44, 0.18) !important;
+}
+
+.field-note {
+  display: block;
+  margin-top: 2px;
+  color: #53647d;
+  line-height: 1.7;
+  font-size: 13px;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  transition: background-color 0.15s ease;
+}
+
+.checkbox-item:hover {
+  background: rgba(69, 120, 210, 0.06);
+}
+
+.checkbox-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
+
+.checkbox-inline {
+  justify-self: start;
+  color: #2f3d55;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.config-actions {
+  margin-top: 16px;
+}
+
+.config-actions-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 22px;
+  border: 1px solid #d6dfec;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 8px 18px rgba(45, 70, 110, 0.05);
+}
+
+.config-actions-copy {
+  display: grid;
+  gap: 4px;
+  color: #4e5f78;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.config-actions-copy strong {
+  color: #172033;
+  font-size: 15px;
+}
+
+.config-actions-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ------------------------------------------------------------------ *
+ * スマート一覧プラグイン固有のパーツ
+ * ------------------------------------------------------------------ */
+
+.form-stack-2col {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.list-mode-radios {
+  display: grid;
+  gap: 10px;
+}
+
+.list-mode-radios .kintoneplugin-input-radio-item {
+  display: block;
+  margin: 0;
+}
+
+.form-group {
+  display: grid;
+  gap: 12px;
+}
+
+.form-group-title {
+  color: #3d4d66;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.option-panel {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid #dce5f1;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.option-panel .checkbox-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.option-panel .checkbox-inline input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+.option-panel .field-note {
+  margin: 0;
+  padding-left: 26px;
+}
+
+.checkbox-grid {
+  display: grid;
+  gap: 2px;
+  max-height: 260px;
+  overflow: auto;
+  padding: 8px;
+  border: 1px solid #dce5f1;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.checkbox-grid .checkbox-item {
+  padding: 6px 10px;
+  color: #2f3d55;
+  font-size: 14px;
+}
+
+.type-tag {
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #eef2f8;
+  color: #5c6b82;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.snippet-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+  padding: 10px 12px;
+  border: 1px solid #dce5f1;
+  border-radius: 10px;
+  background: #f7fafd;
+}
+
+.snippet-code {
+  flex: 1 1 auto;
+  overflow-x: auto;
+  color: #1f3358;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.snippet-box .kintoneplugin-button-normal {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+/* 初期の列順（ドラッグ＆ドロップ） */
+.order-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 340px;
+  overflow: auto;
+  padding: 8px;
+  border: 1px solid #dce5f1;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.order-list.is-sortable-dragging {
+  cursor: grabbing;
+}
+
+.order-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid #e7edf5;
+  border-radius: 8px;
+  background: #fbfcfe;
+  cursor: grab;
+}
+
+.order-item:hover {
+  border-color: #c3d5ef;
+  background: #f5f9ff;
+}
+
+.order-item.is-dragging {
+  opacity: 0.5;
+}
+
+.order-item.is-drop-target {
+  box-shadow: inset 0 3px 0 #315fc4;
+}
+
+.order-handle {
+  flex: 0 0 auto;
+  color: #9fadc2;
+  font-size: 14px;
+}
+
+.order-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-width: 0;
+  color: #2f3d55;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.order-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
+
+.order-name {
+  overflow: hidden;
+  flex: 1 1 auto;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scope-tag {
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.scope-p {
+  background: #e8eef7;
+  color: #45577a;
+}
+
+.scope-t {
+  background: #e6f2ea;
+  color: #2f6b48;
+}
+
+/* 初期の並び順 */
+.sort-list {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.sort-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sort-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: #e8f1ff;
+  color: #214fa8;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.sort-row .kintoneplugin-select {
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid #aebdd0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #182033;
+  font-size: 14px;
+}
+
+.sort-row .kintoneplugin-select:first-of-type {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* セル・列の色付け */
+.color-rule-list {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.color-rule-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.color-rule-row-condition {
+  align-items: flex-start;
+  padding: 10px 12px;
+  border: 1px solid #e3e8ef;
+  border-radius: 8px;
+  background: #fbfcfd;
+}
+
+.color-rule-row .kintoneplugin-select {
+  height: 40px;
+  min-width: 140px;
+}
+
+.color-rule-value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 180px;
+  min-width: 160px;
+}
+
+.color-rule-value .kintoneplugin-input-text {
+  width: 140px;
+  max-width: 100%;
+}
+
+.color-rule-range-sep {
+  color: #6b7785;
+  font-size: 13px;
+}
+
+.color-palette {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.color-swatch {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+}
+
+.color-swatch.is-selected {
+  border-color: #214fa8;
+  box-shadow: 0 0 0 2px rgba(33, 79, 168, 0.2), inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.color-token-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  max-width: 420px;
+}
+
+.color-token-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: #334155;
+  cursor: pointer;
+}
+
+.sort-remove {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid #dce5f1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #6b7a90;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.sort-remove:hover {
+  border-color: #e6afa9;
+  color: #c0392b;
+}
+
+/* ------------------------------------------------------------------ *
+ * タブ（基本設定 / 詳細設定）
+ * ------------------------------------------------------------------ */
+
+.config-tabs {
+  display: flex;
+  gap: 4px;
+  margin: 0 0 16px;
+  padding: 4px;
+  border: 1px solid #d6dfec;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 8px 18px rgba(45, 70, 110, 0.05);
+}
+
+.config-tab {
+  flex: 1 1 0;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #53647d;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.config-tab:hover {
+  background: #f4f7fb;
+  color: #24324a;
+}
+
+.config-tab.is-active {
+  background: #e8f1ff;
+  color: #214fa8;
+  box-shadow: inset 0 0 0 1px #bcd6ff;
+}
+
+.config-tab-panel[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 900px) {
+  .config-page {
+    padding: 16px 0 28px;
+  }
+
+  .config-hero-main,
+  .config-actions-inner,
+  .config-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .auth-status {
+    width: 100%;
+  }
+}
