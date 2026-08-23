@@ -21,7 +21,9 @@
     suppressSuccessMessage: document.getElementById('suppressSuccessMessage'),
     fetchFieldsButton: document.getElementById('fetch-fields-button'),
     saveButton: document.getElementById('save-button'),
-    cancelButton: document.getElementById('cancel-button')
+    cancelButton: document.getElementById('cancel-button'),
+    authStatus: document.getElementById('auth-status'),
+    trialStatus: document.getElementById('trial-status')
   };
 
   let currentFormProperties = null;
@@ -53,8 +55,180 @@
     elements.saveButton.removeAttribute('title');
   }
 
+  function setAuthStatus(message, isError) {
+    elements.authStatus.textContent = message;
+    elements.authStatus.classList.toggle('is-error', Boolean(isError));
+  }
+
+  function formatTrialEndDate(trialEndDate) {
+    const match = String(trialEndDate).match(/^(\d{4})[-/]?(\d{2})[-/]?(\d{2})$/);
+    if (!match) {
+      return '';
+    }
+
+    return `${Number(match[2])}月${Number(match[3])}日`;
+  }
+
+  function setTrialStatus(trialEndDate) {
+    const formattedDate = formatTrialEndDate(trialEndDate);
+    if (!formattedDate) {
+      elements.trialStatus.hidden = true;
+      elements.trialStatus.textContent = '';
+      return;
+    }
+
+    elements.trialStatus.textContent = `トライアル中（～${formattedDate}まで）`;
+    elements.trialStatus.hidden = false;
+  }
+
+  const FIELD_TYPE_LABELS = {
+    SINGLE_LINE_TEXT: '文字列（1行）',
+    MULTI_LINE_TEXT: '文字列（複数行）',
+    RICH_TEXT: 'リッチエディター',
+    NUMBER: '数値',
+    CALC: '計算',
+    RADIO: 'ラジオボタン',
+    CHECK_BOX: 'チェックボックス',
+    MULTI_SELECT: '複数選択',
+    DROP_DOWN: 'ドロップダウン',
+    DATE: '日付',
+    TIME: '時刻',
+    DATETIME: '日時',
+    LINK: 'リンク',
+    USER_SELECT: 'ユーザー選択',
+    ORGANIZATION_SELECT: '組織選択',
+    GROUP_SELECT: 'グループ選択',
+    RECORD_NUMBER: 'レコード番号',
+    CREATOR: '作成者',
+    MODIFIER: '更新者',
+    CREATED_TIME: '作成日時',
+    UPDATED_TIME: '更新日時',
+    STATUS: 'ステータス',
+    STATUS_ASSIGNEE: '作業者',
+    CATEGORY: 'カテゴリー'
+  };
+
   function formatFieldDisplayName(label, code) {
     return `${label || code}（${code}）`;
+  }
+
+  function formatFieldTypeLabel(type) {
+    return FIELD_TYPE_LABELS[type] || type || '';
+  }
+
+  function closeAllTypedSelectMenus() {
+    document.querySelectorAll('.typed-select.is-open').forEach((picker) => {
+      picker.classList.remove('is-open');
+      const menu = picker.querySelector('.typed-select-menu');
+      const button = picker.querySelector('.typed-select-button');
+      if (menu) {
+        menu.hidden = true;
+      }
+      if (button) {
+        button.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+
+  function createTypedFieldSelect(definitions, selectedValue, dataset) {
+    const picker = document.createElement('div');
+    picker.className = 'typed-select';
+
+    const nativeSelect = document.createElement('select');
+    nativeSelect.className = 'typed-select-native';
+    nativeSelect.tabIndex = -1;
+    nativeSelect.setAttribute('aria-hidden', 'true');
+    Object.keys(dataset).forEach((key) => {
+      nativeSelect.dataset[key] = dataset[key];
+    });
+    setSelectOptions(nativeSelect, buildFieldOptions(definitions), selectedValue);
+
+    const selected = getDefinitionByCode(definitions, selectedValue);
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'typed-select-button';
+    button.setAttribute('aria-haspopup', 'listbox');
+    button.setAttribute('aria-expanded', 'false');
+
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'typed-select-name';
+    nameSpan.textContent = selected
+      ? formatFieldDisplayName(selected.label, selected.code)
+      : '選択してください';
+    button.appendChild(nameSpan);
+
+    if (selected) {
+      const typeSpan = document.createElement('span');
+      typeSpan.className = 'typed-select-type';
+      typeSpan.textContent = formatFieldTypeLabel(selected.type);
+      button.appendChild(typeSpan);
+    } else {
+      button.classList.add('is-placeholder');
+    }
+
+    const menu = document.createElement('div');
+    menu.className = 'typed-select-menu';
+    menu.hidden = true;
+    menu.setAttribute('role', 'listbox');
+
+    function appendMenuOption(value, name, typeLabel, isSelected) {
+      const option = document.createElement('button');
+      option.type = 'button';
+      option.className = 'typed-select-option';
+      if (isSelected) {
+        option.classList.add('is-selected');
+      }
+      option.setAttribute('role', 'option');
+
+      const optionName = document.createElement('span');
+      optionName.className = 'typed-select-name';
+      optionName.textContent = name;
+      option.appendChild(optionName);
+
+      if (typeLabel) {
+        const optionType = document.createElement('span');
+        optionType.className = 'typed-select-type';
+        optionType.textContent = typeLabel;
+        option.appendChild(optionType);
+      }
+
+      option.addEventListener('click', (event) => {
+        event.stopPropagation();
+        nativeSelect.value = value;
+        nativeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+      menu.appendChild(option);
+    }
+
+    appendMenuOption('', '選択してください', '', !selectedValue);
+    definitions.forEach((definition) => {
+      appendMenuOption(
+        definition.code,
+        formatFieldDisplayName(definition.label, definition.code),
+        formatFieldTypeLabel(definition.type),
+        definition.code === selectedValue
+      );
+    });
+
+    button.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const willOpen = menu.hidden;
+      closeAllTypedSelectMenus();
+      if (willOpen) {
+        picker.classList.add('is-open');
+        menu.hidden = false;
+        button.setAttribute('aria-expanded', 'true');
+      }
+    });
+
+    picker.addEventListener('click', (event) => {
+      event.stopPropagation();
+    });
+
+    picker.appendChild(nativeSelect);
+    picker.appendChild(button);
+    picker.appendChild(menu);
+    return picker;
   }
 
   function createEmptyCondition() {
@@ -271,11 +445,20 @@
     return ['FILE', 'REFERENCE_TABLE', 'GROUP', 'SUBTABLE'];
   }
 
+  function appendMissingRecordNumber(definitions, properties) {
+    const recordNumber = Object.values(properties || {}).find((field) => field?.type === 'RECORD_NUMBER');
+    if (!recordNumber?.code || definitions.some((definition) => definition.code === recordNumber.code)) {
+      return definitions;
+    }
+    return [createFieldDefinition(recordNumber, recordNumber.code), ...definitions];
+  }
+
   function buildSourceDefinitions() {
-    return currentLayoutFields
+    const definitions = currentLayoutFields
       .filter((field) => !field.subtableCode)
       .map((field) => createFieldDefinition(currentFormProperties[field.code], field.code, field.label))
       .filter((definition) => definition.code && definition.type && !getExcludedTypes().includes(definition.type));
+    return appendMissingRecordNumber(definitions, currentFormProperties);
   }
 
   function buildTargetRecordDefinitions(targetProperties, targetLayoutOrderedFields) {
@@ -285,9 +468,10 @@
     const fallbackCodes = Object.keys(targetProperties).filter((code) => targetProperties[code]?.type !== 'SUBTABLE');
     const fieldCodes = orderedCodes.length > 0 ? orderedCodes : fallbackCodes;
 
-    return fieldCodes
+    const definitions = fieldCodes
       .map((code) => createFieldDefinition(targetProperties[code], code))
       .filter((definition) => definition.code && definition.type && !getExcludedTypes().includes(definition.type));
+    return appendMissingRecordNumber(definitions, targetProperties);
   }
 
   function buildTargetTableDefinitions(targetProperties, targetLayoutOrderedFields, tableCode) {
@@ -310,25 +494,51 @@
     return targetScope === TARGET_SCOPE.TABLE ? targetTableDefinitions : targetRecordDefinitions;
   }
 
-  function filterCompatibleTargets(sourceDefinition, targetDefinitions) {
+  const RECORD_NUMBER_ALIAS_TYPES = ['SINGLE_LINE_TEXT', 'NUMBER'];
+
+  function isCompatibleFieldType(sourceType, targetType, compatibility = '') {
+    if (!sourceType || !targetType) {
+      return false;
+    }
+    if (compatibility === 'mapping' && targetType === 'RECORD_NUMBER') {
+      return false;
+    }
+    if (sourceType === targetType) {
+      return true;
+    }
+    if (compatibility === 'condition') {
+      const involvesRecordNumber = sourceType === 'RECORD_NUMBER' || targetType === 'RECORD_NUMBER';
+      return involvesRecordNumber
+        && (sourceType === 'RECORD_NUMBER' || RECORD_NUMBER_ALIAS_TYPES.includes(sourceType))
+        && (targetType === 'RECORD_NUMBER' || RECORD_NUMBER_ALIAS_TYPES.includes(targetType));
+    }
+    if (compatibility === 'mapping') {
+      return sourceType === 'RECORD_NUMBER' && RECORD_NUMBER_ALIAS_TYPES.includes(targetType);
+    }
+    return false;
+  }
+
+  function filterCompatibleTargets(sourceDefinition, targetDefinitions, compatibility = '') {
     if (!sourceDefinition) {
       return [];
     }
-    return targetDefinitions.filter((targetDefinition) => targetDefinition.type === sourceDefinition.type);
+    return targetDefinitions.filter((targetDefinition) =>
+      isCompatibleFieldType(sourceDefinition.type, targetDefinition.type, compatibility)
+    );
   }
 
-  function resolvePreferredTarget(sourceDefinition) {
+  function resolvePreferredTarget(sourceDefinition, compatibility = '') {
     if (!sourceDefinition) {
       return { targetScope: TARGET_SCOPE.RECORD, targetFieldCode: '' };
     }
 
-    const recordTargets = filterCompatibleTargets(sourceDefinition, targetRecordDefinitions);
+    const recordTargets = filterCompatibleTargets(sourceDefinition, targetRecordDefinitions, compatibility);
     const sameRecordTarget = recordTargets.find((targetDefinition) => targetDefinition.code === sourceDefinition.code);
     if (sameRecordTarget) {
       return { targetScope: TARGET_SCOPE.RECORD, targetFieldCode: sameRecordTarget.code };
     }
 
-    const tableTargets = filterCompatibleTargets(sourceDefinition, targetTableDefinitions);
+    const tableTargets = filterCompatibleTargets(sourceDefinition, targetTableDefinitions, compatibility);
     const sameTableTarget = tableTargets.find((targetDefinition) => targetDefinition.code === sourceDefinition.code);
     if (sameTableTarget) {
       return { targetScope: TARGET_SCOPE.TABLE, targetFieldCode: sameTableTarget.code };
@@ -351,14 +561,16 @@
     }
 
     const sameRecordTarget = targetRecordDefinitions.find((targetDefinition) =>
-      targetDefinition.code === sourceDefinition.code && targetDefinition.type === sourceDefinition.type
+      targetDefinition.code === sourceDefinition.code
+      && isCompatibleFieldType(sourceDefinition.type, targetDefinition.type, 'mapping')
     );
     if (sameRecordTarget) {
       return { targetScope: TARGET_SCOPE.RECORD, targetFieldCode: sameRecordTarget.code };
     }
 
     const sameTableTarget = targetTableDefinitions.find((targetDefinition) =>
-      targetDefinition.code === sourceDefinition.code && targetDefinition.type === sourceDefinition.type
+      targetDefinition.code === sourceDefinition.code
+      && isCompatibleFieldType(sourceDefinition.type, targetDefinition.type, 'mapping')
     );
     if (sameTableTarget) {
       return { targetScope: TARGET_SCOPE.TABLE, targetFieldCode: sameTableTarget.code };
@@ -387,7 +599,11 @@
           return createEmptyCondition();
         }
 
-        const compatibleTargets = filterCompatibleTargets(sourceDefinition, getTargetDefinitionsByScope(normalized.targetScope));
+        const compatibleTargets = filterCompatibleTargets(
+          sourceDefinition,
+          getTargetDefinitionsByScope(normalized.targetScope),
+          'condition'
+        );
         const targetFieldCode = compatibleTargets.some((targetDefinition) => targetDefinition.code === normalized.targetFieldCode)
           ? normalized.targetFieldCode
           : '';
@@ -420,7 +636,11 @@
           return createEmptyMapping();
         }
 
-        const compatibleTargets = filterCompatibleTargets(sourceDefinition, getTargetDefinitionsByScope(normalized.targetScope));
+        const compatibleTargets = filterCompatibleTargets(
+          sourceDefinition,
+          getTargetDefinitionsByScope(normalized.targetScope),
+          'mapping'
+        );
         const targetFieldCode = compatibleTargets.some((targetDefinition) => targetDefinition.code === normalized.targetFieldCode)
           ? normalized.targetFieldCode
           : '';
@@ -458,11 +678,10 @@
 
       const source = document.createElement('div');
       source.className = 'condition-source';
-      const sourceSelect = document.createElement('select');
-      sourceSelect.dataset.conditionRole = 'source';
-      sourceSelect.dataset.conditionIndex = String(index);
-      setSelectOptions(sourceSelect, buildFieldOptions(sourceNormalDefinitions), condition.sourceFieldCode);
-      source.appendChild(sourceSelect);
+      source.appendChild(createTypedFieldSelect(sourceNormalDefinitions, condition.sourceFieldCode, {
+        conditionRole: 'source',
+        conditionIndex: String(index)
+      }));
 
       const scope = document.createElement('div');
       scope.className = 'condition-scope';
@@ -477,13 +696,16 @@
 
       const target = document.createElement('div');
       target.className = 'condition-target';
-      const targetSelect = document.createElement('select');
-      targetSelect.dataset.conditionRole = 'target';
-      targetSelect.dataset.conditionIndex = String(index);
       const sourceDefinition = getDefinitionByCode(sourceNormalDefinitions, condition.sourceFieldCode);
-      const compatibleTargets = filterCompatibleTargets(sourceDefinition, getTargetDefinitionsByScope(condition.targetScope));
-      setSelectOptions(targetSelect, buildFieldOptions(compatibleTargets), condition.targetFieldCode);
-      target.appendChild(targetSelect);
+      const compatibleTargets = filterCompatibleTargets(
+        sourceDefinition,
+        getTargetDefinitionsByScope(condition.targetScope),
+        'condition'
+      );
+      target.appendChild(createTypedFieldSelect(compatibleTargets, condition.targetFieldCode, {
+        conditionRole: 'target',
+        conditionIndex: String(index)
+      }));
 
       const remove = document.createElement('button');
       remove.type = 'button';
@@ -525,11 +747,10 @@
 
       const source = document.createElement('div');
       source.className = 'mapping-source';
-      const sourceSelect = document.createElement('select');
-      sourceSelect.dataset.mappingRole = 'source';
-      sourceSelect.dataset.mappingIndex = String(index);
-      setSelectOptions(sourceSelect, buildFieldOptions(sourceNormalDefinitions), mapping.sourceFieldCode);
-      source.appendChild(sourceSelect);
+      source.appendChild(createTypedFieldSelect(sourceNormalDefinitions, mapping.sourceFieldCode, {
+        mappingRole: 'source',
+        mappingIndex: String(index)
+      }));
 
       const scope = document.createElement('div');
       scope.className = 'mapping-scope';
@@ -544,13 +765,16 @@
 
       const target = document.createElement('div');
       target.className = 'mapping-target';
-      const targetSelect = document.createElement('select');
-      targetSelect.dataset.mappingRole = 'target';
-      targetSelect.dataset.mappingIndex = String(index);
       const sourceDefinition = getDefinitionByCode(sourceNormalDefinitions, mapping.sourceFieldCode);
-      const compatibleTargets = filterCompatibleTargets(sourceDefinition, getTargetDefinitionsByScope(mapping.targetScope));
-      setSelectOptions(targetSelect, buildFieldOptions(compatibleTargets), mapping.targetFieldCode);
-      target.appendChild(targetSelect);
+      const compatibleTargets = filterCompatibleTargets(
+        sourceDefinition,
+        getTargetDefinitionsByScope(mapping.targetScope),
+        'mapping'
+      );
+      target.appendChild(createTypedFieldSelect(compatibleTargets, mapping.targetFieldCode, {
+        mappingRole: 'target',
+        mappingIndex: String(index)
+      }));
 
       const remove = document.createElement('button');
       remove.type = 'button';
@@ -591,7 +815,7 @@
     const sourceDefinition = sourceNormalDefinitions.find((definition) =>
       !updateConditions.some((condition) => condition.sourceFieldCode === definition.code)
     ) || sourceNormalDefinitions[0];
-    const preferredTarget = resolvePreferredTarget(sourceDefinition);
+    const preferredTarget = resolvePreferredTarget(sourceDefinition, 'condition');
 
     updateConditions = sanitizeConditions([
       ...updateConditions,
@@ -613,7 +837,7 @@
     const sourceDefinition = sourceNormalDefinitions.find((definition) =>
       !fieldMappings.some((mapping) => mapping.sourceFieldCode === definition.code)
     ) || sourceNormalDefinitions[0];
-    const preferredTarget = resolvePreferredTarget(sourceDefinition);
+    const preferredTarget = resolvePreferredTarget(sourceDefinition, 'mapping');
 
     fieldMappings = sanitizeMappings([
       ...fieldMappings,
@@ -720,6 +944,8 @@
 
   async function authenticateOnInitialize() {
     updateSaveButtonState(true, '認証状態を確認しています。');
+    setAuthStatus('認証状態を確認しています。', false);
+
     try {
       const data = await AuthModule.authenticateDomain(API_CONFIG);
       if (data.status === 'success' && data.response?.status === 'valid') {
@@ -727,6 +953,8 @@
         authState.isValid = true;
         authState.trialEndDate = data.response.Trial_enddate || authState.trialEndDate;
         updateSaveButtonState(false);
+        setAuthStatus('認証済みです。設定を保存できます。', false);
+        setTrialStatus(authState.trialEndDate);
         return true;
       }
 
@@ -734,6 +962,8 @@
       authState.checked = true;
       authState.isValid = false;
       updateSaveButtonState(true, '認証に失敗したため保存できません。');
+      setAuthStatus(`認証失敗: ${message}`, true);
+      setTrialStatus('');
       alert(buildReloadPromptMessage(`認証失敗: ${message}`));
       return false;
     } catch (error) {
@@ -741,6 +971,8 @@
       authState.checked = true;
       authState.isValid = false;
       updateSaveButtonState(true, '認証に失敗したため保存できません。');
+      setAuthStatus('認証中にエラーが発生しました。', true);
+      setTrialStatus('');
       alert(buildReloadPromptMessage('認証中にエラーが発生しました。'));
       return false;
     }
@@ -749,6 +981,7 @@
   async function initialize() {
     try {
       renderEditors();
+      await authenticateOnInitialize();
 
       [currentFormProperties, currentLayoutFields] = await Promise.all([
         fetchFormProperties(currentAppId),
@@ -764,10 +997,10 @@
         setSelectOptions(elements.sourceTableFieldCode, [], '');
         renderEditors();
       }
-
-      await authenticateOnInitialize();
     } catch (error) {
       console.error('初期表示に失敗しました:', error);
+      updateSaveButtonState(true, '初期化に失敗しました。');
+      setAuthStatus('初期化に失敗しました。画面をリロードしてください。', true);
       alert('設定画面の初期表示に失敗しました。更新先アプリの閲覧権限と、対象アプリの設定状態を確認してください。');
     }
   }
@@ -799,7 +1032,7 @@
 
     if (select.dataset.conditionRole === 'source') {
       const sourceDefinition = getDefinitionByCode(sourceNormalDefinitions, select.value);
-      const preferredTarget = resolvePreferredTarget(sourceDefinition);
+      const preferredTarget = resolvePreferredTarget(sourceDefinition, 'condition');
       updateConditions[index] = {
         sourceFieldCode: select.value,
         operator: '=',
@@ -845,7 +1078,7 @@
 
     if (select.dataset.mappingRole === 'source') {
       const sourceDefinition = getDefinitionByCode(sourceNormalDefinitions, select.value);
-      const preferredTarget = resolvePreferredTarget(sourceDefinition);
+      const preferredTarget = resolvePreferredTarget(sourceDefinition, 'mapping');
       fieldMappings[index] = {
         sourceFieldCode: select.value,
         targetScope: preferredTarget.targetScope,
@@ -1003,6 +1236,16 @@
 
   elements.cancelButton.addEventListener('click', () => {
     window.location.href = `/k/admin/app/${kintone.app.getId()}/plugin/`;
+  });
+
+  document.addEventListener('click', () => {
+    closeAllTypedSelectMenus();
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closeAllTypedSelectMenus();
+    }
   });
 
   renderEditors();
