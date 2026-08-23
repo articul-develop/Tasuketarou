@@ -59,6 +59,8 @@
       if (changes.length) {
         CH.applyChanges(event.record, changes);
       }
+      // 新規登録の履歴OFF時も、kintoneが入れる空の下書き行を残さない
+      CH.removeEmptyHistoryDraftRows(event.record, allSettings);
     } catch (error) {
       return rejectWithWriteError(event, error, '変更履歴の書き込みに失敗しました');
     }
@@ -91,6 +93,8 @@
     if (event.reuse) {
       CH.clearHistoryDestinations(event.record, allSettings);
     }
+    // 新規画面で kintone が入れる空行を先に除去し、ロック用スナップショットに残さない
+    CH.removeEmptyHistoryDraftRows(event.record, allSettings);
 
     CH.applyDestinationFieldUi(event, allSettings, { hideDestOnEdit, lockDestOnEdit });
     if (lockDestOnEdit) {

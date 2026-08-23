@@ -526,6 +526,18 @@ h2 {
   line-height: 1.6;
 }
 
+.target-fields-box {
+  display: grid;
+  gap: 6px;
+}
+
+.checkbox-select-all {
+  font-weight: 800;
+  color: #24324a;
+  padding: 8px 12px;
+  border-bottom: 1px solid #e2e8f1;
+}
+
 .checkbox-grid {
   display: grid;
   gap: 4px;

@@ -20,6 +20,7 @@
   const cancelBtn = document.getElementById('cancel-button');
 
   const HISTORY_TABLE_BASE_NAME = '変更履歴テーブル';
+  const HISTORY_TEXT_BASE_NAME = '変更履歴';
 
   let formFields = [];
   let settingsState = [];
@@ -472,14 +473,21 @@
       return '<p class="field-note">選択可能なフィールドがありません。</p>';
     }
     const selected = new Set(selectedCodes || []);
-    return `<div class="checkbox-grid">${fields.map((f) => {
+    const allChecked = fields.every((f) => selected.has(f.code));
+    return `<div class="target-fields-box">
+      <label class="checkbox-item checkbox-select-all">
+        <input type="checkbox" data-role="target-field-all"${allChecked ? ' checked' : ''}>
+        <span>全項目を選択</span>
+      </label>
+      <div class="checkbox-grid">${fields.map((f) => {
       const checked = selected.has(f.code) ? ' checked' : '';
       const label = f.label ? `${f.label}（${f.code}）` : f.code;
       return `<label class="checkbox-item">
         <input type="checkbox" data-role="target-field" data-code="${escapeAttr(f.code)}" data-label="${escapeAttr(f.label || f.code)}" name="${name}"${checked}>
         <span>${escapeHtml(label)} <em class="type-tag">${escapeHtml(f.type)}</em></span>
       </label>`;
-    }).join('')}</div>`;
+    }).join('')}</div>
+    </div>`;
   }
 
   function renderSettingCard(setting, index) {
@@ -604,9 +612,16 @@
 
           <div class="form-field" data-section="text-dest-field" style="${isText ? '' : 'display:none'}">
             <label class="kintoneplugin-label">保存先（文字列・複数行）</label>
-            <select class="kintoneplugin-select" data-role="textDestField">
-              ${optionHtml(textDestFields, setting.textDestField, true)}
-            </select>
+            <div class="history-table-row">
+              <select class="kintoneplugin-select" data-role="textDestField">
+                ${optionHtml(textDestFields, setting.textDestField, true)}
+              </select>
+              <button type="button" class="kintoneplugin-button-dialog-ok" data-role="create-history-text">変更履歴項目（文字列）をアプリに作成する</button>
+            </div>
+            <span class="field-note">${setting.textDestType === 'row'
+              ? '作成時に対象サブテーブル行内へ「変更履歴」を文字列（複数行）として追加し、この履歴設定へ割り当てます。対象テーブルを先に選んでください。作成後は自動で「アプリを更新」します（他の未反映のフォーム変更も一緒に公開されます）。'
+              : '作成時に「変更履歴」を文字列（複数行）として追加し、この履歴設定へ割り当てます。作成後は自動で「アプリを更新」します（他の未反映のフォーム変更も一緒に公開されます）。'}</span>
+            <p class="create-history-status" data-role="create-text-status" aria-live="polite"></p>
           </div>
 
           <div class="form-field" data-section="history-table" style="${isHistoryTable ? '' : 'display:none'}">
@@ -615,7 +630,7 @@
               <select class="kintoneplugin-select" data-role="historyTable">
                 ${optionHtml(historyTables, setting.historyTable, true)}
               </select>
-              <button type="button" class="kintoneplugin-button-dialog-ok" data-role="create-history-table">履歴サブテーブルをアプリに作成する</button>
+              <button type="button" class="kintoneplugin-button-dialog-ok" data-role="create-history-table">変更履歴テーブルをアプリに作成する</button>
             </div>
             <span class="field-note">${isPerSave
               ? '作成時に「変更履歴テーブル」を追加し、変更日時・変更者・変更内容を割り当てます。作成後は自動で「アプリを更新」します（他の未反映のフォーム変更も一緒に公開されます）。'
@@ -782,8 +797,8 @@
     });
   }
 
-  function setCreateHistoryStatus(card, message, type) {
-    const statusEl = card.querySelector('[data-role="create-status"]');
+  function setCreateHistoryStatus(card, message, type, role) {
+    const statusEl = card.querySelector(`[data-role="${role || 'create-status'}"]`);
     if (!statusEl) {
       return;
     }
@@ -977,7 +992,89 @@
     if (newCard) {
       setCreateHistoryStatus(newCard, `「${tableName}」を作成し、この履歴設定へ割り当てました。アプリの更新も完了しました。`, 'success');
     }
-    alert(`履歴用サブテーブル「${tableName}」を作成し、この履歴設定へ割り当てました。\nアプリの更新も完了しました。`);
+  }
+
+  async function createHistoryTextFieldForSetting(settingId, card) {
+    const appId = kintone.app.getId();
+    syncStateFromDom();
+
+    const currentSetting = settingsState.find((s) => s.id === settingId);
+    const addToRow = currentSetting && currentSetting.textDestType === 'row';
+    const sourceTable = currentSetting ? currentSetting.sourceTable : '';
+    if (addToRow && !sourceTable) {
+      throw new Error('対象テーブルを先に選択してください。');
+    }
+
+    setCreateHistoryStatus(card, '既存フィールドを確認しています…', null, 'create-text-status');
+    const fieldsResp = await kintone.api(
+      kintone.api.url('/k/v1/preview/app/form/fields.json', true),
+      'GET',
+      { app: appId }
+    );
+    const properties = (fieldsResp && fieldsResp.properties) || {};
+    if (addToRow && (!properties[sourceTable] || properties[sourceTable].type !== 'SUBTABLE')) {
+      throw new Error('対象テーブルが見つかりません。');
+    }
+
+    const existingCodes = collectExistingFieldCodes(properties);
+    const fieldCode = buildUniqueCode(HISTORY_TEXT_BASE_NAME, existingCodes);
+    const fieldProp = {
+      type: 'MULTI_LINE_TEXT',
+      code: fieldCode,
+      label: fieldCode
+    };
+
+    setCreateHistoryStatus(card, '文字列フィールドを作成しています…', null, 'create-text-status');
+    if (addToRow) {
+      await kintone.api(
+        kintone.api.url('/k/v1/preview/app/form/fields.json', true),
+        'PUT',
+        {
+          app: appId,
+          properties: {
+            [sourceTable]: {
+              type: 'SUBTABLE',
+              fields: {
+                [fieldCode]: fieldProp
+              }
+            }
+          }
+        }
+      );
+    } else {
+      await kintone.api(
+        kintone.api.url('/k/v1/preview/app/form/fields.json', true),
+        'POST',
+        {
+          app: appId,
+          properties: {
+            [fieldCode]: fieldProp
+          }
+        }
+      );
+    }
+
+    setCreateHistoryStatus(card, 'アプリを更新しています…', null, 'create-text-status');
+    await updateAppAndWait(appId);
+
+    setCreateHistoryStatus(card, 'フィールド一覧を再読み込みしています…', null, 'create-text-status');
+    syncStateFromDom();
+    formFields = await loadFormFields();
+
+    const target = settingsState.find((s) => s.id === settingId);
+    if (target) {
+      target.saveType = 'text';
+      target.textDestField = fieldCode;
+    }
+    renderAll();
+
+    const newCard = settingsListEl.querySelector(`.history-card[data-id="${settingId}"]`);
+    const assignedLabel = addToRow
+      ? `対象サブテーブル「${sourceTable}」へ「${fieldCode}」を作成し、この履歴設定へ割り当てました。アプリの更新も完了しました。`
+      : `「${fieldCode}」を作成し、この履歴設定へ割り当てました。アプリの更新も完了しました。`;
+    if (newCard) {
+      setCreateHistoryStatus(newCard, assignedLabel, 'success', 'create-text-status');
+    }
   }
 
   function renderAll() {
@@ -1062,6 +1159,9 @@
     const createBtn = card.querySelector('[data-role="create-history-table"]');
     if (createBtn) {
       createBtn.addEventListener('click', async () => {
+        if (!window.confirm('変更履歴テーブルをアプリに自動で追加します。よろしいですか？')) {
+          return;
+        }
         createBtn.disabled = true;
         try {
           await createHistorySubtableForSetting(setting.id, card);
@@ -1072,6 +1172,31 @@
           alert(message);
         } finally {
           createBtn.disabled = false;
+        }
+      });
+    }
+
+    const createTextBtn = card.querySelector('[data-role="create-history-text"]');
+    if (createTextBtn) {
+      createTextBtn.addEventListener('click', async () => {
+        const textDestTypeEl = card.querySelector('[data-role="textDestType"]:checked');
+        const addToRow = textDestTypeEl && textDestTypeEl.value === 'row';
+        const confirmMessage = addToRow
+          ? '対象サブテーブルに、文字列（複数行）の変更履歴フィールドを自動で追加します。よろしいですか？'
+          : '文字列（複数行）の変更履歴フィールドをアプリに自動で追加します。よろしいですか？';
+        if (!window.confirm(confirmMessage)) {
+          return;
+        }
+        createTextBtn.disabled = true;
+        try {
+          await createHistoryTextFieldForSetting(setting.id, card);
+        } catch (error) {
+          console.error('履歴フィールド作成エラー:', error);
+          const message = error && error.message ? error.message : '変更履歴フィールドの作成に失敗しました。';
+          setCreateHistoryStatus(card, message, 'error', 'create-text-status');
+          alert(message);
+        } finally {
+          createTextBtn.disabled = false;
         }
       });
     }
@@ -1100,6 +1225,27 @@
 
     bindParentChild('logOnCreate', 'logOnCreateValues');
     bindParentChild('logCreateOrAdd', 'logAddedRowValues');
+
+    const selectAll = card.querySelector('[data-role="target-field-all"]');
+    const targetFieldInputs = () => card.querySelectorAll('[data-role="target-field"]');
+    const syncSelectAllState = () => {
+      if (!selectAll) {
+        return;
+      }
+      const fields = Array.from(targetFieldInputs());
+      selectAll.checked = fields.length > 0 && fields.every((el) => el.checked);
+    };
+    if (selectAll) {
+      selectAll.addEventListener('change', () => {
+        const checked = selectAll.checked;
+        targetFieldInputs().forEach((el) => {
+          el.checked = checked;
+        });
+      });
+      targetFieldInputs().forEach((el) => {
+        el.addEventListener('change', syncSelectAllState);
+      });
+    }
   }
 
   function validateSettings(settings) {

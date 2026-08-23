@@ -459,12 +459,17 @@ window.ChangeHistory = window.ChangeHistory || {};
     if (!historyTableField || !Array.isArray(historyTableField.value)) {
       return;
     }
-    // 新規作成時にkintoneが入れる空の下書き行を除去（保存済み行 id 付きは残す）
+    // 新規作成時にkintoneが入れる空の下書き行、および全セル空の行を除去
     historyTableField.value = historyTableField.value.filter((row) => {
-      if (row && row.id !== null && row.id !== undefined && row.id !== '') {
+      if (!isEmptyHistoryRow(row, mappedFieldCodes)) {
         return true;
       }
-      return !isEmptyHistoryRow(row, mappedFieldCodes);
+      const hasSavedId = row && row.id !== null && row.id !== undefined && row.id !== '';
+      if (!hasSavedId) {
+        return false;
+      }
+      // 保存済みでも全セル空なら、新規時に残った空白行とみなす
+      return !isEmptyHistoryRow(row, Object.keys((row && row.value) || {}));
     });
   };
 
@@ -573,6 +578,26 @@ window.ChangeHistory = window.ChangeHistory || {};
       return resolveHistoryCellValue(sample, columnKey, fieldType);
     });
     record[tableCode].value.push({ value: rowValue });
+  };
+
+  /**
+   * 新規作成時に kintone が入れる履歴テーブルの空下書き行を除去する
+   * （新規登録の履歴を残さない場合でも、空白1行目が保存されないようにする）
+   */
+  CH.removeEmptyHistoryDraftRows = (record, settings) => {
+    if (!record || !Array.isArray(settings)) {
+      return;
+    }
+    settings.forEach((setting) => {
+      if (!setting || setting.saveType !== 'subtable' || !setting.historyTable) {
+        return;
+      }
+      const tableField = record[setting.historyTable];
+      if (!tableField) {
+        return;
+      }
+      removeEmptyDraftRows(tableField, setting.historyColumns || {});
+    });
   };
 
   /**
