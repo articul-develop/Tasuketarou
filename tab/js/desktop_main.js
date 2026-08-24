@@ -392,12 +392,17 @@
     });
   }
 
-  function renderIfAuthenticated(eventType) {
+  async function renderIfAuthenticated(eventType) {
     if (!currentSettings) {
       return;
     }
 
-    if (!window.isAuthenticated || !window.isAuthenticated()) {
+    if (typeof window.whenAuthenticated === 'function') {
+      const ok = await window.whenAuthenticated();
+      if (!ok) {
+        return;
+      }
+    } else if (!window.isAuthenticated || !window.isAuthenticated()) {
       return;
     }
 

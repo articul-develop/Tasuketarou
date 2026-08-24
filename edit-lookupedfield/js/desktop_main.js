@@ -20,13 +20,22 @@
     return;
   }
 
+  function waitForAuth() {
+    if (typeof window.whenAuthenticated === 'function') {
+      return window.whenAuthenticated();
+    }
+    return Promise.resolve(isAuthenticated());
+  }
+
   kintone.events.on(SHOW_EVENTS, function(event) {
-    return getLookupConfig().then(function(config) {
-      if (isAuthenticated()) {
-        enableLookupCopyFields(event.record, config, null);
-      }
-      registerChangeEvents(config);
-      return event;
+    return waitForAuth().then(function(ok) {
+      return getLookupConfig().then(function(config) {
+        if (ok) {
+          enableLookupCopyFields(event.record, config, null);
+        }
+        registerChangeEvents(config);
+        return event;
+      });
     }).catch(function(error) {
       console.error('ルックアップコピー先フィールドの編集可制御に失敗しました。', error);
       return event;

@@ -21,32 +21,44 @@
   let mobileStatusResumeTimer = null;
 
   kintone.events.on(EVENTS, (event) => {
+    const startRender = () => {
+      const settingsList = loadSettingsList();
+      if (!settingsList || settingsList.length === 0) {
+        return;
+      }
+
+      const recordApi = getRecordApi(event.type);
+      const isMobile = isMobileEvent(event.type);
+      const delays = isMobile ? MOBILE_APPLY_DELAYS : APPLY_DELAYS;
+
+      delays.forEach((delay, index) => {
+        setTimeout(() => {
+          const isFinalAttempt = index === delays.length - 1;
+          settingsList.forEach((settings) => {
+            try {
+              render(event.record, settings, recordApi, isMobile, isFinalAttempt);
+            } catch (error) {
+              console.error('[openmailer] 描画エラー', error);
+            }
+          });
+        }, delay);
+      });
+    };
+
+    if (typeof window.whenAuthenticated === 'function') {
+      window.whenAuthenticated().then((ok) => {
+        if (ok) {
+          startRender();
+        }
+      });
+      return event;
+    }
+
     if (window.isAuthenticated && !window.isAuthenticated()) {
       return event;
     }
 
-    const settingsList = loadSettingsList();
-    if (!settingsList || settingsList.length === 0) {
-      return event;
-    }
-
-    const recordApi = getRecordApi(event.type);
-    const isMobile = isMobileEvent(event.type);
-    const delays = isMobile ? MOBILE_APPLY_DELAYS : APPLY_DELAYS;
-
-    delays.forEach((delay, index) => {
-      setTimeout(() => {
-        const isFinalAttempt = index === delays.length - 1;
-        settingsList.forEach((settings) => {
-          try {
-            render(event.record, settings, recordApi, isMobile, isFinalAttempt);
-          } catch (error) {
-            console.error('[openmailer] 描画エラー', error);
-          }
-        });
-      }, delay);
-    });
-
+    startRender();
     return event;
   });
 

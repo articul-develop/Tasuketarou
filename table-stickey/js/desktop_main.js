@@ -92,8 +92,13 @@
     });
   }
 
-  function applyTableBehaviorIfAuthenticated(currentSetting) {
-    if (!window.isAuthenticated || !window.isAuthenticated()) {
+  async function applyTableBehaviorIfAuthenticated(currentSetting) {
+    if (typeof window.whenAuthenticated === 'function') {
+      const ok = await window.whenAuthenticated();
+      if (!ok) {
+        return;
+      }
+    } else if (!window.isAuthenticated || !window.isAuthenticated()) {
       return;
     }
 

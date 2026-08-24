@@ -42,6 +42,9 @@
   }
 
   async function getAuthenticationStatus() {
+    if (typeof window.whenAuthenticated === 'function') {
+      return window.whenAuthenticated();
+    }
     let authStatus = window.isAuthenticated();
     if (authStatus === undefined || authStatus === '') {
       await new Promise((resolve) => setTimeout(resolve, 500));

@@ -26,6 +26,12 @@
   let historyTableRowSnap = {};
 
   const authOk = () => !window.isAuthenticated || window.isAuthenticated();
+  const waitForAuth = () => {
+    if (typeof window.whenAuthenticated === 'function') {
+      return window.whenAuthenticated();
+    }
+    return Promise.resolve(authOk());
+  };
 
   // 履歴サブテーブル書き込み用にフィールド型を先読み
   CH.ensureFieldTypesLoaded();
@@ -109,41 +115,44 @@
     'app.record.create.submit',
     'mobile.app.record.create.submit'
   ], (event) => {
-    if (!authOk()) {
-      return event;
-    }
-    return CH.ensureFieldTypesLoaded()
-      .then(() => applyHistory(event, null, true))
-      .catch((error) => rejectWithWriteError(event, error, '変更履歴（新規）処理に失敗しました'));
+    return waitForAuth().then((ok) => {
+      if (!ok) {
+        return event;
+      }
+      return CH.ensureFieldTypesLoaded()
+        .then(() => applyHistory(event, null, true))
+        .catch((error) => rejectWithWriteError(event, error, '変更履歴（新規）処理に失敗しました'));
+    });
   });
 
   kintone.events.on([
     'app.record.edit.submit',
     'mobile.app.record.edit.submit'
   ], (event) => {
-    if (!authOk()) {
-      return event;
-    }
-
     const run = (oldRecord) => applyHistory(event, oldRecord, false);
-
-    return CH.ensureFieldTypesLoaded().then(() => {
-      if (editSnapshot) {
-        return run(editSnapshot);
-      }
-
-      const recordId = CH.getRecordIdSafe(event.record);
-      if (!recordId) {
+    return waitForAuth().then((ok) => {
+      if (!ok) {
         return event;
       }
 
-      return CH.fetchRecordById(recordId)
-        .then((oldRecord) => run(oldRecord))
-        .catch((error) => {
-          console.error('変更履歴の比較用レコード取得に失敗しました', error);
+      return CH.ensureFieldTypesLoaded().then(() => {
+        if (editSnapshot) {
+          return run(editSnapshot);
+        }
+
+        const recordId = CH.getRecordIdSafe(event.record);
+        if (!recordId) {
           return event;
-        });
-    }).catch((error) => rejectWithWriteError(event, error, '変更履歴（編集）処理に失敗しました'));
+        }
+
+        return CH.fetchRecordById(recordId)
+          .then((oldRecord) => run(oldRecord))
+          .catch((error) => {
+            console.error('変更履歴の比較用レコード取得に失敗しました', error);
+            return event;
+          });
+      }).catch((error) => rejectWithWriteError(event, error, '変更履歴（編集）処理に失敗しました'));
+    });
   });
 
   // ---------- 一覧インライン編集 ----------
@@ -188,9 +197,10 @@
   ];
 
   kintone.events.on(indexSubmitEvents, (event) => {
-    if (!authOk()) {
-      return event;
-    }
+    return waitForAuth().then((ok) => {
+      if (!ok) {
+        return event;
+      }
 
     const recordId = event.record && event.record.$id ? event.record.$id.value : null;
     const run = (oldRecord) => {
@@ -218,6 +228,7 @@
           return event;
         });
     }).catch((error) => rejectWithWriteError(event, error, '一覧編集の変更履歴処理に失敗しました'));
+    });
   });
 
   // 明細行内の履歴文字列／履歴テーブルの更新対象列は、行追加後も編集不可にする
