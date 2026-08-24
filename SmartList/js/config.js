@@ -1485,10 +1485,7 @@
         newConfig.Trial_enddate = authState.trialEndDate;
       }
 
-      kintone.plugin.app.setConfig(newConfig, () => {
-        alert('設定を保存しました。');
-        window.location.href = `/k/admin/app/${APP_ID}/plugin/`;
-      });
+      kintone.plugin.app.setConfig(newConfig);
     } catch (error) {
       console.error('設定保存エラー:', error);
       alert(error.message || '設定保存中にエラーが発生しました。');
