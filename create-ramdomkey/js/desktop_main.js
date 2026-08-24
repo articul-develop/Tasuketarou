@@ -27,8 +27,12 @@
       async function (event) {
 
         // 認証が成功しているか確認
-        if (!window.isAuthenticated || !window.isAuthenticated()) {
-          // 認証に失敗した場合、処理を中断
+        if (typeof window.whenAuthenticated === 'function') {
+          const ok = await window.whenAuthenticated();
+          if (!ok) {
+            return;
+          }
+        } else if (!window.isAuthenticated || !window.isAuthenticated()) {
           return;
         }
 

@@ -134,7 +134,13 @@
     if (!latestIndexState) {
       return;
     }
-    if (!window.isAuthenticated || !window.isAuthenticated()) {
+    if (typeof window.whenAuthenticated === 'function') {
+      const ok = await window.whenAuthenticated();
+      if (!ok) {
+        alert('認証が完了していないため、CSV出力できません。');
+        return;
+      }
+    } else if (!window.isAuthenticated || !window.isAuthenticated()) {
       alert('認証が完了していないため、CSV出力できません。');
       return;
     }

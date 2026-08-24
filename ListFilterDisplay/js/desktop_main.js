@@ -127,8 +127,15 @@
   }
 
   /* ------------------- 3. レンダリング ------------------ */
-  function render(evt) {
-    if (window.isAuthenticated && !window.isAuthenticated()) return evt;
+  async function render(evt) {
+    if (typeof window.whenAuthenticated === 'function') {
+      const ok = await window.whenAuthenticated();
+      if (!ok) {
+        return evt;
+      }
+    } else if (window.isAuthenticated && !window.isAuthenticated()) {
+      return evt;
+    }
 
     const isMobile = isMobileEvent(evt.type);
     const isReport = evt.type.includes('.report.');

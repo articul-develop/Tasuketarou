@@ -24,29 +24,34 @@
    * 認証待ち（desktop_auth.js の非同期チェック完了を待つ）
    * ------------------------------------------------------------------ */
 
-  const waitForAuthentication = () => new Promise((resolve) => {
-    if (typeof window.isAuthenticated !== 'function') {
-      resolve(false);
-      return;
+  const waitForAuthentication = () => {
+    if (typeof window.whenAuthenticated === 'function') {
+      return window.whenAuthenticated();
     }
-    if (window.isAuthenticated()) {
-      resolve(true);
-      return;
-    }
-    let waited = 0;
-    const timerId = window.setInterval(() => {
-      waited += AUTH_WAIT_INTERVAL;
+    return new Promise((resolve) => {
+      if (typeof window.isAuthenticated !== 'function') {
+        resolve(false);
+        return;
+      }
       if (window.isAuthenticated()) {
-        window.clearInterval(timerId);
         resolve(true);
         return;
       }
-      if (waited >= AUTH_WAIT_MAX) {
-        window.clearInterval(timerId);
-        resolve(false);
-      }
-    }, AUTH_WAIT_INTERVAL);
-  });
+      let waited = 0;
+      const timerId = window.setInterval(() => {
+        waited += AUTH_WAIT_INTERVAL;
+        if (window.isAuthenticated()) {
+          window.clearInterval(timerId);
+          resolve(true);
+          return;
+        }
+        if (waited >= AUTH_WAIT_MAX) {
+          window.clearInterval(timerId);
+          resolve(false);
+        }
+      }, AUTH_WAIT_INTERVAL);
+    });
+  };
 
   /* ------------------------------------------------------------------ *
    * 描画先の解決

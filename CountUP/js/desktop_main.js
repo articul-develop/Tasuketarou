@@ -39,8 +39,15 @@
   kintone.events.on([
     'app.record.create.submit',
     'mobile.app.record.create.submit'
-  ], (e) => {
-    if (!window.isAuthenticated || !window.isAuthenticated()) return e;
+  ], async (e) => {
+    if (typeof window.whenAuthenticated === 'function') {
+      const ok = await window.whenAuthenticated();
+      if (!ok) {
+        return e;
+      }
+    } else if (!window.isAuthenticated || !window.isAuthenticated()) {
+      return e;
+    }
     e.record[REV_FIELD].value = 0;
     return e;
   });
@@ -50,8 +57,15 @@
     'app.record.edit.submit',          'mobile.app.record.edit.submit',
     'app.record.index.edit.submit',    'mobile.app.record.index.edit.submit'
   ];
-  kintone.events.on(editSubmitEv, (e) => {
-    if (!window.isAuthenticated || !window.isAuthenticated()) return e;
+  kintone.events.on(editSubmitEv, async (e) => {
+    if (typeof window.whenAuthenticated === 'function') {
+      const ok = await window.whenAuthenticated();
+      if (!ok) {
+        return e;
+      }
+    } else if (!window.isAuthenticated || !window.isAuthenticated()) {
+      return e;
+    }
 
     const handle = async () => {
       let cur;

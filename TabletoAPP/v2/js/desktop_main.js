@@ -219,6 +219,9 @@
   }
 
   async function getAuthenticationStatus() {
+    if (typeof window.whenAuthenticated === 'function') {
+      return window.whenAuthenticated();
+    }
     let authStatus = window.isAuthenticated();
     if (authStatus === undefined || authStatus === '') {
       console.warn('認証処理が完了していないため、待機します...');

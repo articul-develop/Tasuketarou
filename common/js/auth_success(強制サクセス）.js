@@ -1,19 +1,49 @@
 window.AuthModule = (function () {
   'use strict';
 
-  // API認証を常に成功状態にする関数
   async function authenticateDomain(API_CONFIG) {
     return {
       status: 'success',
       response: {
         status: 'valid',
-        Trial_enddate: '' // 必要なら適当な終了日を設定
+        mode: 'official',
+        Trial_enddate: ''
       }
     };
   }
 
-  // 公開する関数をreturn
+  async function sendErrorLog() {
+    return;
+  }
+
+  async function checkAndReauthenticate() {
+    return { success: true, mode: 'official' };
+  }
+
+  function shouldShowTrialBanner() {
+    return false;
+  }
+
+  function formatTrialBannerText(pluginName, trialEndDate) {
+    const dateText = `${trialEndDate.slice(0, 4)}/${trialEndDate.slice(4, 6)}/${trialEndDate.slice(6, 8)}`;
+    return `${pluginName}　お試し期間中（～${dateText}）`;
+  }
+
+  function appendTrialBanner() {
+    return;
+  }
+
+  function normalizeMode(mode) {
+    return String(mode || '').toLowerCase();
+  }
+
   return {
-    authenticateDomain
+    authenticateDomain,
+    sendErrorLog,
+    checkAndReauthenticate,
+    shouldShowTrialBanner,
+    formatTrialBannerText,
+    appendTrialBanner,
+    normalizeMode
   };
 })();
