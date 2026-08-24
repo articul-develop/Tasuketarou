@@ -742,10 +742,7 @@
       return;
     }
 
-    kintone.plugin.app.setConfig(newConfig, () => {
-      alert('設定を保存しました。');
-      window.location.href = `/k/admin/app/${kintone.app.getId()}/plugin/`;
-    });
+    kintone.plugin.app.setConfig(newConfig);
   });
 
   cancelBtn.addEventListener('click', () => {
