@@ -3,7 +3,6 @@
 
   const DEFAULT_SETTING = {
     fixedColumns: '4',
-    maxHeight: '500',
     minWidth: '1200',
     rightMargin: '32',
     stickyStopTop: '80'
@@ -67,7 +66,6 @@
       id: generateId(),
       tableFieldCode: '',
       fixedColumns: DEFAULT_SETTING.fixedColumns,
-      maxHeight: DEFAULT_SETTING.maxHeight,
       minWidth: DEFAULT_SETTING.minWidth,
       rightMargin: DEFAULT_SETTING.rightMargin,
       stickyStopTop: DEFAULT_SETTING.stickyStopTop
@@ -81,7 +79,6 @@
       fixedColumns: typeof setting.fixedColumns === 'undefined'
         ? DEFAULT_SETTING.fixedColumns
         : String(setting.fixedColumns),
-      maxHeight: String(setting.maxHeight || DEFAULT_SETTING.maxHeight),
       minWidth: DEFAULT_SETTING.minWidth,
       rightMargin: DEFAULT_SETTING.rightMargin,
       stickyStopTop: DEFAULT_SETTING.stickyStopTop
@@ -170,7 +167,7 @@
         <div class="column-reference-header">
           <div>
             <div class="column-reference-title">列構成（参考）</div>
-            <p>フォーム設定の項目順です。固定列数を0にすると、見出しラベルのみ固定します。</p>
+            <p>フォーム設定の項目順です。固定列数を変えると、固定対象列が強調されます。</p>
           </div>
           <span class="column-reference-count">${columns.length}列</span>
         </div>
@@ -204,7 +201,7 @@
         <div class="setting-card-header">
           <div>
             <h4>固定表示設定 ${index + 1}</h4>
-            <p>対象テーブル、固定列数、最大高さを指定します。</p>
+            <p>対象テーブルと固定列数を指定します。</p>
           </div>
           <button type="button" class="setting-remove-button" data-action="remove-setting">削除</button>
         </div>
@@ -219,23 +216,13 @@
             </select>
             <span class="field-note">固定表示するサブテーブルを選択します。</span>
           </div>
-          <div class="form-row-2">
-            <div class="form-field">
-              <label class="kintoneplugin-label" for="fixed-columns-${escapeHtml(setting.id)}">
-                固定列数
-                <span class="kintoneplugin-require">*</span>
-              </label>
-              <input type="number" id="fixed-columns-${escapeHtml(setting.id)}" class="kintoneplugin-input-text" min="0" step="1" value="${escapeHtml(setting.fixedColumns)}" data-field="fixedColumns">
-              <span class="field-note">左から何列を固定するか指定します。0の場合は見出しラベルのみ固定します。</span>
-            </div>
-            <div class="form-field">
-              <label class="kintoneplugin-label" for="max-height-${escapeHtml(setting.id)}">
-                最大高さ
-                <span class="kintoneplugin-require">*</span>
-              </label>
-              <input type="number" id="max-height-${escapeHtml(setting.id)}" class="kintoneplugin-input-text" min="1" step="1" value="${escapeHtml(setting.maxHeight)}" data-field="maxHeight">
-              <span class="field-note">テーブルの高さをpxで指定します。</span>
-            </div>
+          <div class="form-field">
+            <label class="kintoneplugin-label" for="fixed-columns-${escapeHtml(setting.id)}">
+              固定列数
+              <span class="kintoneplugin-require">*</span>
+            </label>
+            <input type="number" id="fixed-columns-${escapeHtml(setting.id)}" class="kintoneplugin-input-text" min="1" step="1" value="${escapeHtml(setting.fixedColumns)}" data-field="fixedColumns">
+            <span class="field-note">左から何列を固定するか指定します。</span>
           </div>
           ${getColumnReferenceHtml(setting)}
         </div>
@@ -308,16 +295,6 @@
     return String(parsed);
   }
 
-  function validateNonNegativeInteger(value, label) {
-    const parsed = Number.parseInt(value, 10);
-
-    if (!Number.isFinite(parsed) || parsed < 0 || String(parsed) !== String(value).trim()) {
-      throw new Error(`${label}は0以上の整数で入力してください。`);
-    }
-
-    return String(parsed);
-  }
-
   function buildConfigForSave() {
     if (state.settings.length === 0) {
       throw new Error('固定表示設定を1件以上追加してください。');
@@ -331,8 +308,7 @@
       return {
         id: setting.id,
         tableFieldCode: setting.tableFieldCode,
-        fixedColumns: validateNonNegativeInteger(setting.fixedColumns, `${index + 1}件目: 固定列数`),
-        maxHeight: validatePositiveInteger(setting.maxHeight, `${index + 1}件目: 最大高さ`),
+        fixedColumns: validatePositiveInteger(setting.fixedColumns, `${index + 1}件目: 固定列数`),
         minWidth: DEFAULT_SETTING.minWidth,
         rightMargin: DEFAULT_SETTING.rightMargin,
         stickyStopTop: DEFAULT_SETTING.stickyStopTop
@@ -344,7 +320,6 @@
       settings: JSON.stringify(settings),
       tableFieldCode: firstSetting.tableFieldCode,
       fixedColumns: firstSetting.fixedColumns,
-      maxHeight: firstSetting.maxHeight,
       minWidth: DEFAULT_SETTING.minWidth,
       rightMargin: DEFAULT_SETTING.rightMargin,
       stickyStopTop: DEFAULT_SETTING.stickyStopTop,
@@ -441,10 +416,7 @@
       return;
     }
 
-    kintone.plugin.app.setConfig(newConfig, () => {
-      alert('設定を保存しました。');
-      window.location.href = `/k/admin/app/${kintone.app.getId()}/plugin/`;
-    });
+    kintone.plugin.app.setConfig(newConfig);
   });
 
   cancelBtn.addEventListener('click', () => {

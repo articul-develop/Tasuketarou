@@ -1,32 +1,21 @@
 ((PLUGIN_ID) => {
   'use strict';
 
-  const CLASS_NAMES = {
-    scroller: 'table-sticky-scroll',
-    table: 'table-sticky-scroll-table'
-  };
-
   const STYLE_ID = 'table-sticky-scroll-style';
-  const SCROLL_MARKER = 'tableStickyScroll';
   const SCROLL_SELECTOR = '[data-table-sticky-scroll="1"]';
   const APPLY_DELAYS = [0, 100, 300, 700, 1500];
-  const MIN_SCROLL_WIDTH = 320;
   const RESIZE_DEBOUNCE_MS = 200;
   const MUTATION_DEBOUNCE_MS = 150;
   const DEFAULT_SETTING = {
     fixedColumns: 4,
-    maxHeight: 500,
     minWidth: 1200,
     rightMargin: 32,
     stickyStopTop: 80
   };
 
   const Z_INDEX = {
-    headerBlock: 10,
-    headerScrollable: 11,
-    headerFixedCorner: 12,
-    bodyFixedColumn: 2,
-    bodyNormal: 1
+    bodyFixedColumn: 1,
+    bodyNormal: 0
   };
 
   const EVENTS = [
@@ -83,8 +72,7 @@
   function normalizeSetting(config) {
     return {
       tableFieldCode: config.tableFieldCode || '',
-      fixedColumns: parseNonNegativeInteger(config.fixedColumns, DEFAULT_SETTING.fixedColumns),
-      maxHeight: parsePositiveInteger(config.maxHeight, DEFAULT_SETTING.maxHeight),
+      fixedColumns: parsePositiveInteger(config.fixedColumns, DEFAULT_SETTING.fixedColumns),
       minWidth: parsePositiveInteger(config.minWidth, DEFAULT_SETTING.minWidth),
       rightMargin: parsePositiveInteger(config.rightMargin, DEFAULT_SETTING.rightMargin),
       stickyStopTop: parsePositiveInteger(config.stickyStopTop, DEFAULT_SETTING.stickyStopTop)
@@ -94,11 +82,6 @@
   function parsePositiveInteger(value, fallback) {
     const parsed = Number.parseInt(value, 10);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
-  }
-
-  function parseNonNegativeInteger(value, fallback) {
-    const parsed = Number.parseInt(value, 10);
-    return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
   }
 
   function scheduleApplyForSetting(currentSetting) {
@@ -126,8 +109,6 @@
     }
 
     unwrapLegacyVerticalScrollContainer(context.scrollElement);
-    applyScrollFrame(context.scrollElement, currentSetting);
-    applyTableBaseStyle(context.scrollElement, currentSetting);
     updateStickyState(context, currentSetting);
     bindStickyListeners(context, currentSetting);
     observeContainerChanges(context, currentSetting);
@@ -201,105 +182,26 @@
     }, tables[0]);
   }
 
-  function findExistingScrollElement(containerElement) {
-    return containerElement.querySelector(`${SCROLL_SELECTOR}, [data-table-sticky-table-only-scroll="1"]`);
-  }
-
   function ensureScrollElement(containerElement, bodyTable) {
-    const existing = findExistingScrollElement(containerElement);
-    if (existing) {
-      return existing;
+    return findNativeScrollElement(containerElement, bodyTable) || bodyTable.parentElement || containerElement;
+  }
+
+  function findNativeScrollElement(containerElement, bodyTable) {
+    const markedElement = containerElement.querySelector(SCROLL_SELECTOR);
+    if (markedElement) {
+      return markedElement;
     }
 
-    const headerElement = containerElement.querySelector('.subtable-header-gaia');
-    if (!headerElement) {
-      return wrapSingleTable(bodyTable);
-    }
-
-    const parent = headerElement.parentElement;
-    if (!parent) {
-      return wrapSingleTable(bodyTable);
-    }
-
-    const nodesToWrap = [];
-    let currentNode = headerElement;
-
-    while (currentNode) {
-      nodesToWrap.push(currentNode);
-      if (currentNode.contains(bodyTable)) {
-        break;
+    let currentElement = bodyTable.parentElement;
+    while (currentElement && currentElement !== containerElement.parentElement) {
+      const overflowX = window.getComputedStyle(currentElement).overflowX;
+      if (overflowX === 'auto' || overflowX === 'scroll' || overflowX === 'overlay') {
+        return currentElement;
       }
-      currentNode = currentNode.nextElementSibling;
+      currentElement = currentElement.parentElement;
     }
 
-    if (!nodesToWrap.some((node) => node.contains(bodyTable))) {
-      return wrapSingleTable(bodyTable);
-    }
-
-    const wrapper = createScrollWrapper();
-    parent.insertBefore(wrapper, nodesToWrap[0]);
-    nodesToWrap.forEach((node) => wrapper.appendChild(node));
-    return wrapper;
-  }
-
-  function wrapSingleTable(table) {
-    const currentParent = table.parentElement;
-    if (!currentParent) {
-      return table;
-    }
-
-    const existing = currentParent.dataset?.[SCROLL_MARKER] === '1' ? currentParent : null;
-    if (existing) {
-      return existing;
-    }
-
-    clearScrollFrame(currentParent);
-
-    const wrapper = createScrollWrapper();
-    currentParent.insertBefore(wrapper, table);
-    wrapper.appendChild(table);
-    return wrapper;
-  }
-
-  function createScrollWrapper() {
-    const wrapper = document.createElement('div');
-    wrapper.dataset[SCROLL_MARKER] = '1';
-    return wrapper;
-  }
-
-  function clearScrollFrame(element) {
-    element.classList.remove(CLASS_NAMES.scroller);
-    element.style.width = '';
-    element.style.maxWidth = '';
-    element.style.maxHeight = '';
-  }
-
-  function applyScrollFrame(scrollElement, currentSetting) {
-    scrollElement.classList.add(CLASS_NAMES.scroller);
-    constrainScrollWidth(scrollElement, currentSetting);
-    constrainScrollHeight(scrollElement, currentSetting);
-  }
-
-  function applyTableBaseStyle(scrollElement, currentSetting) {
-    scrollElement.querySelectorAll('table').forEach((table) => {
-      table.classList.add(CLASS_NAMES.table);
-      table.style.minWidth = currentSetting.minWidth ? `${currentSetting.minWidth}px` : '';
-    });
-  }
-
-  function constrainScrollWidth(scrollElement, currentSetting) {
-    const rect = scrollElement.getBoundingClientRect();
-    const availableWidth = Math.max(
-      MIN_SCROLL_WIDTH,
-      window.innerWidth - rect.left - currentSetting.rightMargin
-    );
-
-    scrollElement.style.width = `${availableWidth}px`;
-    scrollElement.style.maxWidth = `${availableWidth}px`;
-  }
-
-  function constrainScrollHeight(scrollElement, currentSetting) {
-    scrollElement.style.maxHeight = currentSetting.maxHeight ? `${currentSetting.maxHeight}px` : '';
+    return null;
   }
 
   function unwrapLegacyVerticalScrollContainer(scrollElement) {
@@ -337,58 +239,116 @@
     const rect = context.scrollElement.getBoundingClientRect();
     const shouldStickBody = rect.bottom > currentSetting.stickyStopTop && rect.top < window.innerHeight;
     const leftOffsets = calculateLeftOffsets(headerCells, currentSetting.fixedColumns);
+    const topFixedBarBottom = getTopFixedBarBottom() || currentSetting.stickyStopTop;
+    const headerGaia = context.containerElement.querySelector('.subtable-header-gaia');
+    const headerOverlapsTopBar = doesElementOverlapTopBar(headerGaia, topFixedBarBottom);
 
-    applyHeaderSticky(context.containerElement, headerCells, currentSetting, leftOffsets);
+    applyHeaderFixedColumns(
+      headerCells,
+      currentSetting.fixedColumns,
+      leftOffsets,
+      topFixedBarBottom,
+      headerOverlapsTopBar
+    );
+    applyHeaderRowContainerStyle(headerGaia, headerOverlapsTopBar);
 
     getFixedColumnBodyCells(context.table, currentSetting.fixedColumns).forEach(({ cell, index }) => {
-      applyBodyStickyCell(cell, shouldStickBody, leftOffsets[index] || 0);
+      applyBodyStickyCell(cell, shouldStickBody, leftOffsets[index] || 0, topFixedBarBottom);
     });
   }
 
-  function applyHeaderBlockStyle(containerElement, headerCells) {
-    const headerGaia = containerElement.querySelector('.subtable-header-gaia');
-    if (!headerGaia || headerCells.length === 0) {
+  function applyHeaderFixedColumns(headerCells, fixedColumns, leftOffsets, topFixedBarBottom, headerOverlapsTopBar) {
+    headerCells.forEach((cell, index) => {
+      if (headerOverlapsTopBar) {
+        resetHorizontalStickyCell(cell);
+        return;
+      }
+
+      if (index < fixedColumns) {
+        const originalBackground = cell.dataset.tableStickyOriginalBackground ||
+          window.getComputedStyle(cell).backgroundColor;
+        cell.dataset.tableStickyOriginalBackground = originalBackground;
+        cell.style.background = originalBackground;
+        cell.style.backgroundClip = 'padding-box';
+        applyHorizontalStickyCell(cell, true, leftOffsets[index] || 0, null, topFixedBarBottom);
+        cell.style.top = '';
+        return;
+      }
+
+      resetHorizontalStickyCell(cell);
+    });
+  }
+
+  function applyHeaderRowContainerStyle(headerGaia, headerOverlapsTopBar) {
+    if (!headerGaia || !headerOverlapsTopBar) {
       return;
     }
 
-    const originalBackground = headerCells[0].dataset.tableStickyOriginalBackground ||
-      window.getComputedStyle(headerCells[0]).backgroundColor;
-    headerGaia.style.background = originalBackground;
+    headerGaia.style.position = '';
+    headerGaia.style.top = '';
+    headerGaia.style.zIndex = '';
   }
 
-  function applyBodyStickyCell(cell, shouldStick, leftOffset) {
+  function doesElementOverlapTopBar(element, topFixedBarBottom) {
+    if (!element || topFixedBarBottom <= 0) {
+      return false;
+    }
+
+    const rect = element.getBoundingClientRect();
+    return rect.top < topFixedBarBottom && rect.bottom > 0;
+  }
+
+  function applyBodyStickyCell(cell, shouldStick, leftOffset, topFixedBarBottom) {
     cell.style.background = '#fff';
     cell.style.backgroundClip = 'padding-box';
-    cell.style.left = shouldStick ? `${leftOffset}px` : '';
-    cell.style.position = shouldStick ? 'sticky' : '';
+    applyHorizontalStickyCell(cell, shouldStick, leftOffset, Z_INDEX.bodyFixedColumn, topFixedBarBottom);
     cell.style.top = 'auto';
     cell.style.bottom = 'auto';
     cell.style.transform = '';
     cell.style.willChange = '';
-    cell.style.zIndex = shouldStick ? String(Z_INDEX.bodyFixedColumn) : '';
   }
 
-  function applyHeaderSticky(containerElement, headerCells, currentSetting, leftOffsets) {
-    headerCells.forEach((cell, index) => {
-      const originalBackground = cell.dataset.tableStickyOriginalBackground ||
-        window.getComputedStyle(cell).backgroundColor;
-      cell.dataset.tableStickyOriginalBackground = originalBackground;
+  function applyHorizontalStickyCell(cell, shouldStick, leftOffset, zIndex, topFixedBarBottom) {
+    const cellRect = cell.getBoundingClientRect();
+    const overlapsTopBar = topFixedBarBottom > 0 &&
+      cellRect.top < topFixedBarBottom &&
+      cellRect.bottom > 0;
+    const shouldApplySticky = shouldStick && !overlapsTopBar;
 
-      cell.style.position = 'sticky';
-      cell.style.top = '0px';
-      cell.style.background = originalBackground;
-      cell.style.backgroundClip = 'padding-box';
+    cell.style.left = shouldApplySticky ? `${leftOffset}px` : '';
+    cell.style.position = shouldApplySticky ? 'sticky' : '';
+    cell.style.zIndex = shouldApplySticky && zIndex != null ? String(zIndex) : '';
+  }
 
-      if (index < currentSetting.fixedColumns) {
-        cell.style.left = `${leftOffsets[index] || 0}px`;
-        cell.style.zIndex = String(Z_INDEX.headerFixedCorner);
-      } else {
-        cell.style.left = '';
-        cell.style.zIndex = String(Z_INDEX.headerScrollable);
-      }
-    });
+  function resetHorizontalStickyCell(cell) {
+    cell.style.left = '';
+    cell.style.position = '';
+    cell.style.top = '';
+    cell.style.zIndex = '';
+  }
 
-    applyHeaderBlockStyle(containerElement, headerCells);
+  function getTopFixedBarBottom() {
+    const selectors = [
+      '.gaia-argoui-app-edit-buttons',
+      '.gaia-argoui-app-show-toolbar',
+      '.gaia-argoui-app-toolbar',
+      '.gaia-argoui-floater',
+      '.gaia-argoui-floater-box',
+      '.gaia-argoui-floater-float'
+    ];
+    const bottoms = selectors.flatMap((selector) => {
+      return Array.from(document.querySelectorAll(selector)).map((element) => {
+        const rect = element.getBoundingClientRect();
+        const style = window.getComputedStyle(element);
+        const isTopBar = rect.top <= 8 &&
+          rect.bottom > 0 &&
+          rect.height >= 24 &&
+          (style.position === 'fixed' || style.position === 'sticky' || style.position === 'absolute');
+        return isTopBar ? rect.bottom : 0;
+      });
+    }).filter((bottom) => bottom > 0);
+
+    return bottoms.length > 0 ? Math.ceil(Math.max(...bottoms)) : 0;
   }
 
   function getFixedColumnBodyCells(table, fixedColumns) {
@@ -465,37 +425,7 @@
       document.head.appendChild(style);
     }
 
-    style.textContent = `
-      .${CLASS_NAMES.scroller} {
-        box-sizing: border-box;
-        display: block;
-        isolation: isolate;
-        min-width: 0;
-        max-width: 100%;
-        position: relative;
-        width: 100% !important;
-        overflow-x: auto !important;
-        overflow-y: auto !important;
-        padding-bottom: 8px;
-        scrollbar-gutter: stable;
-        -webkit-overflow-scrolling: touch;
-      }
-
-      .${CLASS_NAMES.scroller} .subtable-header-gaia {
-        position: sticky;
-        top: 0;
-        z-index: ${Z_INDEX.headerBlock};
-        background: #fff;
-      }
-
-      .${CLASS_NAMES.table} {
-        border-collapse: separate !important;
-        border-spacing: 0 !important;
-        display: table !important;
-        max-width: none !important;
-        width: auto !important;
-      }
-    `;
+    style.textContent = '';
   }
 
   function escapeCss(value) {
