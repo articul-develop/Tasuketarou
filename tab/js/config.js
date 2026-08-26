@@ -66,6 +66,17 @@
       .replace(/'/g, '&#39;');
   }
 
+  function stripHtmlToText(value) {
+    const raw = String(value || '');
+    if (!raw) {
+      return '';
+    }
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(raw, 'text/html');
+    return String(doc.body.textContent || '').replace(/\s+/g, ' ').trim();
+  }
+
   function isAllTab(tab) {
     return tab.id === ALL_TAB_ID || tab.includeAllTargets === true || tab.includeAllTargets === 'true';
   }
@@ -248,7 +259,11 @@
       return fieldCode;
     }
     if (field.type === 'SPACER' || field.type === 'HR' || field.type === 'LABEL') {
-      return `${field.label || field.code}${getFieldTypeSuffix(field)}`;
+      const displayLabel = stripHtmlToText(field.label);
+      const fallback = LAYOUT_ONLY_TYPES[field.type]
+        ? LAYOUT_ONLY_TYPES[field.type].fallbackName
+        : field.code;
+      return `${displayLabel || fallback}${getFieldTypeSuffix(field)}`;
     }
     const base = field.label ? `${field.label} (${field.code})` : field.code;
     return `${base}${getFieldTypeSuffix(field)}`;
@@ -344,7 +359,7 @@
     }
 
     const labelMatch = lookupFields.find((field) => {
-      return field.label === trimmed;
+      return stripHtmlToText(field.label) === stripHtmlToText(trimmed);
     });
     if (labelMatch) {
       return remapFieldCodeToUnit(labelMatch.code);
@@ -636,7 +651,7 @@
     const layoutOnly = LAYOUT_ONLY_TYPES[type];
     if (layoutOnly) {
       const elementId = String(field.elementId || '').trim();
-      const text = String(field.label || '').trim();
+      const text = stripHtmlToText(field.label);
 
       if (elementId) {
         return {
