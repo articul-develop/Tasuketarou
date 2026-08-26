@@ -34,6 +34,7 @@
   const cache = {
     appInfoById: {},
     fieldMapByApp: {},
+    subtableFieldOrderByApp: {},
     viewsByApp: {}
   };
   let latestIndexState = null;
@@ -185,8 +186,13 @@
     const appId = indexState.appId;
     const appInfo = await fetchAppInfo(appId);
     const fieldMap = await fetchFieldMap(appId);
+    const subtableFieldOrder = await fetchSubtableFieldOrder(appId);
     const viewInfo = await fetchCurrentViewInfo(indexState, appId);
-    const visibleColumns = resolveVisibleColumnsFromRenderedList(fieldMap, viewInfo.fields);
+    const visibleColumns = orderVisibleSubtableColumns(
+      resolveVisibleColumnsFromRenderedList(fieldMap, viewInfo.fields),
+      fieldMap,
+      subtableFieldOrder
+    );
     const updateField = definition.updateFieldCode ? fieldMap[definition.updateFieldCode] : null;
 
     if (visibleColumns.length === 0) {
@@ -315,6 +321,42 @@
 
     cache.fieldMapByApp[appId] = flattenFieldProperties(response.properties);
     return cache.fieldMapByApp[appId];
+  }
+
+  async function fetchSubtableFieldOrder(appId) {
+    if (cache.subtableFieldOrderByApp[appId]) {
+      return cache.subtableFieldOrderByApp[appId];
+    }
+
+    try {
+      const response = await kintone.api(kintone.api.url('/k/v1/app/form/layout.json', true), 'GET', {
+        app: appId
+      });
+      cache.subtableFieldOrderByApp[appId] = collectSubtableFieldOrder(response.layout || []);
+    } catch (error) {
+      console.warn('フォームレイアウトの取得に失敗したため、テーブル列順はフィールド定義順を使います。', error);
+      cache.subtableFieldOrderByApp[appId] = {};
+    }
+
+    return cache.subtableFieldOrderByApp[appId];
+  }
+
+  function collectSubtableFieldOrder(layout) {
+    const orderBySubtable = {};
+
+    function walk(layouts) {
+      (layouts || []).forEach((item) => {
+        if (item.type === 'SUBTABLE' && item.code) {
+          orderBySubtable[item.code] = (item.fields || []).map((field) => field.code).filter(Boolean);
+        }
+        if (item.type === 'GROUP' && item.layout) {
+          walk(item.layout);
+        }
+      });
+    }
+
+    walk(layout);
+    return orderBySubtable;
   }
 
   function flattenFieldProperties(properties) {
@@ -882,16 +924,75 @@
         return columns;
       }
       if (fieldInfo.type === 'SUBTABLE') {
-        return columns.concat(getSubtableChildFields(fieldMap, fieldInfo.code));
+        return columns.concat(getSubtableChildFields(fieldMap, fieldInfo.code, null));
       }
       columns.push(fieldInfo);
       return columns;
     }, []);
   }
 
-  function getSubtableChildFields(fieldMap, subtableCode) {
-    return Object.keys(fieldMap).map((fieldCode) => fieldMap[fieldCode]).filter((fieldInfo) => {
+  function getSubtableChildFields(fieldMap, subtableCode, subtableFieldOrder) {
+    const childFields = Object.keys(fieldMap).map((fieldCode) => fieldMap[fieldCode]).filter((fieldInfo) => {
       return fieldInfo.subtableCode === subtableCode;
+    });
+    return sortFieldsBySubtableOrder(childFields, subtableCode, subtableFieldOrder);
+  }
+
+  function orderVisibleSubtableColumns(columns, fieldMap, subtableFieldOrder) {
+    if (!Array.isArray(columns) || columns.length === 0) {
+      return columns;
+    }
+
+    const emittedSubtables = {};
+    const orderedColumns = [];
+
+    columns.forEach((column) => {
+      const subtableCode = column.subtableCode;
+      if (!subtableCode) {
+        orderedColumns.push(column);
+        return;
+      }
+      if (emittedSubtables[subtableCode]) {
+        return;
+      }
+
+      emittedSubtables[subtableCode] = true;
+      const selectedCodes = columns
+        .filter((item) => item.subtableCode === subtableCode)
+        .map((item) => item.code);
+      const selectedSet = {};
+      selectedCodes.forEach((code) => {
+        selectedSet[code] = true;
+      });
+
+      getSubtableChildFields(fieldMap, subtableCode, subtableFieldOrder).forEach((fieldInfo) => {
+        if (selectedSet[fieldInfo.code]) {
+          orderedColumns.push(fieldInfo);
+        }
+      });
+    });
+
+    return orderedColumns;
+  }
+
+  function sortFieldsBySubtableOrder(fields, subtableCode, subtableFieldOrder) {
+    const layoutCodes = (subtableFieldOrder && subtableFieldOrder[subtableCode]) || [];
+    if (layoutCodes.length === 0) {
+      return fields;
+    }
+
+    const indexByCode = {};
+    layoutCodes.forEach((code, index) => {
+      indexByCode[code] = index;
+    });
+
+    return fields.slice().sort((a, b) => {
+      const aIndex = Object.prototype.hasOwnProperty.call(indexByCode, a.code) ? indexByCode[a.code] : Number.MAX_SAFE_INTEGER;
+      const bIndex = Object.prototype.hasOwnProperty.call(indexByCode, b.code) ? indexByCode[b.code] : Number.MAX_SAFE_INTEGER;
+      if (aIndex !== bIndex) {
+        return aIndex - bIndex;
+      }
+      return 0;
     });
   }
 
