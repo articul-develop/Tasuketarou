@@ -411,6 +411,49 @@
         return '';
     }
 
+    function isValidConditionDateValue(value) {
+        const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (!match) {
+            return false;
+        }
+
+        const year = Number(match[1]);
+        const month = Number(match[2]);
+        const day = Number(match[3]);
+        if (year < 1000 || year > 9999) {
+            return false;
+        }
+
+        const date = new Date(Date.UTC(year, month - 1, day));
+        return date.getUTCFullYear() === year
+            && date.getUTCMonth() === month - 1
+            && date.getUTCDate() === day;
+    }
+
+    function normalizeConditionInputValue(fieldType, value) {
+        if (fieldType !== 'DATE') {
+            return value;
+        }
+        if (!value) {
+            return '';
+        }
+        return isValidConditionDateValue(value) ? value : '';
+    }
+
+    function applyConditionValueInputAttributes(valueInput, valueInputKind) {
+        if (valueInputKind === 'number') {
+            valueInput.type = 'number';
+            return;
+        }
+        if (valueInputKind === 'date') {
+            valueInput.type = 'date';
+            valueInput.min = '1000-01-01';
+            valueInput.max = '9999-12-31';
+            return;
+        }
+        valueInput.type = valueInputKind;
+    }
+
     function createConditionFromDefinition(fieldScope, definition) {
         const operators = getConditionOperatorOptions(definition?.type || '');
         return {
@@ -440,6 +483,8 @@
             if (!definition.options.some(option => String(option.value) === String(value))) {
                 value = getDefaultConditionValue(definition);
             }
+        } else if (definition.type === 'DATE') {
+            value = normalizeConditionInputValue('DATE', value);
         }
 
         return {
@@ -595,6 +640,19 @@
         linkage.targetRowIdentifierField = dom.targetRowIdentifierField.value;
         linkage.sourceRecordNumber = dom.sourceRecordNumber.value;
         linkage.tableRowNumber = dom.tableRowNumber.value;
+
+        dom.conditionEditor.querySelectorAll('[data-condition-role="operator"], [data-condition-role="value"]').forEach((control) => {
+            const index = Number(control.dataset.conditionIndex);
+            const condition = linkage.syncConditions[index];
+            if (Number.isNaN(index) || !condition) {
+                return;
+            }
+            if (control.dataset.conditionRole === 'operator') {
+                condition.operator = control.value;
+                return;
+            }
+            condition.value = normalizeConditionInputValue(condition.fieldType, control.value);
+        });
     }
 
     function renderTabs() {
@@ -820,7 +878,7 @@
                 });
             } else {
                 valueInput = document.createElement('input');
-                valueInput.type = valueInputKind === 'number' ? 'number' : valueInputKind;
+                applyConditionValueInputAttributes(valueInput, valueInputKind);
                 valueInput.value = condition.value;
             }
             valueInput.dataset.conditionRole = 'value';
@@ -1210,8 +1268,10 @@
                 : current;
         } else if (role === 'operator') {
             current.operator = value;
+            return;
         } else if (role === 'value') {
-            current.value = value;
+            current.value = normalizeConditionInputValue(current.fieldType, value);
+            return;
         }
 
         linkage.syncConditions = sanitizeConditions(linkage, linkage.syncConditions);
@@ -1233,14 +1293,17 @@
         renderActiveLinkage();
     }
 
-    dom.conditionEditor.addEventListener('change', (event) => {
+    function handleConditionControlEvent(event) {
         const target = event.target;
         if (!(target instanceof HTMLSelectElement) && !(target instanceof HTMLInputElement)) {
             return;
         }
 
         updateConditionFromControl(target.dataset.conditionIndex, target.dataset.conditionRole, target.value);
-    });
+    }
+
+    dom.conditionEditor.addEventListener('input', handleConditionControlEvent);
+    dom.conditionEditor.addEventListener('change', handleConditionControlEvent);
 
     dom.conditionEditor.addEventListener('click', (event) => {
         const button = event.target;

@@ -446,7 +446,7 @@
         const errorMsg = `${linkageContext} の更新対象テーブルフィールドコード "${linkage.tableFieldCode}" が見つかりません。`;
         alert(`プラグインエラー：${errorMsg}`);
         await AuthModule.sendErrorLog(API_CONFIG, 'テーブルフィールド未検出', errorMsg);
-        return { hasError: true, targetAppName };
+        return { hasError: true, targetAppName, didSyncTarget: false };
       }
 
       const tableRecords = tableField.value;
@@ -463,7 +463,7 @@
           const errorMsg = `${linkageContext} の更新元キー項目 "${linkage.sourceRowIdentifierField}" がテーブル内に存在しません。`;
           alert(`プラグインエラー：${errorMsg}`);
           await AuthModule.sendErrorLog(API_CONFIG, '更新キー項目未検出', errorMsg);
-          return { hasError: true, targetAppName };
+          return { hasError: true, targetAppName, didSyncTarget: false };
         }
 
         if (!matchesConditions(record, row.value, linkage.syncConditions)) {
@@ -593,7 +593,12 @@
         }
       }
 
-      return { hasError, targetAppName };
+      const didSyncTarget = !hasError
+        && (deletedIdentifiers.length > 0
+          || recordsToUpdate.length > 0
+          || recordsToCreateInTarget.length > 0);
+
+      return { hasError, targetAppName, didSyncTarget };
     }
 
     const eventsToShow = [
@@ -665,7 +670,7 @@
           const result = await processSingleLinkageSync(event, linkageConfigs[i], i);
           if (result.hasError) {
             hasAnyError = true;
-          } else {
+          } else if (result.didSyncTarget) {
             successfulTargets.push(result.targetAppName);
           }
         }
