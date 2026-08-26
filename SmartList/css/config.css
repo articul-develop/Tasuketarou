@@ -386,6 +386,10 @@ h2 {
   white-space: nowrap;
 }
 
+.view-duplicate-message[hidden] {
+  display: none !important;
+}
+
 .view-create-panel {
   display: grid;
   gap: 9px;
@@ -449,6 +453,11 @@ h2 {
   color: #53647d;
   line-height: 1.7;
   font-size: 13px;
+}
+
+.field-note.view-duplicate-message {
+  color: #b42318;
+  font-weight: 700;
 }
 
 .checkbox-item {
@@ -624,6 +633,26 @@ h2 {
 }
 
 /* 初期の列順（ドラッグ＆ドロップ） */
+.order-select-all {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  color: #2f3d55;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.order-select-all input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
+
+.order-select-all.is-disabled {
+  color: #9fadc2;
+  cursor: default;
+}
+
 .order-list {
   display: flex;
   flex-direction: column;

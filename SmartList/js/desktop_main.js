@@ -189,6 +189,7 @@
       state.columnOrder = state.columns.map((column) => column.key);
       const allowed = new Set(state.columnOrder);
       const initialVisible = setting.initialVisibleKeys.filter((key) => allowed.has(key));
+      // 空配列は旧設定（未チェック＝全表示）向けの安全網。再保存後は明示的なキーが入る
       state.visibleKeys = initialVisible.length > 0 ? initialVisible : state.columnOrder.slice();
       state.columnWidths = {};
       state.frozenColumnCount = 0;

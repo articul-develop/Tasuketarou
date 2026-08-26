@@ -25,6 +25,7 @@
     definitionDuplicateButton: document.getElementById('definition-duplicate-button'),
     definitionDeleteButton: document.getElementById('definition-delete-button'),
     viewSelect: document.getElementById('view-select'),
+    viewDuplicateMessage: document.getElementById('view-duplicate-message'),
     viewCreateToggle: document.getElementById('view-create-toggle'),
     viewCreatePanel: document.getElementById('view-create-panel'),
     viewNameInput: document.getElementById('view-name-input'),
@@ -39,6 +40,7 @@
     snippetText: document.getElementById('snippet-text'),
     snippetCopy: document.getElementById('snippet-copy'),
     columnOrderList: document.getElementById('column-order-list'),
+    columnVisibleSelectAll: document.getElementById('column-visible-select-all'),
     quickSearchList: document.getElementById('quick-search-list'),
     quickSearchDescription: document.getElementById('quick-search-description'),
     linkColumnSelect: document.getElementById('link-column-select'),
@@ -260,6 +262,9 @@
     active.tableFieldCodes = active.listMode === DL.LIST_MODE.PARENT
       ? []
       : state.tableCandidates.map((field) => field.code);
+    if (state.visibleKeys.size === 0 && state.columnOrder.length > 0) {
+      state.columnOrder.forEach((key) => state.visibleKeys.add(key));
+    }
     active.columnOrder = state.columnOrder.slice();
     active.initialVisibleKeys = state.columnOrder.filter((key) => state.visibleKeys.has(key));
     active.quickSearchKeys = state.columnOrder.filter((key) => state.quickKeys.has(key));
@@ -351,6 +356,32 @@
       el.definitionList.appendChild(button);
     });
     el.definitionDeleteButton.disabled = state.definitions.length <= 1;
+    updateViewDuplicateMessage();
+  };
+
+  const updateViewDuplicateMessage = () => {
+    const messageEl = el.viewDuplicateMessage;
+    if (!messageEl) {
+      return;
+    }
+    const viewId = el.viewSelect.value;
+    const others = state.definitions
+      .map((definition, index) => ({ definition, index }))
+      .filter((item) => item.definition.id !== state.activeId && String(item.definition.viewId) === String(viewId))
+      .map((item) => getDefinitionLabel(item.definition, item.index));
+
+    if (!viewId || others.length === 0) {
+      messageEl.hidden = true;
+      messageEl.textContent = '';
+      el.viewSelect.classList.remove('is-invalid');
+      return;
+    }
+
+    const viewLabel = getViewLabel(viewId);
+    const otherLabels = others.join('」「');
+    messageEl.textContent = `カスタマイズビュー「${viewLabel}」は、定義「${otherLabels}」でも選ばれています。1つのビューに紐づけられる定義は1つだけです。`;
+    messageEl.hidden = false;
+    el.viewSelect.classList.add('is-invalid');
   };
 
   const selectDefinition = (definitionId) => {
@@ -519,6 +550,29 @@
     state.cellColorRules = state.cellColorRules.filter((item) => allSet.has(item.key));
   };
 
+  const ensureDefaultVisibleKeys = () => {
+    if (state.visibleKeys.size === 0 && state.columnOrder.length > 0) {
+      state.columnOrder.forEach((key) => state.visibleKeys.add(key));
+    }
+  };
+
+  const syncSelectAllCheckbox = () => {
+    const checkbox = el.columnVisibleSelectAll;
+    if (!checkbox) {
+      return;
+    }
+    const columns = getSelectedColumns();
+    const checkedCount = columns.filter((column) => state.visibleKeys.has(column.key)).length;
+    const hasColumns = columns.length > 0;
+    checkbox.disabled = !hasColumns;
+    checkbox.indeterminate = hasColumns && checkedCount > 0 && checkedCount < columns.length;
+    checkbox.checked = hasColumns && checkedCount === columns.length;
+    const label = checkbox.closest('.order-select-all');
+    if (label) {
+      label.classList.toggle('is-disabled', !hasColumns);
+    }
+  };
+
   /* ------------------------------------------------------------------ *
    * 描画
    * ------------------------------------------------------------------ */
@@ -532,6 +586,7 @@
         isParentListMode()
           ? '表示できる親レコードの項目が一覧されます。'
           : '対象サブテーブルを選択すると、表示できる項目が一覧されます。'));
+      syncSelectAllCheckbox();
       return;
     }
 
@@ -558,6 +613,7 @@
         } else {
           state.visibleKeys.delete(column.key);
         }
+        syncSelectAllCheckbox();
       });
       label.appendChild(checkbox);
       label.appendChild(createElement('span', 'order-name', column.label));
@@ -604,6 +660,7 @@
     });
 
     el.columnOrderList.scrollTop = scrollTop;
+    syncSelectAllCheckbox();
   };
 
   const renderQuickSearchList = () => {
@@ -951,6 +1008,7 @@
     state.tableCandidates = parentMode ? [] : buildTableCandidates(tableCode);
     state.parentCandidates = buildParentCandidates(tableCode);
     syncColumnOrder();
+    ensureDefaultVisibleKeys();
     renderColumnDependentUi();
   };
 
@@ -1044,6 +1102,13 @@
 
   const collectPluginConfig = () => {
     flushActiveToDefinition();
+    state.definitions.forEach((definition) => {
+      if ((!definition.initialVisibleKeys || definition.initialVisibleKeys.length === 0)
+          && definition.columnOrder && definition.columnOrder.length > 0) {
+        definition.initialVisibleKeys = definition.columnOrder.slice();
+      }
+    });
+    renderColumnOrderList();
     return {
       definitions: state.definitions.map((definition) => DL.normalizeDefinition(definition))
     };
@@ -1349,6 +1414,16 @@
       syncModeDependentUi();
       renderTableFieldSection();
     });
+  });
+
+  el.columnVisibleSelectAll.addEventListener('change', () => {
+    const columns = getSelectedColumns();
+    if (el.columnVisibleSelectAll.checked) {
+      columns.forEach((column) => state.visibleKeys.add(column.key));
+    } else {
+      columns.forEach((column) => state.visibleKeys.delete(column.key));
+    }
+    renderColumnOrderList();
   });
 
   el.tableSelect.addEventListener('change', () => {
