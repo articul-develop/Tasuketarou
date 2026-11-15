@@ -468,7 +468,7 @@
 
     allFieldCodes.forEach((fieldCode) => {
       if (activeFieldCodes.indexOf(fieldCode) !== -1) {
-        showField(recordApi, fieldCode, parentMap);
+        showField(recordApi, fieldCode);
         return;
       }
 
@@ -487,16 +487,8 @@
     }
   }
 
-  function showField(recordApi, fieldCode, parentMap) {
+  function showField(recordApi, fieldCode) {
     setFieldShown(recordApi, fieldCode, true);
-
-    let parentGroupCode = parentMap[fieldCode];
-    while (parentGroupCode) {
-      openGroup(recordApi, parentGroupCode);
-      parentGroupCode = parentMap[parentGroupCode];
-    }
-
-    openGroup(recordApi, fieldCode);
   }
 
   function hideField(recordApi, fieldCode) {
@@ -885,16 +877,6 @@
 
   function unique(values) {
     return values.filter((value, index) => values.indexOf(value) === index);
-  }
-
-  function openGroup(recordApi, groupFieldCode) {
-    if (recordApi && typeof recordApi.setGroupFieldOpen === 'function') {
-      try {
-        recordApi.setGroupFieldOpen(groupFieldCode, true);
-      } catch (error) {
-        // グループ以外の項目は開閉APIの対象外のため、表示制御だけ行います。
-      }
-    }
   }
 
   function getRecordApi(eventType) {
